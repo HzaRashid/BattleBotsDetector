@@ -8,9 +8,10 @@ import json
 # session_id = os.getenv('SESSION_ID')
 
 # Testing Environment Variables
-base_url = 'http://52.207.242.165:3000/api/test'
-authentication_token = ""
-session_id = 2
+base_url = 'http://52.207.242.165:3000/api/test/1'
+authentication_token = os.getenv('AUTH_TOKEN')
+# print(f"auth token: {authentication_token}")
+session_id = 1
 
 header = {'Authorization': 'bearer ' + authentication_token, 'Content-Type': 'application/json'}
 
@@ -73,6 +74,8 @@ class SessionDataset:
 def get_session_data():
     response = requests.get(base_url + '/detector/session/' + str(session_id), headers=header)
     if response.status_code >= 400:
+        print("uh oh")
+        print(response.json())
         return response, []
     else:
         return response, SessionDataset(response.json())
