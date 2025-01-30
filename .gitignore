@@ -53,3 +53,5 @@ docs/_build/
 .venv
 
 get_token.sh
+
+.env
