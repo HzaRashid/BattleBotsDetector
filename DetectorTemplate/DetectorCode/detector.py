@@ -1,5 +1,7 @@
 from abc_classes import ADetector
 from teams_classes import DetectionMark
+import json
+
 
 class Detector(ADetector):
     def detect_bot(self, session_data):
