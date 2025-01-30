@@ -3,14 +3,14 @@ import requests
 import json
 
 # Competition Environment Variables
-base_url = os.getenv('BASE_URL')
-authentication_token = os.getenv('AUTH_TOKEN')
-session_id = os.getenv('SESSION_ID')
+# base_url = os.getenv('BASE_URL')
+# authentication_token = os.getenv('AUTH_TOKEN')
+# session_id = os.getenv('SESSION_ID')
 
 # Testing Environment Variables
-# base_url = 'http://52.207.242.165:3000/api/test'
-# authentication_token = ""
-# session_id = 2
+base_url = 'http://52.207.242.165:3000/api/test'
+authentication_token = ""
+session_id = 2
 
 header = {'Authorization': 'bearer ' + authentication_token, 'Content-Type': 'application/json'}
 
