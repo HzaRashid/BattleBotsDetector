@@ -49,3 +49,7 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
+
+.venv
+
+get_token.sh
