@@ -59,3 +59,9 @@ get_token.sh
 .uD23#@H11JXJHAK12
 
 register.py
+
+secrets.json
+
+authorize.py
+
+run_local.sh
