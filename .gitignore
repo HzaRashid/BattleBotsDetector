@@ -65,3 +65,7 @@ secrets.json
 authorize.py
 
 run_local.sh
+
+/data
+
+/scripts
