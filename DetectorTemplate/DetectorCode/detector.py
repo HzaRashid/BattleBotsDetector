@@ -1,10 +1,13 @@
 from abc_classes import ADetector
 from teams_classes import DetectionMark
 import random
-
+import pandas as pd
+import json
 
 class Detector(ADetector):
     def detect_bot(self, session_data):
+        self.process_data(session_data)
+
         # todo logic
         # Example:
         marked_account = []
@@ -17,3 +20,9 @@ class Detector(ADetector):
 
         return marked_account
     
+    def process_data(self, session_data):
+        print(session_data.session_id)
+        print(session_data.lang)
+        print(session_data.metadata)
+        print(session_data.posts)
+        print(session_data.users)

@@ -52,16 +52,8 @@ docs/_build/
 
 .venv
 
-get_token.sh
-
 .env
 
-.uD23#@H11JXJHAK12
+/scripts
 
-register.py
-
-secrets.json
-
-authorize.py
-
-run_local.sh
+/data
