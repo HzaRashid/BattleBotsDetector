@@ -1,14 +1,11 @@
 from abc_classes import ADetector
 from teams_classes import DetectionMark
-from sklearn.feature_extraction.text import TfidfVectorizer
 import pandas as pd
 import spacy
 import pickle
 import re
 import os
 import warnings
-
-
 
 class Detector(ADetector):
     def __init__(self):
