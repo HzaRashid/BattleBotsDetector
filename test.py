@@ -48,9 +48,15 @@ def process_data():
     with open("./data/session_10_results.json", "r", encoding="utf-8") as file:
         dataset1 = json.load(file)
 
+    with open("./data/session_3_results.json", "r", encoding="utf-8") as file:
+        dataset2 = json.load(file)
+
+    with open("./data/session_4_results.json", "r", encoding="utf-8") as file:
+        dataset3 = json.load(file)
+
     # Convert JSON to DataFrames
-    users_df = pd.DataFrame(dataset1["users"])
-    posts_df = pd.DataFrame(dataset1["posts"])
+    users_df = pd.DataFrame(dataset1["users"] + dataset2["users"] + dataset3["users"])
+    posts_df = pd.DataFrame(dataset1["posts"] + dataset2["posts"] + dataset3["posts"])
 
     # Keep only relevant columns
     posts_df = posts_df[['author_id', 'text', 'created_at']]
@@ -68,52 +74,44 @@ def process_data():
     # Drop redundant column
     users_df.drop(columns=["author_id"], inplace=True)
 
-    # Apply TF-IDF to get user-specific word importance
-    vectorizer = TfidfVectorizer()
-    tfidf_matrix = vectorizer.fit_transform(users_df["cleaned_text"].fillna(""))
-
-    # Convert TF-IDF matrix to a DataFrame
-    feature_names = vectorizer.get_feature_names_out()
-    tfidf_df = pd.DataFrame(tfidf_matrix.toarray(), columns=feature_names)
-
-    # # sort each row in descending order of tfidf score of columns
-    # a = tfidf_df.values
-    # a.sort(axis=1)  # no ascending argument
-    # a = a[:, ::-1]  # so reverse
-    # sorted_tfidf_df = pd.DataFrame(a, tfidf_df.index, tfidf_df.columns)
-
-    # # Rename TF-IDF columns generically as 0,1,2,...
-    # sorted_tfidf_df.columns = range(sorted_tfidf_df.shape[1])
-
-    # Merge sorted TF-IDF features with user data
-    final_df = pd.concat([users_df.drop(columns=["cleaned_text"]), tfidf_df], axis=1)
-
-    final_df = final_df.sample(frac=1, random_state=42).reset_index(drop=True)
-
     # Separate features and target variable
-    X = final_df.drop(columns=['user_id', 'is_bot'])
-    y = final_df['is_bot']
+    X = users_df[['cleaned_text']]
+    y = users_df['is_bot']
 
     # Train-test split (80% train, 20% test)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+    X_train_text, X_test_text, y_train, y_test = train_test_split(
+        X['cleaned_text'], y, test_size=0.2, random_state=42, stratify=y
+    )
+
+    # Apply TF-IDF only on the training data
+    vectorizer = TfidfVectorizer()
+    X_train_tfidf = vectorizer.fit_transform(X_train_text.fillna(""))
+    X_test_tfidf = vectorizer.transform(X_test_text.fillna(""))
+
+    # Convert TF-IDF matrices to DataFrames
+    feature_names = vectorizer.get_feature_names_out()
+    X_train_df = pd.DataFrame(X_train_tfidf.toarray(), columns=feature_names)
+    X_test_df = pd.DataFrame(X_test_tfidf.toarray(), columns=feature_names)
 
     # Train a svm classifier as a baseline
-    clf = svm.SVC(kernel='rbf', C=3.0, class_weight='balanced')
-    clf.fit(X_train, y_train)
+    clf = RandomForestClassifier(n_estimators=100, class_weight='balanced', random_state=42)
+
+    clf.fit(X_train_df, y_train)
+
     # Predictions for svm
-    y_pred = clf.predict(X_test)
+    y_pred = clf.predict(X_test_df)
 
     # Evaluate SVM performance
     accuracy = accuracy_score(y_test, y_pred)
     report = classification_report(y_test, y_pred)
 
-    print(f'SVM Accuracy: {accuracy:.4f}')
-    print('SVM Classification Report:\n', report)
+    (print(clf))
+    print(f'Accuracy: {accuracy:.4f}')
+    print('Classification Report:\n', report)
+
 
     # Save the trained model
-    # clf.fit(X, y)
-    # Save the trained model
-    model_path = os.path.join(model_dir, "linear_svm_model.pkl")
+    model_path = os.path.join(model_dir, "random_forest.pkl")
     with open(model_path, "wb") as model_file:
         pickle.dump(clf, model_file)
 
@@ -121,8 +119,6 @@ def process_data():
     vectorizer_path = os.path.join(model_dir, "tfidf_vectorizer.pkl")
     with open(vectorizer_path, "wb") as vec_file:
         pickle.dump(vectorizer, vec_file)
-
-
 
     # print(final_df.head())
 

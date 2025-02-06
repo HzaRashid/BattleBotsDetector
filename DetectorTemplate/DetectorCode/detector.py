@@ -13,25 +13,27 @@ class Detector(ADetector):
         self.nlp = spacy.load("en_core_web_sm", enable=['tokenizer', 'stopwords','lemmatizer'])
         
         model_dir = f'{os.path.dirname(__file__)}/models'
-        with open(os.path.join(model_dir, "linear_svm_model.pkl"), "rb") as model_file:
+        with open(os.path.join(model_dir, "random_forest.pkl"), "rb") as model_file:
             self.clf = pickle.load(model_file)
 
         with open(os.path.join(model_dir, "tfidf_vectorizer.pkl"), "rb") as vec_file:
             self.vectorizer = pickle.load(vec_file)
+            
 
     def detect_bot(self, session_data):
         feature_vectors = self.process_data(session_data)
-        predictions = self.clf.predict(feature_vectors)
-
-        print(predictions)
-
+        prediction_probs = self.clf.predict_proba(feature_vectors)
+        # print(prediction_probs)
+        
         # todo logic    
         # Example:
         marked_account = []
         
         for i, user in enumerate(session_data.users):
-            
-            marked_account.append(DetectionMark(user_id=user['id'], confidence=50, bot=predictions[i]))
+            bot_confidence = int(prediction_probs[i][1] * 100)  # Highest probability
+            predicted_class = bool(prediction_probs[i].argmax())   # Class with the highest probability
+            # print(bot_confidence, predicted_class)
+            marked_account.append(DetectionMark(user_id=user['id'], confidence=bot_confidence, bot=predicted_class))
 
         return marked_account
     
@@ -60,9 +62,7 @@ class Detector(ADetector):
 
         # Merge processed tweets back to users
         users_df = users_df.merge(user_tweets, left_on="id", right_on="author_id", how="left")
-
-        # print(users_df.iloc[5]['cleaned_text'])
-
+        
         # Apply TF-IDF to get user-specific word importance
         tfidf_matrix = self.vectorizer.transform(users_df["cleaned_text"].fillna(""))
 
