@@ -1,111 +1,129 @@
 from abc_classes import ADetector
 from teams_classes import DetectionMark
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sentence_transformers import SentenceTransformer
 import pandas as pd
 import numpy as np
-import spacy
 import pickle
 import re
 import os
+from sklearn.preprocessing import MinMaxScaler
 
 class Detector(ADetector):
     def __init__(self):
+        
+        # Load the pre-trained SentenceTransformer model
+        self.sentence_transformer = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 
-        self.nlp = spacy.load("en_core_web_sm", enable=['tokenizer', 'stopwords','lemmatizer'])
-
-        # Load R.F model
-        model_dir = f'{os.path.dirname(__file__)}/models'
-        with open(os.path.join(model_dir, "random_forest_with_lda.pkl"), "rb") as model_file:
+        model_dir = os.path.join(os.path.dirname(__file__), 'models')
+        
+        # Load the pre-trained Random Forest classifier (ensure this was trained with our new features)
+        with open(os.path.join(model_dir, "random_forest.pkl"), "rb") as model_file:
             self.clf = pickle.load(model_file)
 
-        # Load TFIDFVectorizer
-        with open(os.path.join(model_dir, "tfidf_vectorizer.pkl"), "rb") as vec_file:
-            self.vectorizer = pickle.load(vec_file)
-
-        # Load LDAVectorizer
-        with open(os.path.join(model_dir, "lda_vectorizer.pkl"), "rb") as vec_file:
-            self.lda_model = pickle.load(vec_file)
+        # Load the pre-fitted BERTopic model from training
+        with open(os.path.join(model_dir, "bertopic_model.pkl"), "rb") as topic_file:
+            self.topic_model = pickle.load(topic_file)
     
-        # Load CountVectorizer for LDA
-        with open(os.path.join(model_dir, "count_vectorizer.pkl"), "rb") as count_file:
-            self.count_vectorizer = pickle.load(count_file)
-
     def detect_bot(self, session_data):
+        # Process new session data to extract features in the same way as training
         feature_vectors = self.process_data(session_data)
-        prediction_probs = self.clf.predict_proba(feature_vectors)
-        # print([bool(prediction_probs[i].argmax()) for i in range(len(prediction_probs))])
-       
+        prediction_probs = self.clf.predict_proba(feature_vectors)[:, 1]
         
-        # todo logic    
-        # Example:
-        marked_account = []
+        # Normalize confidence scores between 0 and 100
+        if len(prediction_probs) > 1:
+            scaler = MinMaxScaler(feature_range=(0, 100))
+            normalized_confidences = scaler.fit_transform(prediction_probs.reshape(-1, 1)).flatten()
+        else:
+            normalized_confidences = prediction_probs * 100
         
+        marked_accounts = []
         for i, user in enumerate(session_data.users):
-            bot_confidence = int(prediction_probs[i][1] * 100)  # Highest probability
-            predicted_class = bool(prediction_probs[i].argmax())   # Class with the highest probability
-            print(bot_confidence, predicted_class, user['id'])
-            marked_account.append(DetectionMark(user_id=user['id'], confidence=bot_confidence, bot=predicted_class))
-
-        return marked_account
-    
+            predicted_class = int(normalized_confidences[i]) >= 50  # classify as bot if confidence is 50% or higher
+            print(predicted_class, int(normalized_confidences[i]), user['id'])
+            marked_accounts.append(DetectionMark(user_id=user['id'], confidence=int(normalized_confidences[i]), bot=predicted_class))
+        
+        return marked_accounts
 
     def process_data(self, session_data):
         """
-        session_data = {
-        session_id: int,
-        lang: str,
-        metadata: None,
-        users: ...
-        posts: ...
-        }
+        Processes new session data to match the training pipeline:
+         - Builds DataFrames for users and posts.
+         - Cleans tweet text.
+         - Computes embeddings and topics using the pre-fitted models.
+         - Aggregates tweet-level features to user-level.
+         - Constructs the final feature matrix.
         """
+        # Build DataFrames from session data
         users_df = pd.DataFrame(session_data.users)
         posts_df = pd.DataFrame(session_data.posts)
-
-        posts_df = posts_df[['author_id', 'text', 'created_at']]
-        users_df = users_df[['id']]
-
+        print(users_df.columns)
+        # Ensure posts_df has only the needed columns and rename for consistency
+        posts_df = posts_df[['author_id', 'text', 'created_at']].rename(columns={"author_id": "user_id"})
+        users_df = users_df.rename(columns={"id": "user_id"})
+        
+        # Clean text in posts and convert created_at to datetime
         posts_df["cleaned_text"] = posts_df["text"].apply(self.preprocess_text)
-        user_tweets = posts_df.groupby("author_id")["cleaned_text"].apply(lambda x: " ".join(x)).reset_index()
-        users_df = users_df.merge(user_tweets, left_on="id", right_on="author_id", how="left")
+        posts_df['created_at'] = pd.to_datetime(posts_df['created_at'], errors='coerce')
+        
+        # Compute sentence embeddings for each tweet
+        texts = posts_df["cleaned_text"].fillna("").tolist()
+        embeddings = self.sentence_transformer.encode(texts, convert_to_numpy=True)
+        posts_df['embedding'] = list(embeddings)
+        
+        # Obtain topics using the pre-fitted BERTopic model
+        topics, _ = self.topic_model.transform(texts)
+        posts_df['topic'] = topics
+        
+        # Aggregate tweet-level features to user-level
+        user_features = self.aggregate_user_features(posts_df)
 
-        # Apply TF-IDF Vectorization
-        tfidf_matrix = self.vectorizer.transform(users_df["cleaned_text"].fillna(""))
+        # Merge aggregated features with users_df (to ensure every user is included)
+        # Drop tweet_count from users_df if it's not needed
+        users_df = users_df.drop(columns=['tweet_count'], errors='ignore')
+        user_features = users_df.merge(user_features, on="user_id", how="left")
+        
+        # For users with no tweets, fill missing features with default values
+        embedding_dim = embeddings.shape[1] if len(embeddings) > 0 else 384
+        user_features['embedding_mean'] = user_features['embedding_mean'].apply(
+            lambda x: x if isinstance(x, np.ndarray) else np.zeros(embedding_dim)
+        )
+        user_features[['most_common_topic', 'tweet_time_mean', 'tweet_time_std', 'tweet_count']] = user_features[
+            ['most_common_topic', 'tweet_time_mean', 'tweet_time_std', 'tweet_count']
+        ].fillna(0)
+        
+        # Create the final feature matrix
+        X = np.hstack((
+            np.vstack(user_features['embedding_mean']),
+            user_features[['most_common_topic', 'tweet_time_mean', 'tweet_time_std', 'tweet_count']].values
+        ))
+        
+        return X
 
-        # Apply LDA Topic Modeling
-        count_matrix = self.count_vectorizer.transform(users_df["cleaned_text"].fillna(""))
-        lda_matrix = self.lda_model.transform(count_matrix)
-
-
-        # Combine TF-IDF and LDA Features
-        combined_features = np.hstack((tfidf_matrix.toarray(), lda_matrix))
-
-        return combined_features
-
+    def aggregate_user_features(self, data_df):
+        """
+        Aggregates tweet-level features to user-level.
+         - Computes the mean embedding for each user.
+         - Determines the most common (non-noise) topic.
+         - Computes mean and std of tweet timestamps and tweet count.
+        """
+        data_df = data_df.copy()
+        data_df['created_at'] = pd.to_datetime(data_df['created_at'], errors='coerce')
+        
+        user_features = data_df.groupby('user_id').agg({
+            'embedding': lambda x: np.mean(np.vstack(x), axis=0),
+            'topic': lambda x: np.bincount([i for i in x if i >= 0]).argmax() if any(i >= 0 for i in x) else -1,
+            'created_at': [
+                lambda x: x.dropna().astype('int64').mean(),  # tweet_time_mean
+                lambda x: x.dropna().astype('int64').std(),   # tweet_time_std
+                'count'                                       # tweet_count
+            ]
+        })
+        # Flatten the MultiIndex columns and rename
+        user_features.columns = ['embedding_mean', 'most_common_topic', 'tweet_time_mean', 'tweet_time_std', 'tweet_count']
+        return user_features.reset_index()
 
     def preprocess_text(self, text):
-        """
-        Preprocesses a tweet by:
-        1. Tokenizing it with spaCy
-        2. Replacing URLs, mentions, and hashtags with special tokens
-        3. Removing stopwords
-        4. Removing punctuation
-        5. Lowercasing all words
-        6. Applying lemmatization
-        """
-        # Replace URLs
         text = re.sub(r"https?://\S+", "<URLURL>", text)
-        
-        # Replace mentions
         text = re.sub(r"@\w+", "<UsernameMention>", text)
-        
-        # Replace hashtags
         text = re.sub(r"#\w+", "<HashtagMention>", text)
-
-        # Tokenize with spaCy
-        doc = self.nlp(text)
-
-        # Extract lemmatized tokens, removing stopwords and punctuation, and converting to lowercase
-        tokens = [token.lemma_.lower() for token in doc if not token.is_stop and not token.is_punct]
-        
-        return " ".join(tokens)
+        return text

@@ -1,130 +1,178 @@
-from sklearn.metrics import accuracy_score, classification_report
-from sklearn.decomposition import LatentDirichletAllocation
-from sklearn.feature_extraction.text import CountVectorizer
-from sentence_transformers import SentenceTransformer
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
 import pandas as pd
 import numpy as np
-import pickle
-import spacy
 import json
 import re
 import os
+from sentence_transformers import SentenceTransformer
+from bertopic import BERTopic
+from hdbscan import HDBSCAN
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.ensemble import RandomForestClassifier
+import pickle
 
 
-# Load spaCy's English model
-nlp = spacy.load("en_core_web_sm", enable=['tokenizer', 'stopwords', 'lemmatizer'])
+model_dir = f'{os.path.dirname(__file__)}/../DetectorTemplate/DetectorCode/models'
 
-model_dir = f'{os.path.dirname(__file__)}../DetectorTemplate/DetectorCode/models'
-print(model_dir)
-
-# "all-MiniLM-L6-v2" is a fairly lightweight model (~82MB) 
-# that generates 384-dimensional sentence embeddings.
-model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 
 def preprocess_text(text):
     text = re.sub(r"https?://\S+", "<URLURL>", text)
     text = re.sub(r"@\w+", "<UsernameMention>", text)
     text = re.sub(r"#\w+", "<HashtagMention>", text)
-    doc = nlp(text)
-    tokens = [token.lemma_.lower() for token in doc if not token.is_stop and not token.is_punct]
-    return " ".join(tokens)
-
+    return text
 
 def process_data():
-    with open("./data/session_10_results.json", "r", encoding="utf-8") as file:
-        dataset1 = json.load(file)
-    # with open("./data/session_3_results.json", "r", encoding="utf-8") as file:
-    #     dataset2 = json.load(file)
-    # with open("./data/session_4_results.json", "r", encoding="utf-8") as file:
-    #     dataset3 = json.load(file)
+    datasets = []
+    for session in ["session_10"]:
+        with open(f"./data/{session}_results.json", "r", encoding="utf-8") as file:
+            datasets.append(json.load(file))
 
-    users_df = pd.DataFrame(dataset1["users"] \
-                            # + dataset2["users"] + dataset3["users"]
-                            )
-    posts_df = pd.DataFrame(dataset1["posts"] \
-                            #  + dataset2["posts"] + dataset3["posts"]
-                             )
+    users_df = pd.concat([pd.DataFrame(ds["users"]) for ds in datasets])
+    posts_df = pd.concat([pd.DataFrame(ds["posts"]) for ds in datasets])
 
     posts_df = posts_df[['author_id', 'text', 'created_at']]
     users_df = users_df[['user_id', 'is_bot']]
+    # print(users_df)
 
-    posts_df["cleaned_text"] = posts_df["text"].apply(preprocess_text)
-    user_tweets = posts_df.groupby("author_id")["cleaned_text"].apply(lambda x: " ".join(x)).reset_index()
-    users_df = users_df.merge(user_tweets, left_on="user_id", right_on="author_id", how="left")
-    users_df.drop(columns=["author_id"], inplace=True)
+    # posts_df["cleaned_text"] = posts_df["text"].apply(preprocess_text)
+    # posts_df['created_at'] = pd.to_datetime(posts_df['created_at'], errors='coerce')
 
-    return users_df
+    combined_df = users_df.merge(posts_df, left_on="user_id", right_on="author_id", how="left")
+    return combined_df
 
+def extract_features_from_tweets(data_df):
+    model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+    embeddings = model.encode(data_df['cleaned_text'].tolist(), convert_to_numpy=True)
 
-def train_and_test(users_df):
-    X = users_df[['cleaned_text']]
-    y = users_df['is_bot']
+    hdbscan_model = HDBSCAN(cluster_selection_method='eom', prediction_data=True)
+    topic_model = BERTopic(hdbscan_model=hdbscan_model, embedding_model=model)
+    topics, _ = topic_model.fit_transform(data_df['cleaned_text'].tolist())
 
-    X_train_text, X_test_text, y_train, y_test = train_test_split(
-        X['cleaned_text'], y, test_size=0.2, 
-        random_state=42, stratify=y, shuffle=True
-    )
+    data_df['embedding'] = list(embeddings)
+    data_df['topic'] = topics
 
-    X_train_text = X_train_text.fillna("").reset_index(drop=True)
-    X_test_text = X_test_text.fillna("").reset_index(drop=True)
-    # print(X_train_text.reset_index(drop=True)[4])
-    X_train_embeddings= model.encode(X_train_text)
-    X_test_embeddings = model.encode(X_test_text)
+    return data_df, topic_model
 
-    # LDA Topic Modeling
-    count_vectorizer = CountVectorizer(max_df=0.95, min_df=2, stop_words='english')
-    X_train_counts = count_vectorizer.fit_transform(X_train_text.fillna(""))
-    X_test_counts = count_vectorizer.transform(X_test_text.fillna(""))
+def aggregate_user_features(data_df):
+    data_df = data_df.copy()
+    data_df['created_at'] = pd.to_datetime(data_df['created_at'], errors='coerce')
 
-    lda = LatentDirichletAllocation(n_components=10, random_state=42)
-    X_train_lda = lda.fit_transform(X_train_counts)
-    X_test_lda = lda.transform(X_test_counts)
+    user_features = data_df.groupby('user_id').agg({
+        'embedding': lambda x: np.mean(np.vstack(x), axis=0),
+        'topic': lambda x: np.bincount([i for i in x if i >= 0]).argmax() if any(i >= 0 for i in x) else -1,
 
-    # Combine TF-IDF and LDA features
-    X_train_combined = np.hstack((X_train_embeddings, X_train_lda))
-    X_test_combined = np.hstack((X_test_embeddings, X_test_lda))
+        'created_at': [
+            lambda x: x.dropna().astype('int64').mean(),  # tweet_time_mean
+            lambda x: x.dropna().astype('int64').std(),   # tweet_time_std
+            'count'                                       # tweet_count
+        ],
+        'is_bot': 'first'  # preserve the is_bot label for each user
+    })
 
-
-
-    # Train Random Forest Classifier
-    clf  = RandomForestClassifier(n_estimators=100, random_state=42, class_weight='balanced')
-    clf.fit(X_train_combined, y_train)
-
-    y_pred = clf.predict(X_test_combined)
-
-    accuracy = accuracy_score(y_test, y_pred)
-    report = classification_report(y_test, y_pred)
-
-    print(f'Accuracy: {accuracy:.4f}')
-    print('Classification Report:\n', report)
-
-    # save_models_and_vectorizers(clf, tfidf_vectorizer, lda, count_vectorizer)
-
-
-def save_models_and_vectorizers(clf, tfidf_vectorizer, lda, count_vectorizer):
-    # Save the trained model and vectorizers
-    model_path = os.path.join(model_dir, "random_forest_with_lda.pkl")
-    with open(model_path, "wb") as model_file:
-        pickle.dump(clf, model_file)
-
-    tfidf_vectorizer_path = os.path.join(model_dir, "tfidf_vectorizer.pkl")
-    with open(tfidf_vectorizer_path, "wb") as vec_file:
-        pickle.dump(tfidf_vectorizer, vec_file)
-
-    lda_vectorizer_path = os.path.join(model_dir, "lda_vectorizer.pkl")
-    with open(lda_vectorizer_path, "wb") as lda_file:
-        pickle.dump(lda, lda_file)
-
-    count_vectorizer_path = os.path.join(model_dir, "count_vectorizer.pkl")
-    with open(count_vectorizer_path, "wb") as count_file:
-        pickle.dump(count_vectorizer, count_file)
-
+    # Flatten the MultiIndex columns and rename them
+    user_features.columns = [
+        'embedding_mean', 
+        'most_common_topic', 
+        'tweet_time_mean', 
+        'tweet_time_std', 
+        'tweet_count',
+        'is_bot'
+    ]
+    return user_features.reset_index()
 
 def main():
-    users_df = process_data()
-    train_and_test(users_df)
+    # Load the combined data
+    data_df = process_data()
+
+    # Split by user to ensure no user appears in both training and test sets
+    unique_users = data_df[['user_id', 'is_bot']].drop_duplicates()
+    # print(data_df)
+    train_users, test_users = train_test_split(
+        unique_users,
+        test_size=0.2,
+        random_state=42,
+        stratify=unique_users['is_bot']
+    )
+    # print('foo')
+    train_df = data_df[data_df['user_id'].isin(train_users['user_id'])]
+    test_df = data_df[data_df['user_id'].isin(test_users['user_id'])]
+
+    # print('bar')
+    train_df = train_df.reset_index(drop=True)
+    test_df = test_df.reset_index(drop=True)
+
+    # -------------------------
+    # Process training data only
+    # -------------------------
+    train_df_text = train_df["text"].apply(preprocess_text).fillna("").tolist()
+    
+    # Initialize the pre-trained embedding model
+    model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+    train_embeddings = model.encode(train_df_text, convert_to_numpy=True)
+    
+    # Fit BERTopic (and HDBSCAN) on the training data
+    hdbscan_model = HDBSCAN(cluster_selection_method='eom', prediction_data=True)
+    topic_model = BERTopic(hdbscan_model=hdbscan_model, embedding_model=model)
+    train_topics, _ = topic_model.fit_transform(train_df_text)
+
+    # Store features in the training dataframe
+    train_df['embedding'] = list(train_embeddings)
+    train_df['topic'] = train_topics
+    
+    # Aggregate tweet-level features to user-level for training data
+    train_user_features = aggregate_user_features(train_df)
+
+    # -------------------------
+    # Process test data using the fitted BERTopic model
+    # -------------------------
+    test_df_text = test_df["text"].apply(preprocess_text).fillna("").tolist()
+    test_embeddings = model.encode(test_df_text, convert_to_numpy=True)
+    
+    # Transform test texts with the already fitted BERTopic model
+    test_topics, _ = topic_model.transform(test_df_text)
+    test_df['embedding'] = list(test_embeddings)
+    test_df['topic'] = test_topics
+
+    # Aggregate tweet-level features to user-level for test data
+    test_user_features = aggregate_user_features(test_df)
+    
+    # -------------------------
+    # Prepare features and labels for classification
+    # -------------------------
+    X_train = np.hstack((
+         np.vstack(train_user_features['embedding_mean']),
+         train_user_features[['most_common_topic', 'tweet_time_mean', 'tweet_time_std', 'tweet_count']].values
+    ))
+    y_train = train_user_features['is_bot'].values
+
+    X_test = np.hstack((
+         np.vstack(test_user_features['embedding_mean']),
+         test_user_features[['most_common_topic', 'tweet_time_mean', 'tweet_time_std', 'tweet_count']].values
+    ))
+    y_test = test_user_features['is_bot'].values
+
+    # -------------------------
+    # Train and evaluate the classifier
+    # -------------------------
+    clf = RandomForestClassifier(n_estimators=100, random_state=42, class_weight='balanced')
+    clf.fit(X_train, y_train)
+
+    y_pred = clf.predict(X_test)
+
+    print(f'Accuracy: {accuracy_score(y_test, y_pred):.4f}')
+    print(classification_report(y_test, y_pred))
+
+    # -------------------------
+    # Save models
+    # -------------------------
+    
+    # Save the Random Forest classifier
+    with open(os.path.join(model_dir, "random_forest.pkl"), "wb") as f:
+        pickle.dump(clf, f)
+        
+    # Save the BERTopic model
+    with open(os.path.join(model_dir, "bertopic_model.pkl"), "wb") as f:
+        pickle.dump(topic_model, f)
 
 if __name__ == "__main__":
     main()
