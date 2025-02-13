@@ -21,9 +21,10 @@ def preprocess_text(text):
     text = re.sub(r"#\w+", "<HashtagMention>", text)
     return text
 
+
 def process_data():
     datasets = []
-    for session in ["session_10"]:
+    for session in ["session_10", "session_11", "session_4"]:
         with open(f"./data/{session}_results.json", "r", encoding="utf-8") as file:
             datasets.append(json.load(file))
 
@@ -32,10 +33,6 @@ def process_data():
 
     posts_df = posts_df[['author_id', 'text', 'created_at']]
     users_df = users_df[['user_id', 'is_bot']]
-    # print(users_df)
-
-    # posts_df["cleaned_text"] = posts_df["text"].apply(preprocess_text)
-    # posts_df['created_at'] = pd.to_datetime(posts_df['created_at'], errors='coerce')
 
     combined_df = users_df.merge(posts_df, left_on="user_id", right_on="author_id", how="left")
     return combined_df
@@ -52,6 +49,7 @@ def extract_features_from_tweets(data_df):
     data_df['topic'] = topics
 
     return data_df, topic_model
+
 
 def aggregate_user_features(data_df):
     data_df = data_df.copy()
@@ -79,6 +77,7 @@ def aggregate_user_features(data_df):
         'is_bot'
     ]
     return user_features.reset_index()
+
 
 def main():
     # Load the combined data
@@ -173,6 +172,7 @@ def main():
     # Save the BERTopic model
     with open(os.path.join(model_dir, "bertopic_model.pkl"), "wb") as f:
         pickle.dump(topic_model, f)
+
 
 if __name__ == "__main__":
     main()
