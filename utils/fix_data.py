@@ -2,7 +2,7 @@ import os
 import json
 
 def correct_tweet_count(json_dir):
-    for file_name in ["session_4_results.json"]:
+    for file_name in ["session_10_results.json"]:
         if file_name.endswith('.json'):
             
             file_path = os.path.join(json_dir, file_name)
@@ -33,5 +33,5 @@ def correct_tweet_count(json_dir):
 
 if __name__ == "__main__":
     f'{os.path.dirname(__file__)}/data'
-    json_directory = f'{os.path.dirname(__file__)}/data'
+    json_directory = f'{os.path.dirname(__file__)}/../data'
     correct_tweet_count(json_directory)
