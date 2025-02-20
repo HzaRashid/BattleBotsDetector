@@ -16,16 +16,19 @@ FIXED_TOPIC_DIM = 361
 
 model_dir = f'{os.path.dirname(__file__)}/../DetectorTemplate/DetectorCode/models'
 
+data_dir = f'{os.path.dirname(__file__)}/./data'
+# os.path.join(data_dir, f'{session}_results.json')
 def preprocess_text(text):
     text = re.sub(r"https?://\S+", "<URLURL>", text)
     text = re.sub(r"@\w+", "<UsernameMention>", text)
     text = re.sub(r"#\w+", "<HashtagMention>", text)
     return text
 
+
 def process_data():
     datasets = []
     for session in ["session_10", "session_11", "session_4"]:
-        with open(f"./data/{session}_results.json", "r", encoding="utf-8") as file:
+        with open(os.path.join(data_dir, f'{session}_results.json'), "r", encoding="utf-8") as file:
             datasets.append(json.load(file))
 
     users_df = pd.concat([pd.DataFrame(ds["users"]) for ds in datasets])
@@ -37,6 +40,7 @@ def process_data():
     combined_df = users_df.merge(posts_df, left_on="user_id", right_on="author_id", how="left")
     return combined_df
 
+
 def compute_topic_distribution(topics, num_topics):
     """
     Given an iterable of topic IDs, filter out unassigned topics (-1) and return
@@ -47,6 +51,7 @@ def compute_topic_distribution(topics, num_topics):
         return np.zeros(num_topics)
     counts = np.bincount(valid_topics, minlength=num_topics)
     return counts / counts.sum()
+
 
 def pad_or_trim(vec, expected_dim):
     """
@@ -61,6 +66,82 @@ def pad_or_trim(vec, expected_dim):
     else:
         return vec
 
+
+def compute_bucket_duplicate_counts(times, num_buckets=10):
+    """
+    Given a sorted pandas Series of tweet times, partition the times into
+    `num_buckets` buckets. For each bucket, compute the sum of duplicate posts,
+    where for each timestamp that occurs more than once, we add (count - 1).
+    If all timestamps in a bucket are unique, the bucket's value will be 0.
+    """
+    if times.empty:
+        return np.zeros(num_buckets)
+    
+    # Convert to numpy array and partition into num_buckets buckets
+    times_array = times.values
+    buckets = np.array_split(times_array, num_buckets)
+    bucket_counts = []
+    for bucket in buckets:
+        if len(bucket) == 0:
+            bucket_counts.append(0)
+        else:
+            # Count occurrences of each timestamp in the bucket
+            bucket_series = pd.Series(bucket)
+            counts = bucket_series.value_counts()
+            # For timestamps with duplicates, add (count - 1)
+            dup_sum = int((counts[counts > 1] - 1).sum())
+            bucket_counts.append(dup_sum)
+    return np.array(bucket_counts)
+
+
+def user_agg(group):
+    # Compute the mean of the tweet embeddings
+    embedding_mean = np.mean(np.vstack(group['embedding']), axis=0)
+    
+    # Determine the most common topic (ignoring -1 values)
+    topics = group['topic'].tolist()
+    if any(t >= 0 for t in topics):
+        most_common_topic = np.bincount([t for t in topics if t >= 0]).argmax()
+    else:
+        most_common_topic = -1
+
+    # Compute the topic distribution (with dynamic length, to be padded later)
+    if (group['topic'] >= 0).any():
+        num_topics = int(group.loc[group['topic'] >= 0, 'topic'].max()) + 1
+    else:
+        num_topics = 0
+    topic_distribution = compute_topic_distribution(topics, num_topics)
+    
+    # Sort the tweet times
+    times = group['created_at'].dropna().sort_values()
+    
+    # Compute inter-post intervals (in seconds)
+    if len(times) < 2:
+        tweet_time_mean = np.nan
+        tweet_time_std = np.nan
+    else:
+        intervals = times.diff().dropna().values.astype('int64') / 1e9
+        tweet_time_mean = intervals.mean()
+        tweet_time_std = intervals.std()
+    
+    # Compute the new bucketed duplicate counts feature
+    bucketed_duplicates = compute_bucket_duplicate_counts(times, num_buckets=10)
+    
+    tweet_count = group['created_at'].count()
+    is_bot = group['is_bot'].iloc[0]
+    
+    return pd.Series({
+        'embedding_mean': embedding_mean,
+        'most_common_topic': most_common_topic,
+        'topic_distribution': topic_distribution,
+        'tweet_time_mean': tweet_time_mean,         # average interval (in seconds) between posts
+        'tweet_time_std': tweet_time_std,           # std of intervals (in seconds) between posts
+        'time_bucket_duplicates': bucketed_duplicates,  # new feature: vector of duplicate counts per bucket
+        'tweet_count': tweet_count,
+        'is_bot': is_bot
+    })
+
+
 def aggregate_user_features(data_df):
     data_df = data_df.copy()
     data_df['created_at'] = pd.to_datetime(
@@ -73,32 +154,9 @@ def aggregate_user_features(data_df):
     else:
         num_topics = 0
 
-    def user_agg(group):
-        embedding_mean = np.mean(np.vstack(group['embedding']), axis=0)
-        topics = group['topic'].tolist()
-        if any(t >= 0 for t in topics):
-            most_common_topic = np.bincount([t for t in topics if t >= 0]).argmax()
-        else:
-            most_common_topic = -1
-        # Compute topic distribution with dynamic length then later pad/trim
-        topic_distribution = compute_topic_distribution(topics, num_topics)
-        tweet_times = group['created_at'].dropna().astype('int64')
-        tweet_time_mean = tweet_times.mean() if not tweet_times.empty else np.nan
-        tweet_time_std = tweet_times.std() if not tweet_times.empty else np.nan
-        tweet_count = group['created_at'].count()
-        is_bot = group['is_bot'].iloc[0]
-        return pd.Series({
-            'embedding_mean': embedding_mean,
-            'most_common_topic': most_common_topic,
-            'topic_distribution': topic_distribution,
-            'tweet_time_mean': tweet_time_mean,
-            'tweet_time_std': tweet_time_std,
-            'tweet_count': tweet_count,
-            'is_bot': is_bot
-        })
-
     user_features = data_df.groupby('user_id').apply(user_agg).reset_index()
     return user_features
+
 
 def main():
     # Load the combined data
@@ -170,14 +228,16 @@ def main():
     X_train = np.hstack((
         np.vstack(train_user_features['embedding_mean']),
         np.vstack(train_user_features['topic_distribution']),
-        train_user_features[['tweet_time_mean', 'tweet_time_std', 'tweet_count']].values
+        train_user_features[['tweet_time_mean', 'tweet_time_std', 'tweet_count']].values,
+        np.vstack(train_user_features['time_bucket_duplicates'])
     ))
     y_train = train_user_features['is_bot'].values
 
     X_test = np.hstack((
          np.vstack(test_user_features['embedding_mean']),
          np.vstack(test_user_features['topic_distribution']),
-         test_user_features[['tweet_time_mean', 'tweet_time_std', 'tweet_count']].values
+         test_user_features[['tweet_time_mean', 'tweet_time_std', 'tweet_count']].values,
+         np.vstack(test_user_features['time_bucket_duplicates'])
     ))
     y_test = test_user_features['is_bot'].values
     
