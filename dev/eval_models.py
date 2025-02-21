@@ -27,7 +27,11 @@ def preprocess_text(text):
 
 def process_data():
     datasets = []
-    for session in ["session_10", "session_11", "session_4"]:
+    for session in ["session_10", 
+                    "session_11", 
+                    "session_12", 
+                    "session_4"
+                    ]:
         with open(os.path.join(data_dir, f'{session}_results.json'), "r", encoding="utf-8") as file:
             datasets.append(json.load(file))
 
@@ -83,7 +87,7 @@ def compute_bucket_duplicate_counts(times, num_buckets=10):
     bucket_counts = []
     for bucket in buckets:
         if len(bucket) == 0:
-            bucket_counts.append(0)
+            bucket_counts.append(-1)
         else:
             # Count occurrences of each timestamp in the bucket
             bucket_series = pd.Series(bucket)
@@ -120,9 +124,11 @@ def user_agg(group):
         tweet_time_mean = np.nan
         tweet_time_std = np.nan
     else:
+        # Compute differences in nanoseconds, convert to seconds
         intervals = times.diff().dropna().values.astype('int64') / 1e9
         tweet_time_mean = intervals.mean()
         tweet_time_std = intervals.std()
+        tweet_time_var = tweet_time_std**2
     
     # Compute the new bucketed duplicate counts feature
     bucketed_duplicates = compute_bucket_duplicate_counts(times, num_buckets=10)
@@ -147,12 +153,6 @@ def aggregate_user_features(data_df):
     data_df['created_at'] = pd.to_datetime(
         data_df['created_at'], errors='coerce', infer_datetime_format=True
     )
-
-    # Here we still compute num_topics dynamically but will force the vector to FIXED_TOPIC_DIM later.
-    if (data_df['topic'] >= 0).any():
-        num_topics = int(data_df.loc[data_df['topic'] >= 0, 'topic'].max()) + 1
-    else:
-        num_topics = 0
 
     user_features = data_df.groupby('user_id').apply(user_agg).reset_index()
     return user_features
@@ -197,7 +197,7 @@ def main():
     
     # Aggregate tweet-level features to user-level for training data
     train_user_features = aggregate_user_features(train_df)
-
+    # train_user_features.to_csv(path_or_buf=os.path.join(os.path.dirname(__file__), 'foo/check_features.csv'))
     # -------------------------
     # Process test data using the fitted BERTopic model
     # -------------------------
@@ -257,6 +257,7 @@ def main():
     # -------------------------
     with open(os.path.join(model_dir, "random_forest.pkl"), "wb") as f:
         pickle.dump(clf, f)
+
 
 if __name__ == "__main__":
     main()
