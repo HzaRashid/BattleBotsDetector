@@ -6,10 +6,9 @@ import os
 from sentence_transformers import SentenceTransformer
 from bertopic import BERTopic
 from hdbscan import HDBSCAN
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.decomposition import PCA
 import pickle
 
 # -------------------------
@@ -18,14 +17,16 @@ import pickle
 def preprocess_text(text):
     text = re.sub(r"https?://\S+", "<URLURL>", text)
     text = re.sub(r"@\w+", "<UsernameMention>", text)
-    # Retain hashtag contents by capturing the word after '#' and formatting it
-    text = re.sub(r"#(\w+)", lambda m: f"<HashtagMention:{m.group(1)}>", text)
+    # text = re.sub(r"#\w+", "<HashtagMention>", text)
     return text
-# print(preprocess_text("Can't believe how packed the #arena #is tonight! Support for #our team #is unreal! #HomeC#ourtAdvantage https://t.co/twitter_link @mention @mention"))
+
 def process_data():
     datasets = []
     data_dir = os.path.join(os.path.dirname(__file__), "./data")
-    sessions = ["session_10", "session_11", "session_4", "session_12", "session_13"]
+    # Adjust sessions as needed
+    sessions = [
+        "session_13", 
+        ]
     for session in sessions:
         with open(os.path.join(data_dir, f"{session}_results.json"), "r", encoding="utf-8") as file:
             datasets.append(json.load(file))
@@ -36,6 +37,9 @@ def process_data():
     combined_df = users_df.merge(posts_df, left_on="user_id", right_on="author_id", how="left")
     return combined_df
 
+# -------------------------
+# Feature Engineering Functions
+# -------------------------
 
 # -------------------------
 # Topic Distribution Transformation Functions (unchanged)
@@ -76,7 +80,6 @@ def compute_topic_distribution_stats(topics, num_topics):
     
     return distribution, weighted_mean, weighted_variance, weighted_std, entropy, dominance_ratio
 
-
 def pad_or_trim(vec, expected_dim):
     vec = np.array(vec)
     if len(vec) < expected_dim:
@@ -89,13 +92,16 @@ def pad_or_trim(vec, expected_dim):
 def compute_bucket_duplicate_counts(times, num_buckets=10, tolerance=1):
     if times.empty:
         return np.zeros(num_buckets)
+    
     times_array = times.values
     buckets = np.array_split(times_array, num_buckets)
     bucket_counts = []
+    
     for bucket in buckets:
         if len(bucket) == 0:
             bucket_counts.append(-1)
         else:
+            # Convert each time to seconds (as float)
             times_seconds = sorted([pd.Timestamp(t).timestamp() for t in bucket])
             dup_sum = 0
             group_count = 1
@@ -109,7 +115,9 @@ def compute_bucket_duplicate_counts(times, num_buckets=10, tolerance=1):
                 last_time = t
             dup_sum += (group_count - 1)
             bucket_counts.append(dup_sum)
+    
     return np.array(bucket_counts)
+
 
 def compute_intra_user_similarity_by_topic(embeddings, topics):
     """
@@ -160,7 +168,12 @@ def compute_intra_user_similarity_by_topic(embeddings, topics):
     
     return overall_mean, overall_median, overall_std
 
-
+def compute_token_ratio(text, marker):
+    """Compute the ratio of tokens in the tweet equal to the given marker."""
+    tokens = text.split()
+    if not tokens:
+        return 0
+    return sum(1 for token in tokens if token == marker) / len(tokens)
 
 def user_agg(group):
     # Convert created_at to datetime and sort
@@ -200,7 +213,6 @@ def user_agg(group):
     topic_distribution, topic_mean, topic_variance, topic_std, topic_entropy, topic_dominance = compute_topic_distribution_stats(topics, num_topics)
     sim_mean, sim_median, sim_std = compute_intra_user_similarity_by_topic(embeddings, topics)
     
-    
     is_bot = group['is_bot'].iloc[0]
     
     return pd.Series({
@@ -221,7 +233,6 @@ def user_agg(group):
         'is_bot': is_bot
     })
 
-
 def aggregate_user_features(data_df):
     data_df = data_df.copy()
     data_df['created_at'] = pd.to_datetime(data_df['created_at'], errors='coerce', infer_datetime_format=True)
@@ -229,7 +240,7 @@ def aggregate_user_features(data_df):
     return user_features
 
 # -------------------------
-# Main Pipeline with Normalization
+# Main Pipeline
 # -------------------------
 def main():
     model_dir = os.path.join(os.path.dirname(__file__), "../DetectorTemplate/DetectorCode/models")
@@ -237,64 +248,42 @@ def main():
     
     # Split users into training and testing sets
     unique_users = data_df[['user_id', 'is_bot']].drop_duplicates()
-    train_users, test_users = train_test_split(unique_users, test_size=0.2, random_state=42, stratify=unique_users['is_bot'])
-    
-    train_df = data_df[data_df['user_id'].isin(train_users['user_id'])].reset_index(drop=True)
-    test_df = data_df[data_df['user_id'].isin(test_users['user_id'])].reset_index(drop=True)
+
+    test_df = data_df[data_df['user_id'].isin(unique_users['user_id'])].reset_index(drop=True)
     
     # -------------------------
     # Process training data (text and embedding)
     # -------------------------
-    train_texts = train_df["text"].apply(preprocess_text).fillna("").tolist()
     model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-    train_embeddings = model.encode(train_texts, convert_to_numpy=True, normalize_embeddings=True)
     
     hdbscan_model = HDBSCAN(cluster_selection_method='eom', prediction_data=True)
     topic_model = BERTopic(hdbscan_model=hdbscan_model, embedding_model=model)
-    train_topics, _ = topic_model.fit_transform(train_texts)
-    
-    train_df['embedding'] = list(train_embeddings)
-    train_df['topic'] = train_topics
-    
-    train_user_features = aggregate_user_features(train_df)
+
     
     # -------------------------
     # Process test data using the fitted BERTopic model
     # -------------------------
     test_texts = test_df["text"].apply(preprocess_text).fillna("").tolist()
     test_embeddings = model.encode(test_texts, convert_to_numpy=True, normalize_embeddings=True)
-    
-    test_topics, _ = topic_model.transform(test_texts)
+    test_topics, _ = topic_model.fit_transform(test_texts)
     
     test_df['embedding'] = list(test_embeddings)
     test_df['topic'] = test_topics
     
     test_user_features = aggregate_user_features(test_df)
     
-    # Optionally fix topic_distribution dimensions if needed
+    # -------------------------
+    # Fix topic distribution dimensions (if needed for fixed-size input)
+    # -------------------------
     FIXED_TOPIC_DIM = 361
-    train_user_features['topic_distribution'] = train_user_features['topic_distribution'].apply(
-        lambda vec: pad_or_trim(vec, FIXED_TOPIC_DIM)
-    )
     test_user_features['topic_distribution'] = test_user_features['topic_distribution'].apply(
         lambda vec: pad_or_trim(vec, FIXED_TOPIC_DIM)
     )
 
-
+    
     # -------------------------
-    # Combine features for classification:
-    # We include the mean embeddings, topic summary statistics, tweet time statistics,
-    # and time bucket duplicate counts.
+    # Prepare features for classification
     # -------------------------
-    X_train = np.hstack((
-        np.vstack(train_user_features['embedding_mean']),
-        train_user_features[['topic_mean', 'topic_variance', 'topic_std',
-                             'topic_entropy', 'topic_dominance']].values,
-        train_user_features[['tweet_time_mean', 'tweet_time_std', 'tweet_time_var']].values,
-        np.vstack(train_user_features['time_bucket_duplicates']),
-        train_user_features[['similarity_mean', 'similarity_median', 'similarity_std']].values,
-    ))
-    y_train = train_user_features['is_bot'].values
 
     X_test = np.hstack((
         np.vstack(test_user_features['embedding_mean']),
@@ -309,18 +298,30 @@ def main():
     # -------------------------
     # Train and evaluate classifier
     # -------------------------
-    clf = RandomForestClassifier(n_estimators=100, random_state=42, class_weight='balanced')
-    clf.fit(X_train, y_train)
     
-    y_pred = clf.predict(X_test)
+    model_dir = os.path.join(os.path.dirname(__file__), '../DetectorTemplate/DetectorCode/models')
+    
+    # Load the pre-trained Random Forest classifier (trained with our new features)
+    with open(os.path.join(model_dir, "random_forest.pkl"), "rb") as model_file:
+        clf = pickle.load(model_file)
+    
+    prediction_probs = clf.predict_proba(X_test)[:, 1]
+    from sklearn.preprocessing import MinMaxScaler
+    scaler = MinMaxScaler(feature_range=(0, 100))
+    normalized_confidences = scaler.fit_transform(prediction_probs.reshape(-1, 1)).flatten()
+    y_pred = [int(normalized_confidences[i]) >= 50 for i in range(len(prediction_probs))]
+
     print(f'Accuracy: {accuracy_score(y_test, y_pred):.4f}')
     print(classification_report(y_test, y_pred))
-    
-    # -------------------------
-    # Save the trained model
-    # -------------------------
-    with open(os.path.join(model_dir, "random_forest.pkl"), "wb") as f:
-        pickle.dump(clf, f)
+    for i in range(len(y_pred)):
+        if y_pred[i] == False and y_test[i] == True:
+            print('--------- missed this one --------')
+            user_id = test_user_features['user_id'].iloc[i]
+            print("user id:", user_id, '|', 'confidence:', normalized_confidences[i])
+            # bot_data = data_df[data_df['user_id']==user_id]
+            # print(bot_data)
+            print()
+
 
 if __name__ == "__main__":
     main()

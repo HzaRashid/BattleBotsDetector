@@ -7,42 +7,61 @@ import re
 from bertopic import BERTopic
 from hdbscan import HDBSCAN
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics.pairwise import cosine_similarity
 import pickle
 import os
 
-def compute_topic_distribution(topics, num_topics):
-    """
-    Given an iterable of topic IDs, filter out unassigned topics (-1) and return
-    a normalized histogram vector of length num_topics.
-    """
-    valid_topics = [t for t in topics if t >= 0]
-    if not valid_topics:
-        return np.zeros(num_topics)
-    counts = np.bincount(valid_topics, minlength=num_topics)
-    return counts / counts.sum()
+# -------------------------
+# Preprocessing Functions
+# -------------------------
+def preprocess_text(text):
+    # Replace URLs and mentions as before, but now capture hashtag content.
+    text = re.sub(r"https?://\S+", "<URLURL>", text)
+    text = re.sub(r"@\w+", "<UsernameMention>", text)
+    text = re.sub(r"#(\w+)", lambda m: f"<HashtagMention:{m.group(1)}>", text)
+    return text
 
 def pad_or_trim(vec, expected):
-    """
-    Ensure that vec is a NumPy array of length 'expected'. If it's shorter,
-    pad with zeros; if it's longer, trim it.
-    """
     vec = np.array(vec)
     if len(vec) < expected:
         return np.concatenate([vec, np.zeros(expected - len(vec))])
     else:
         return vec[:expected]
 
-def compute_bucket_duplicate_counts(times, num_buckets=10):
+# -------------------------
+# Topic & Similarity Functions
+# -------------------------
+def compute_topic_distribution_stats(topics, num_topics):
     """
-    Given a sorted pandas Series of tweet times, partition the times into
-    `num_buckets` buckets. For each bucket, compute the sum of duplicate posts,
-    where for each timestamp that occurs more than once, we add (count - 1).
-    If all timestamps in a bucket are unique, the bucket's value will be 0.
+    Compute a normalized histogram of topics as well as summary statistics:
+    weighted mean, variance, std, entropy, and dominance ratio.
+    """
+    valid_topics = [t for t in topics if t >= 0]
+    if not valid_topics:
+        return (np.zeros(num_topics), 0, 0, 0, 0, 0)
+    
+    counts = np.bincount(valid_topics, minlength=num_topics)
+    total_count = counts.sum()
+    distribution = counts / total_count
+    
+    indices = np.arange(num_topics)
+    weighted_mean = np.sum(indices * distribution)
+    weighted_variance = np.sum(distribution * (indices - weighted_mean) ** 2)
+    weighted_std = np.sqrt(weighted_variance)
+    
+    # Compute entropy with a small constant for numerical stability.
+    entropy = -np.sum(distribution * np.log(distribution + 1e-10))
+    dominance_ratio = distribution.max()
+    
+    return distribution, weighted_mean, weighted_variance, weighted_std, entropy, dominance_ratio
+
+def compute_bucket_duplicate_counts(times, num_buckets=10, tolerance=1):
+    """
+    Partition tweet timestamps into buckets and count duplicates within each bucket.
+    Uses a tolerance (in seconds) to determine if two posts are duplicates.
     """
     if times.empty:
         return np.zeros(num_buckets)
-    
-    # Convert to numpy array and partition into num_buckets buckets
     times_array = times.values
     buckets = np.array_split(times_array, num_buckets)
     bucket_counts = []
@@ -50,25 +69,64 @@ def compute_bucket_duplicate_counts(times, num_buckets=10):
         if len(bucket) == 0:
             bucket_counts.append(-1)
         else:
-            bucket_series = pd.Series(bucket)
-            counts = bucket_series.value_counts()
-            dup_sum = int((counts[counts > 1] - 1).sum())
+            times_seconds = sorted([pd.Timestamp(t).timestamp() for t in bucket])
+            dup_sum = 0
+            group_count = 1
+            last_time = times_seconds[0]
+            for t in times_seconds[1:]:
+                if t - last_time <= tolerance:
+                    group_count += 1
+                else:
+                    dup_sum += (group_count - 1)
+                    group_count = 1
+                last_time = t
+            dup_sum += (group_count - 1)
             bucket_counts.append(dup_sum)
     return np.array(bucket_counts)
 
+def compute_intra_user_similarity_by_topic(embeddings, topics):
+    """
+    For each topic with at least 2 tweets, compute pairwise cosine similarities
+    and return the average of means, medians, and standard deviations across topics.
+    """
+    unique_topics = set(topics)
+    topic_stats = []
+    for topic in unique_topics:
+        indices = [i for i, t in enumerate(topics) if t == topic]
+        if len(indices) < 2:
+            continue
+        topic_embeddings = embeddings[indices, :]
+        sim_matrix = cosine_similarity(topic_embeddings)
+        triu_indices = np.triu_indices_from(sim_matrix, k=1)
+        sim_values = sim_matrix[triu_indices]
+        topic_mean = sim_values.mean()
+        topic_median = np.median(sim_values)
+        topic_std = sim_values.std()
+        topic_stats.append((topic_mean, topic_median, topic_std))
+    if not topic_stats:
+        return np.nan, np.nan, np.nan
+    means = [stat[0] for stat in topic_stats]
+    medians = [stat[1] for stat in topic_stats]
+    stds = [stat[2] for stat in topic_stats]
+    overall_mean = np.mean(means)
+    overall_median = np.mean(medians)
+    overall_std = np.mean(stds)
+    return overall_mean, overall_median, overall_std
+
+# -------------------------
+# Detector Class
+# -------------------------
 class Detector(ADetector):
     def __init__(self):
-        # Load the pre-trained SentenceTransformer model
+        # Load the SentenceTransformer model (using the same normalization as in training)
         self.sentence_transformer = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
         
         model_dir = os.path.join(os.path.dirname(__file__), 'models')
-        
-        # Load the pre-trained Random Forest classifier (trained with our new features)
+        # Load the pre-trained Random Forest classifier
         with open(os.path.join(model_dir, "random_forest.pkl"), "rb") as model_file:
             self.clf = pickle.load(model_file)
         
-        # Expected dimensions from training
-        self.expected_topic_dim = 361
+        # Expected fixed dimension for bucket duplicate counts (10 buckets)
         self.expected_time_bucket_dim = 10
 
     def detect_bot(self, session_data):
@@ -81,28 +139,27 @@ class Detector(ADetector):
         marked_accounts = []
         for i, user in enumerate(session_data.users):
             predicted_class = int(normalized_confidences[i]) >= 50
-            # print(predicted_class, int(normalized_confidences[i]), user['id'])
             marked_accounts.append(DetectionMark(user_id=user['id'],
                                                  confidence=int(normalized_confidences[i]),
                                                  bot=predicted_class))
         return marked_accounts
 
     def process_data(self, session_data):
-        # Build dataframes for users and posts
+        # Build DataFrames for users and posts.
         users_df = pd.DataFrame(session_data.users)
         posts_df = pd.DataFrame(session_data.posts)
 
         posts_df = posts_df[['author_id', 'text', 'created_at']].rename(columns={"author_id": "user_id"})
         users_df = users_df.rename(columns={"id": "user_id"})
 
-        posts_df['cleaned_text'] = posts_df['text'].apply(self.preprocess_text)
+        posts_df['cleaned_text'] = posts_df['text'].apply(preprocess_text)
         posts_df['created_at'] = pd.to_datetime(posts_df['created_at'], errors='coerce')
 
-        # Compute embeddings and topics
+        # Compute embeddings with normalization (for consistency with training)
         texts = posts_df['cleaned_text'].tolist()
-        embeddings = self.sentence_transformer.encode(texts, convert_to_numpy=True)
+        embeddings = self.sentence_transformer.encode(texts, convert_to_numpy=True, normalize_embeddings=True)
 
-        # Fit a new BERTopic model with HDBSCAN for this batch
+        # Fit a new BERTopic model on the current batch (alternatively, use a fixed model)
         hdbscan_model = HDBSCAN(cluster_selection_method='eom', prediction_data=True)
         topic_model = BERTopic(hdbscan_model=hdbscan_model, embedding_model=self.sentence_transformer)
         topics, _ = topic_model.fit_transform(texts, embeddings)
@@ -110,33 +167,18 @@ class Detector(ADetector):
         posts_df['embedding'] = list(embeddings)
         posts_df['topic'] = topics
 
-        # Aggregate tweet-level features to user-level, including topic distribution and duplicate counts
+        # Aggregate tweet-level features to user-level.
         user_features = self.aggregate_user_features(posts_df)
         users_df = users_df.drop(columns=['tweet_count'], errors='ignore')
         user_features = users_df.merge(user_features, on="user_id", how="left")
 
-        # Ensure that embedding_mean is an array of the proper dimension
+        # Ensure embedding_mean has the correct dimension.
         embedding_dim = embeddings.shape[1]
         user_features['embedding_mean'] = user_features['embedding_mean'].apply(
             lambda x: x if isinstance(x, np.ndarray) else np.zeros(embedding_dim)
         )
 
-        # Pad/trim topic_distribution to match the expected dimension
-        if 'topic_distribution' in user_features.columns:
-            user_features['topic_distribution'] = user_features['topic_distribution'].apply(
-                lambda vec: pad_or_trim(vec, self.expected_topic_dim)
-            )
-        else:
-            user_features['topic_distribution'] = user_features.apply(
-                lambda _: np.zeros(self.expected_topic_dim), axis=1
-            )
-
-        # Fill missing time features with zeros
-        user_features[['tweet_time_mean', 'tweet_time_std', 'tweet_count']] = user_features[
-            ['tweet_time_mean', 'tweet_time_std', 'tweet_count']
-        ].fillna(0)
-
-        # Pad/trim time_bucket_duplicates to the expected length
+        # Pad/trim the bucket duplicates vector.
         if 'time_bucket_duplicates' in user_features.columns:
             user_features['time_bucket_duplicates'] = user_features['time_bucket_duplicates'].apply(
                 lambda vec: pad_or_trim(vec, self.expected_time_bucket_dim)
@@ -146,73 +188,81 @@ class Detector(ADetector):
                 lambda _: np.zeros(self.expected_time_bucket_dim), axis=1
             )
 
-        # Build feature vector by concatenating all features:
-        # [embedding_mean || topic_distribution || tweet_time_mean, tweet_time_std, tweet_count || time_bucket_duplicates]
+        # Fill missing tweet time stats with zeros.
+        user_features[['tweet_time_mean', 'tweet_time_std', 'tweet_time_var']] = user_features[
+            ['tweet_time_mean', 'tweet_time_std', 'tweet_time_var']
+        ].fillna(0)
+
+        # Build the feature vector by concatenating:
+        # [embedding_mean || topic_mean, topic_variance, topic_std, topic_entropy, topic_dominance ||
+        #  tweet_time_mean, tweet_time_std, tweet_time_var || time_bucket_duplicates ||
+        #  similarity_mean, similarity_median, similarity_std]
         X = np.hstack((
             np.vstack(user_features['embedding_mean']),
-            np.vstack(user_features['topic_distribution']),
-            user_features[['tweet_time_mean', 'tweet_time_std', 'tweet_count']].values,
-            np.vstack(user_features['time_bucket_duplicates'])
+            user_features[['topic_mean', 'topic_variance', 'topic_std', 'topic_entropy', 'topic_dominance']].values,
+            user_features[['tweet_time_mean', 'tweet_time_std', 'tweet_time_var']].values,
+            np.vstack(user_features['time_bucket_duplicates']),
+            user_features[['similarity_mean', 'similarity_median', 'similarity_std']].values,
         ))
         return X
 
     def aggregate_user_features(self, data_df):
         data_df = data_df.copy()
-        data_df['created_at'] = pd.to_datetime(data_df['created_at'],
-                                                errors='coerce',
-                                                infer_datetime_format=True)
-
-        # Determine number of topics (ignoring -1) from this batch
-        if (data_df['topic'] >= 0).any():
-            num_topics = int(data_df.loc[data_df['topic'] >= 0, 'topic'].max()) + 1
-        else:
-            num_topics = 0
+        data_df['created_at'] = pd.to_datetime(data_df['created_at'], errors='coerce', infer_datetime_format=True)
 
         def user_agg(group):
-            # Compute mean of the tweet embeddings
-            embedding_mean = np.mean(np.vstack(group['embedding']), axis=0)
-            
-            topics = group['topic'].tolist()
-            # Determine the most common topic (ignoring -1)
-            if any(t >= 0 for t in topics):
-                most_common_topic = np.bincount([t for t in topics if t >= 0]).argmax()
-            else:
-                most_common_topic = -1
-            
-            # Compute topic distribution
-            topic_distribution = compute_topic_distribution(topics, num_topics)
-            
-            # Sort the tweet times and compute inter-post intervals (in seconds)
-            times = group['created_at'].dropna().sort_values()
-            if len(times) < 2:
+            # Process tweet times.
+            times = group['created_at'].dropna().tolist()
+            times_sorted = sorted(times)
+            if len(times_sorted) < 2:
                 tweet_time_mean = np.nan
                 tweet_time_std = np.nan
+                tweet_time_var = np.nan
             else:
-                # Compute differences in nanoseconds, convert to minutes
-                intervals = times.diff().dropna().values.astype('int64') / 1e9
+                timestamps = [t.timestamp() for t in times_sorted]
+                intervals = np.diff(timestamps)
                 tweet_time_mean = intervals.mean()
                 tweet_time_std = intervals.std()
-            
-            tweet_count = group['created_at'].count()
-            
-            # Compute bucketed duplicate counts feature
-            time_bucket_duplicates = compute_bucket_duplicate_counts(times, num_buckets=10)
-            
+                tweet_time_var = intervals.var()
+
+            # Compute duplicate counts with tolerance.
+            bucketed_duplicates = compute_bucket_duplicate_counts(pd.Series(times_sorted), num_buckets=10, tolerance=1)
+
+            # Process embeddings: compute mean and then normalize.
+            embeddings = np.vstack(group['embedding'])
+            embedding_mean = np.mean(embeddings, axis=0)
+            mean_norm = np.linalg.norm(embedding_mean)
+            if mean_norm == 0:
+                mean_norm = 1
+            embedding_mean = embedding_mean / mean_norm
+
+            # Compute topic summary statistics.
+            topics = group['topic'].tolist()
+            if (group['topic'] >= 0).any():
+                num_topics = int(group.loc[group['topic'] >= 0, 'topic'].max()) + 1
+            else:
+                num_topics = 0
+            topic_distribution, topic_mean, topic_variance, topic_std, topic_entropy, topic_dominance = compute_topic_distribution_stats(topics, num_topics)
+
+            # Compute intra-user similarity metrics by topic.
+            sim_mean, sim_median, sim_std = compute_intra_user_similarity_by_topic(embeddings, topics)
+
             return pd.Series({
                 'embedding_mean': embedding_mean,
-                'most_common_topic': most_common_topic,  # retained for reference/debugging
-                'topic_distribution': topic_distribution,
+                'topic_distribution': topic_distribution,  # (retained for debugging, not used in classification)
+                'topic_mean': topic_mean,
+                'topic_variance': topic_variance,
+                'topic_std': topic_std,
+                'topic_entropy': topic_entropy,
+                'topic_dominance': topic_dominance,
                 'tweet_time_mean': tweet_time_mean,
                 'tweet_time_std': tweet_time_std,
-                'tweet_count': tweet_count,
-                'time_bucket_duplicates': time_bucket_duplicates
+                'tweet_time_var': tweet_time_var,
+                'time_bucket_duplicates': bucketed_duplicates,
+                'similarity_mean': sim_mean,
+                'similarity_median': sim_median,
+                'similarity_std': sim_std,
             })
 
         user_features = data_df.groupby('user_id').apply(user_agg).reset_index()
         return user_features
-
-    def preprocess_text(self, text):
-        text = re.sub(r"https?://\S+", "<URLURL>", text)
-        text = re.sub(r"@\w+", "<UsernameMention>", text)
-        text = re.sub(r"#\w+", "<HashtagMention>", text)
-        return text
