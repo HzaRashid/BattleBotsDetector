@@ -9,7 +9,9 @@ from sentence_transformers import SentenceTransformer
 
 cur_dir = os.path.dirname(__file__)
 data_dir = os.path.join(cur_dir, "../data")
-saved_model_dir = os.path.join(cur_dir, '../models_test/model_attn_smote_focal.pth')
+model_foldername = "models_test"
+model_filename = "model_attn_smote_focal.pth"
+saved_model_dir = os.path.join(cur_dir, f'../{model_foldername}/{model_filename}')
 
 # Assume these have been defined in your code:
 # - UserMultimodalDataset: your custom dataset
@@ -38,7 +40,7 @@ all_preds = []
 all_labels = []
 
 with torch.no_grad():
-    for text_emb, img_tensor, labels in test_loader:
+    for text_emb, img_tensor, labels, _ in test_loader:
         text_emb = text_emb.to(device)
         img_tensor = img_tensor.to(device)
         labels = labels.to(device)

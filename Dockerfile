@@ -8,6 +8,7 @@ RUN apt-get update && \
 RUN pip install requests
 RUN pip install pydantic
 RUN pip install pandas
+RUN pip install polars
 RUN pip install scikit-learn
 RUN pip install -U sentence-transformers
 RUN pip install hdbscan
