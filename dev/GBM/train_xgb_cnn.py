@@ -8,7 +8,9 @@ import torch
 import torch.nn as nn
 import polars as pl
 import pandas as pd
-from sentence_transformers import SentenceTransformer, models
+from PIL import Image
+from torchvision import transforms, models as tv_models  # Import torchvision models as tv_models
+from sentence_transformers import SentenceTransformer, models  # 'models' here is for sentence transformer
 from sklearn.metrics import accuracy_score, classification_report, roc_auc_score
 from sklearn.model_selection import train_test_split
 from xgboost import XGBClassifier
@@ -33,7 +35,6 @@ emoji_pattern = re.compile("["
     u"\U0001F800-\U0001F8FF"  # Supplemental Arrows-C
     u"\U0001F900-\U0001F9FF"  # Supplemental Symbols and Pictographs
     u"\U0001FA00-\U0001FA6F"  # Chess Symbols, etc.
-    u"\U0001FBA0-\U0001FBAF"  # (optional additional range)
     u"\U0001FA70-\U0001FAFF"  # Symbols and Pictographs Extended-A
     "]+", flags=re.UNICODE)
 
@@ -68,11 +69,64 @@ def generate_content_dna(tweets):
     return dna
 
 # -------------------------
-# Token Map and DNA Parameters
+# CNN-based DNA Encoder
+# -------------------------
+def dna_to_tensor(dna, 
+                  mapping={"N": 0, "U": 64, "H": 128, "M": 192, "X": 255, "R": 32, "E": 32},
+                  desired_size=64):
+    """
+    Converts a DNA string into a grayscale image (then into a normalized RGB tensor).
+    """
+    values = [mapping[symbol] for symbol in dna if symbol in mapping]
+    length = len(values)
+    n = int(np.ceil(np.sqrt(length)))
+    total = n * n
+    values += [mapping["N"]] * (total - length)
+    arr = np.array(values, dtype=np.uint8).reshape((n, n))
+    img = Image.fromarray(arr, mode="L")
+    img = img.resize((desired_size, desired_size), Image.NEAREST)
+    img = img.convert("RGB")
+    transform = transforms.Compose([
+        transforms.ToTensor(),  # scales pixels to [0,1]
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                             std=[0.229, 0.224, 0.225])
+    ])
+    tensor = transform(img)
+    return tensor
+
+class DNACNNEncoder(nn.Module):
+    def __init__(self, output_dim=384):
+        super(DNACNNEncoder, self).__init__()
+        # Use a pretrained MobileNetV2 from torchvision (tv_models)
+        self.cnn = tv_models.mobilenet_v2(pretrained=True)
+        self.features = self.cnn.features
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc = nn.Linear(1280, output_dim)
+        
+    def forward(self, x):
+        with torch.no_grad():
+            features = self.features(x)
+            pooled = self.avgpool(features)
+        pooled = pooled.view(pooled.size(0), -1)
+        out = self.fc(pooled)
+        return out
+
+# Instantiate the CNN-based encoder and set to eval mode
+dna_cnn_encoder = DNACNNEncoder(output_dim=384)
+dna_cnn_encoder.eval()
+
+def encode_dna_batch_cnn(dna_sequences, desired_size=64):
+    tensors = [dna_to_tensor(seq, desired_size=desired_size) for seq in dna_sequences]
+    input_tensor = torch.stack(tensors)  # shape: [batch, 3, desired_size, desired_size]
+    with torch.no_grad():
+        embeddings = dna_cnn_encoder(input_tensor)
+    return embeddings.numpy()
+
+# -------------------------
+# (Legacy) Token Map and DNA Parameters - no longer used with CNN encoding
 # -------------------------
 token_map = {"N": 0, "U": 1, "H": 2, "M": 3, "X": 4, "R": 5, "E": 6}
-vocab_size = len(token_map)
-max_dna_len = 200  # maximum sequence length for our DNA tokens
+max_dna_len = 200  # maximum sequence length (unused)
 
 # -------------------------
 # Load Pre-trained Model for Description Embeddings
@@ -83,60 +137,6 @@ pooling_model = models.Pooling(
     pooling_mode_mean_tokens=True
 )
 st_model = SentenceTransformer(modules=[transformer_model, pooling_model])
-
-# -------------------------
-# Simple, Randomly Initialized Transformer for DNA Encoding
-# -------------------------
-class SimpleDNATransformer(nn.Module):
-    def __init__(self, vocab_size, embed_dim=384, num_layers=1, num_heads=2, hidden_dim=256, max_seq_len=200, dropout=0.1):
-        super(SimpleDNATransformer, self).__init__()
-        self.embed_dim = embed_dim
-        self.max_seq_len = max_seq_len
-        self.token_embedding = nn.Embedding(vocab_size, embed_dim)
-        self.positional_embedding = nn.Embedding(max_seq_len, embed_dim)
-        
-        encoder_layer = nn.TransformerEncoderLayer(
-            d_model=embed_dim, 
-            nhead=num_heads, 
-            dim_feedforward=hidden_dim, 
-            dropout=dropout,
-            batch_first=True
-        )
-        self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
-    
-    def forward(self, x):
-        batch_size, seq_len = x.size()
-        positions = torch.arange(0, seq_len, device=x.device).unsqueeze(0).expand(batch_size, seq_len)
-        x = self.token_embedding(x) + self.positional_embedding(positions)
-        x = self.transformer_encoder(x)
-        x = x.mean(dim=1)
-        return x
-
-# Instantiate the randomly initialized transformer for DNA encoding
-dna_encoder_model = SimpleDNATransformer(vocab_size=vocab_size, embed_dim=384, num_layers=1, num_heads=2, hidden_dim=256, max_seq_len=max_dna_len)
-dna_encoder_model.eval()
-
-# -------------------------
-# Tokenization for DNA Sequences
-# -------------------------
-def tokenize_dna(dna_string, token_map, max_seq_len):
-    tokens = [ch for ch in dna_string if ch in token_map]
-    token_ids = [token_map[ch] for ch in tokens]
-    if len(token_ids) < max_seq_len:
-        token_ids = token_ids + [token_map["N"]] * (max_seq_len - len(token_ids))
-    else:
-        token_ids = token_ids[:max_seq_len]
-    return token_ids
-
-# -------------------------
-# DNA Encoding Function Using the Randomly Initialized Transformer
-# -------------------------
-def encode_dna_batch(dna_sequences, max_length=200):
-    tokenized = [tokenize_dna(seq, token_map, max_length) for seq in dna_sequences]
-    input_tensor = torch.tensor(tokenized, dtype=torch.long)
-    with torch.no_grad():
-        embeddings = dna_encoder_model(input_tensor)
-    return embeddings.numpy()
 
 # -------------------------
 # Data Loading Function using ijson and Train-Test Split by Unique User
@@ -191,9 +191,9 @@ def load_data(data_dir, session_numbers=[], st_model=None, xnums=[]):
             test_dna_list.append(dna)
             test_labels.append(label)
     
-    # Get DNA embeddings using the randomly initialized transformer
-    train_dna_embs = encode_dna_batch(train_dna_list)
-    test_dna_embs = encode_dna_batch(test_dna_list)
+    # Get DNA embeddings using the CNN-based encoder
+    train_dna_embs = encode_dna_batch_cnn(train_dna_list)
+    test_dna_embs = encode_dna_batch_cnn(test_dna_list)
     
     # Concatenate the description embeddings and DNA embeddings.
     train_X = [np.concatenate([desc, dna_emb]) for desc, dna_emb in zip(train_descs, train_dna_embs)]
@@ -202,7 +202,7 @@ def load_data(data_dir, session_numbers=[], st_model=None, xnums=[]):
     return np.array(train_X), np.array(test_X), np.array(train_labels), np.array(test_labels)
 
 # -------------------------
-# Main Pipeline with Optuna Hyperparameter Tuning Using Expanded Hyperparameters, SMOTE, and Accuracy Scoring
+# Main Pipeline with Optuna Hyperparameter Tuning, SMOTE, and Accuracy Scoring
 # -------------------------
 if __name__ == "__main__":
     cur_dir = os.path.dirname(__file__)
@@ -238,12 +238,12 @@ if __name__ == "__main__":
     def objective(trial):
         # Wrap hyperparameters in a dictionary.
         params = {
-            "n_estimators": trial.suggest_int("n_estimators", 500, 1000),
-            "learning_rate": trial.suggest_loguniform("learning_rate", 0.001, 0.1),
-            "max_depth": trial.suggest_int("max_depth", 6, 10),
-            "gamma": trial.suggest_loguniform("gamma", 1e-8, 1),
-            "min_child_weight": trial.suggest_int("min_child_weight", 1, 10),
-
+            "n_estimators": 850,
+            "learning_rate": 0.0345791693662524,
+            "max_depth": 7,
+            "gamma": 0.005193248963216129,
+            "min_child_weight": 1,
+            # "scale_pos_weight": scale_pos_weight, not used (yet)
             "objective": "binary:logistic",  
             "random_state": 42,
             "use_label_encoder": False,
@@ -297,11 +297,8 @@ if __name__ == "__main__":
     # Save model
     # import pickle
     # model_dir = os.path.join(cur_dir, '../models/GBM')
-    # model_file = os.path.join(model_dir, "XGBoost.pkl")
+    # model_file = os.path.join(model_dir, "XGBoost-CNN.pkl")
     # with open(model_file, "wb") as f:
     #     pickle.dump(best_pipeline, f)
     
     # print("Model saved to:", model_file)
-
-
-

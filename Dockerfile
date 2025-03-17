@@ -13,6 +13,10 @@ RUN pip install scikit-learn
 RUN pip install -U sentence-transformers
 RUN pip install hdbscan
 RUN pip install bertopic
+RUN pip install protobuf
+RUN pip install tiktoken
+RUN pip install sentencepiece
+RUN pip install gliner
 
 
 # Copy source files (ensuring run.sh is available)
