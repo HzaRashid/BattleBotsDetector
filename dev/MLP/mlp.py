@@ -241,10 +241,12 @@ class FlexibleFusionMLP(nn.Module):
         super(FlexibleFusionMLP, self).__init__()
 
         # project to lower dimensions
-        self.projection = nn.Linear(text_dim + content_dna_dim + time_dna_dim, cat_dim)
+        self.fc1 = nn.Linear(text_dim + content_dna_dim + time_dna_dim, cat_dim)
         self.relu = nn.ReLU()
-        self.dropout = nn.Dropout()
-        self.layer_norm= nn.LayerNorm(cat_dim)  # Layer Normalization applied after projection
+        self.init_dropout = nn.Dropout(p=0.33)
+        self.dropout = nn.Dropout(p=0.1)
+        self.fc2 = nn.Linear(cat_dim, cat_dim)
+        self.layer_norm= nn.LayerNorm(cat_dim)
 
         # fusion_layers is built dynamically based on hyperparameters.
         self.fusion_layers = fusion_layers
@@ -260,9 +262,18 @@ class FlexibleFusionMLP(nn.Module):
                                   content_dna_embedding, 
                                   time_dna_embedding], 
                                   dim=1)
-        fusion_input = self.projection(fusion_input)
-        # fusion_input = self.layer_norm(fusion_input)
+
+        # layer 1
+        fusion_input = self.fc1(fusion_input)       # linear
+        fusion_input = self.relu(fusion_input)      # relu
+        fusion_input = self.init_dropout(fusion_input)   # dropout
+        fusion_input = self.layer_norm(fusion_input)
+
+        # layer 2
+        fusion_input = self.fc2(fusion_input)
         fusion_input = self.relu(fusion_input)
+        fusion_input = self.dropout(fusion_input)   # dropout
+        # fusion_input = self.layer_norm(fusion_input)
         # Pass through the flexible fusion layers.
         logits = self.fusion_layers(fusion_input)
         return logits
@@ -296,7 +307,7 @@ fusion_in_dim = 768
 # -------------------------
 def objective(trial):
     # Suggest the number of fully connected layers (e.g., between 1 and 3 layers).
-    n_layers = trial.suggest_int("n_layers", 2, 4)
+    n_layers = 2
     # Suggest a dropout rate (applied in each layer).
     dropout = trial.suggest_float("dropout", 0.1, 0.5)
     
@@ -330,11 +341,11 @@ def objective(trial):
     model.to(device)
     
     # Suggest learning rate and weight decay.
-    learning_rate = trial.suggest_loguniform("learning_rate", 1e-4, 1e-2)
+    learning_rate = 1e-4
     weight_decay = trial.suggest_loguniform("weight_decay", 1e-5, 1e-2)
     
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.NAdam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    criterion = nn.CrossEntropyLoss(class_weights_tensor)
     
     # Create a stratified train/validation split.
     indices = np.arange(len(X_train_tensor))
@@ -396,25 +407,37 @@ if __name__ == "__main__":
     val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False)
     test_loader = DataLoader(TensorDataset(X_test_tensor, y_test_tensor), batch_size=64, shuffle=False)
     
+    # -------- device ----------
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Training on device:", device)
-    
+    # --------------------------
 
-    # Hyperparameter tuning with Optuna using the updated objective.
+    # ----- class weights ------
+    # Convert tensor to numpy array for convenience.
+    y_train_np = y_train_tensor.numpy()
+    # Get the unique classes and their counts.
+    unique_classes, counts = np.unique(y_train_np, return_counts=True)
+    # Inverse frequency 
+    weights_inv = 1.0 / counts
+    class_weights_tensor = torch.tensor(weights_inv, dtype=torch.float32)
+    # --------------------------
+
+    # ------- h.p tuning -------
     study = optuna.create_study(direction="maximize")
     study.optimize(objective, n_trials=50)
-    
+    # --------------------------
+
+    # ------- h.p tuning results -------
     print("Best trial:")
     best_trial = study.best_trial
     print("  Best Validation Accuracy:", best_trial.value)
     for key, value in best_trial.params.items():
         print(f"  {key}: {value}")
-    
-    # Use the best hyperparameters to build and train the final model.
-    final_learning_rate = best_trial.params["learning_rate"]
+    # ----------------------------------
+
+    final_learning_rate = 1e-4
     final_weight_decay = best_trial.params["weight_decay"]
-    # For example:
-    final_n_layers = best_trial.params["n_layers"]
+    final_n_layers = 2
     final_dropout = best_trial.params["dropout"]
     
     fusion_layers = []
@@ -439,7 +462,7 @@ if __name__ == "__main__":
 
     num_epochs = 25
     final_optimizer = optim.NAdam(final_model.parameters(), lr=final_learning_rate, weight_decay=final_weight_decay)
-    final_criterion = nn.CrossEntropyLoss()
+    final_criterion = nn.CrossEntropyLoss(weight=class_weights_tensor)
     scheduler = torch.optim.lr_scheduler.ExponentialLR(final_optimizer, gamma=0.9)
     
     best_val_acc = 0.0
