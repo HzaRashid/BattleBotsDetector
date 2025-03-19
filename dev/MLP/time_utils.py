@@ -29,20 +29,6 @@ def get_time_dna_symbol(current_time, previous_time):
         return "h"  
     elif seconds < 43200:  # 12 hours = 12*3600
         return "u"  
-    elif seconds < 86400:  # 24 hours = 86400 seconds
-        return "t"  
-    elif seconds < 172800:  # 48 hours
-        return "d"  
-    elif seconds < 604800:  # 1 week = 7*86400
-        return "w"  
-    elif seconds < 2592000:  # approx 30 days = 30*86400
-        return "j"  
-    elif seconds < 7776000:  # approx 90 days
-        return "q"  
-    elif seconds < 15552000:  # approx 180 days
-        return "v"  
-    elif seconds < 31536000:  # approx 365 days
-        return "y"  
     else:
         return "x"  # else
 
@@ -70,8 +56,7 @@ def generate_time_dna(tweets):
 "n: first post (nothing to compute), o: less than 1 second, s: less than one minute, m: less than one hour, h: less than 6 hours, u: less than 12 hours, t: less than 24 hours, d: less than 48 hours, w: less than a week, j: less than a month, q: less than three months, v: less than 6 months, y: less than a year, x: else"
 time_dna_mapping = {
     "n": 0,  "o": 255, "s": 200, "m": 150, "h": 100,
-    "u": 80, "t": 60, "d": 50, "w": 40, "j": 20,
-    "q": 10, "v": 8, "y": 5, "x": 2
+    "u": 80, "x": 2
 }
 
 

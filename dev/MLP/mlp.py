@@ -11,19 +11,19 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import TensorDataset, DataLoader, Subset
 
-
 from torchvision import transforms, models as tv_models  # for CNN encoder
 from sentence_transformers import SentenceTransformer, models  # for text embeddings
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, roc_auc_score, average_precision_score
-
+from attn_model import MultiModalAttentionFusion
+from transformer import AttentionFusion
 import optuna
 
 from time_utils import generate_time_dna, time_dna_to_tensor, TimeDNAEncoder, encode_time_dna_batch_cnn
 # Instantiate and set to evaluation mode.
-time_dna_encoder = TimeDNAEncoder(output_dim=128)
+time_dna_encoder = TimeDNAEncoder(output_dim=256)
 time_dna_encoder.eval()
 
 # -------------------------
@@ -53,11 +53,7 @@ def get_content_dna_symbol(tweet_text):
     hashtag_present = bool(re.search(r"#\w+", tweet_text))
     mention_present = bool(re.search(r"@\w+", tweet_text))
     
-    if tweet_text.strip().startswith("@"):
-        return "R"
-    
-    emoji_present = bool(emoji_pattern.search(tweet_text))
-    entity_types = sum([url_present, hashtag_present, mention_present, emoji_present])
+    entity_types = sum([url_present, hashtag_present, mention_present])
     
     if entity_types == 0:
         return "N"
@@ -68,8 +64,6 @@ def get_content_dna_symbol(tweet_text):
             return "H"
         elif mention_present:
             return "M"
-        elif emoji_present:
-            return "E"
     else:
         return "X"
 
@@ -82,7 +76,7 @@ def generate_content_dna(tweets):
 # CNN-based DNA Encoder
 # -------------------------
 def dna_to_tensor(dna, 
-                  mapping={"N": 0, "U": 64, "H": 128, "M": 192, "X": 255, "R": 32, "E": 32},
+                  mapping={"N": 0, "U": 64, "H": 128, "M": 192, "X": 255},
                   desired_size=64):
     """
     Converts a DNA string into a grayscale image that is resized to desired_size
@@ -222,63 +216,6 @@ def load_data(data_dir, session_numbers=[], st_model=None, xnums=[]):
 
 
 # -------------------------
-# Flexible Fusion MLP Model
-# -------------------------
-class FlexibleFusionMLP(nn.Module):
-    def __init__(self, 
-                 text_dim=768,
-                 projected_text_dim=256,
-                 content_dna_dim=384, 
-                 time_dna_dim=128, 
-                 cat_dim=768, 
-                 fusion_layers=None
-                 ):
-        """
-        text_dim: dimension of raw text embeddings.
-        projected_text_dim: dimension after projecting text embeddings.
-        fusion_layers: an nn.Sequential module containing the fusion FC layers.
-        """
-        super(FlexibleFusionMLP, self).__init__()
-
-        # project to lower dimensions
-        self.fc1 = nn.Linear(text_dim + content_dna_dim + time_dna_dim, cat_dim)
-        self.relu = nn.ReLU()
-        self.init_dropout = nn.Dropout(p=0.33)
-        self.dropout = nn.Dropout(p=0.1)
-        self.fc2 = nn.Linear(cat_dim, cat_dim)
-        self.layer_norm= nn.LayerNorm(cat_dim)
-
-        # fusion_layers is built dynamically based on hyperparameters.
-        self.fusion_layers = fusion_layers
-
-    def forward(self, x):
-        # x is a concatenated vector: 
-        # [text_embedding (768), content_dna_embedding (384), time_dna_embedding (128)]
-        text_embedding = x[:, :768]
-        content_dna_embedding = x[:, 768:1152]  # next 384 dims
-        time_dna_embedding = x[:, 1152:]        # remaining 128 dims
-
-        fusion_input = torch.cat([text_embedding, 
-                                  content_dna_embedding, 
-                                  time_dna_embedding], 
-                                  dim=1)
-
-        # layer 1
-        fusion_input = self.fc1(fusion_input)       # linear
-        fusion_input = self.relu(fusion_input)      # relu
-        fusion_input = self.init_dropout(fusion_input)   # dropout
-        fusion_input = self.layer_norm(fusion_input)
-
-        # layer 2
-        fusion_input = self.fc2(fusion_input)
-        fusion_input = self.relu(fusion_input)
-        fusion_input = self.dropout(fusion_input)   # dropout
-        # fusion_input = self.layer_norm(fusion_input)
-        # Pass through the flexible fusion layers.
-        logits = self.fusion_layers(fusion_input)
-        return logits
-    
-# -------------------------
 # Evaluation Function
 # -------------------------
 def evaluate_model(model, data_loader, device):
@@ -295,57 +232,27 @@ def evaluate_model(model, data_loader, device):
     acc = accuracy_score(all_labels, all_preds)
     return acc
 
-
-text_proj_dim = 256
-content_dna_proj_dim = 256
-time_dna_proj_dim = 128
-fusion_in_dim = 768
-
 # -------------------------
-# -------------------------
-# Updated Objective Function for Hyperparameter Tuning
+# Hyperparameter Tuning Objective Function using Optuna
 # -------------------------
 def objective(trial):
-    # Suggest the number of fully connected layers (e.g., between 1 and 3 layers).
-    n_layers = 2
-    # Suggest a dropout rate (applied in each layer).
-    dropout = trial.suggest_float("dropout", 0.1, 0.5)
-    
-    # Build the fusion layers dynamically.
-    layers = []
-
-    # input dimension after projection + concatenation:
-    in_dim = fusion_in_dim
-    
-    # Create n_layers blocks of [Linear -> ReLU -> Dropout].
-    for i in range(n_layers):
-        hidden_units = trial.suggest_int(f"n_units_l{i}", 128, 512)
-        layers.append(nn.Linear(in_dim, hidden_units))
-        layers.append(nn.ReLU())
-        layers.append(nn.Dropout(dropout))
-        in_dim = hidden_units
-    # Final output layer: 2 classes.
-    layers.append(nn.Linear(in_dim, 2))
-    
-    # Pack the layers into a Sequential module.
-    fusion_layers = nn.Sequential(*layers)
-    
-    # Instantiate the flexible model.
-    model = FlexibleFusionMLP(
-        text_dim=768,
-        projected_text_dim=256,
-        content_dna_dim=384,
-        time_dna_dim=128,
-        fusion_layers=fusion_layers
+    # For the GMU, we can tune the hidden dimension.
+    # hidden_dim = trial.suggest_categorical("hidden_dim", [128, 512])
+    # ffn_dropout_rate = trial.suggest_float("ffn_dropout_rate", 0.0, 0.5)
+    # fused_dropout_rate = trial.suggest_float("fused_dropout_rate", 0.0, 0.5)
+    model = MultiModalAttentionFusion(
+        # hidden_dim=512,
+        # ffn_dropout_rate=ffn_dropout_rate,
+        # fused_dropout_rate=fused_dropout_rate
     )
     model.to(device)
     
-    # Suggest learning rate and weight decay.
+    # Use fixed learning rate and tune weight decay.
     learning_rate = 1e-4
-    weight_decay = trial.suggest_loguniform("weight_decay", 1e-5, 1e-2)
+    weight_decay = trial.suggest_float("weight_decay", 1e-5, 1e-2, log=True)
     
-    optimizer = optim.NAdam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    criterion = nn.CrossEntropyLoss(class_weights_tensor)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    criterion = nn.CrossEntropyLoss(weight=class_weights_tensor)
     
     # Create a stratified train/validation split.
     indices = np.arange(len(X_train_tensor))
@@ -411,60 +318,43 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Training on device:", device)
     # --------------------------
-
+    
     # ----- class weights ------
-    # Convert tensor to numpy array for convenience.
     y_train_np = y_train_tensor.numpy()
-    # Get the unique classes and their counts.
     unique_classes, counts = np.unique(y_train_np, return_counts=True)
-    # Inverse frequency 
     weights_inv = 1.0 / counts
     class_weights_tensor = torch.tensor(weights_inv, dtype=torch.float32)
     # --------------------------
-
-    # ------- h.p tuning -------
-    study = optuna.create_study(direction="maximize")
+    
+    # ------- Hyperparameter Tuning with Optuna -------
+    study = optuna.create_study(direction="maximize", pruner=optuna.pruners.MedianPruner())
     study.optimize(objective, n_trials=50)
-    # --------------------------
-
-    # ------- h.p tuning results -------
+    
     print("Best trial:")
     best_trial = study.best_trial
     print("  Best Validation Accuracy:", best_trial.value)
     for key, value in best_trial.params.items():
         print(f"  {key}: {value}")
     # ----------------------------------
-
+    
     final_learning_rate = 1e-4
     final_weight_decay = best_trial.params["weight_decay"]
-    final_n_layers = 2
-    final_dropout = best_trial.params["dropout"]
+    final_hidden_dim = 512
+    # final_ffn_dropout_rate = best_trial.params["ffn_dropout_rate"]
+    # final_fused_dropout_rate = best_trial.params["fused_dropout_rate"]
     
-    fusion_layers = []
-    in_dim = fusion_in_dim
-    for i in range(final_n_layers):
-        hidden_units = best_trial.params[f"n_units_l{i}"]
-        fusion_layers.append(nn.Linear(in_dim, hidden_units))
-        fusion_layers.append(nn.ReLU())
-        fusion_layers.append(nn.Dropout(final_dropout))
-        in_dim = hidden_units
-    fusion_layers.append(nn.Linear(in_dim, 2))
-    final_fusion_layers = nn.Sequential(*fusion_layers)
-    
-    final_model = FlexibleFusionMLP(
-        text_dim=768,
-        projected_text_dim=256,
-        content_dna_dim=384,
-        time_dna_dim=128,
-        fusion_layers=final_fusion_layers
+    final_model = MultiModalAttentionFusion(
+        # hidden_dim=final_hidden_dim,
+        # ffn_dropout_rate=final_ffn_dropout_rate,
+        # fused_dropout_rate=final_fused_dropout_rate
     )
     final_model.to(device)
-
-    num_epochs = 25
-    final_optimizer = optim.NAdam(final_model.parameters(), lr=final_learning_rate, weight_decay=final_weight_decay)
+    
+    final_optimizer = optim.Adam(final_model.parameters(), lr=final_learning_rate, weight_decay=final_weight_decay)
     final_criterion = nn.CrossEntropyLoss(weight=class_weights_tensor)
     scheduler = torch.optim.lr_scheduler.ExponentialLR(final_optimizer, gamma=0.9)
     
+    num_epochs = 30
     best_val_acc = 0.0
     best_state = None
     for epoch in range(num_epochs):
@@ -479,9 +369,7 @@ if __name__ == "__main__":
             final_optimizer.step()
             total_loss += loss.item() * batch_X.size(0)
         avg_loss = total_loss / len(train_loader.dataset)
-
-
-
+    
         # Evaluate on validation set.
         final_model.eval()
         val_loss = 0.0
@@ -495,11 +383,8 @@ if __name__ == "__main__":
         val_acc = evaluate_model(final_model, val_loader, device)
         
         print(f"Epoch {epoch+1}/{num_epochs} - Train Loss: {avg_loss:.4f} - Val Loss: {avg_val_loss:.4f} - Val Acc: {val_acc:.4f} - LR: {final_optimizer.param_groups[0]['lr']:.6f}")
-        
-        # Step the scheduler at the end of the epoch.
         scheduler.step()
-
-
+    
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             best_state = final_model.state_dict()
