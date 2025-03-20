@@ -16,7 +16,20 @@ RUN pip install bertopic
 RUN pip install protobuf
 RUN pip install tiktoken
 RUN pip install sentencepiece
-RUN pip install gliner
+RUN pip install --upgrade huggingface_hub
+RUN pip install transformers
+RUN pip install ijson
+RUN pip install --upgrade pip && \
+    pip install \
+        torch \
+        torchvision \
+        optuna \
+        numpy \
+        pandas \
+        pillow \
+        scikit-learn \
+        sentence-transformers \
+        ijson
 
 
 # Copy source files (ensuring run.sh is available)
