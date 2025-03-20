@@ -1,53 +1,45 @@
 import os
 import re
-import json
+import copy
 import ijson
-import math
-import numpy as np
-from datetime import datetime
-from PIL import Image
 import torch
+import random
+import optuna
+import numpy as np
+import pandas as pd
+from PIL import Image
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import TensorDataset, DataLoader, Subset
-
+from datetime import datetime
+from hybrid import NewMultiModalAttentionFusion
+from attn_model import MultiModalAttentionFusion
+from sklearn.model_selection import train_test_split
 from torchvision import transforms, models as tv_models  # for CNN encoder
 from sentence_transformers import SentenceTransformer, models  # for text embeddings
-
-import pandas as pd
-from sklearn.model_selection import train_test_split
+from torch.utils.data import TensorDataset, DataLoader, Subset
+from time_utils import generate_time_dna, TimeDNAEncoder, encode_time_dna_batch_cnn
 from sklearn.metrics import accuracy_score, classification_report, roc_auc_score, average_precision_score
-from attn_model import MultiModalAttentionFusion
-from transformer import AttentionFusion
-import optuna
+from sklearn.utils.class_weight import compute_class_weight
 
-from time_utils import generate_time_dna, time_dna_to_tensor, TimeDNAEncoder, encode_time_dna_batch_cnn
 # Instantiate and set to evaluation mode.
-time_dna_encoder = TimeDNAEncoder(output_dim=256)
+time_dna_encoder = TimeDNAEncoder(output_dim=384)
 time_dna_encoder.eval()
 
 # -------------------------
 # Set Seed for Reproducibility
 # -------------------------
-torch.manual_seed(42)
-np.random.seed(42)
+def set_seed(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    np.random.seed(seed)
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
 
 # -------------------------
 # Digital DNA Functions
 # -------------------------
-emoji_pattern = re.compile("[" 
-    u"\U0001F600-\U0001F64F"  # emoticons
-    u"\U0001F300-\U0001F5FF"  # symbols & pictographs
-    u"\U0001F680-\U0001F6FF"  # transport & map symbols
-    u"\U0001F1E0-\U0001F1FF"  # flags
-    u"\U0001F700-\U0001F77F"  # alchemical symbols
-    u"\U0001F780-\U0001F7FF"  # Geometric Shapes Extended
-    u"\U0001F800-\U0001F8FF"  # Supplemental Arrows-C
-    u"\U0001F900-\U0001F9FF"  # Supplemental Symbols and Pictographs
-    u"\U0001FA00-\U0001FA6F"  # Chess Symbols, etc.
-    u"\U0001FA70-\U0001FAFF"  # Symbols and Pictographs Extended-A
-    "]+", flags=re.UNICODE)
-
 def get_content_dna_symbol(tweet_text):
     url_present = bool(re.search(r"https?://\S+", tweet_text))
     hashtag_present = bool(re.search(r"#\w+", tweet_text))
@@ -71,7 +63,7 @@ def generate_content_dna(tweets):
     tweets.sort(key=lambda x: datetime.fromisoformat(x["created_at"].replace("Z", "+00:00")))
     dna = "".join(get_content_dna_symbol(tweet["text"]) for tweet in tweets)
     return dna
-
+# ---------------------------------------------------------------------------
 # -------------------------
 # CNN-based DNA Encoder
 # -------------------------
@@ -113,6 +105,7 @@ class DNACNNEncoder(nn.Module):
             features = self.features(x)
             pooled = self.avgpool(features)
         pooled = pooled.view(pooled.size(0), -1)
+        torch.manual_seed(42)
         out = self.fc(pooled)
         return out
 
@@ -126,7 +119,7 @@ def encode_dna_batch_cnn(dna_sequences, desired_size=64):
     with torch.no_grad():
         embeddings = dna_cnn_encoder(input_tensor)
     return embeddings.numpy()
-
+# ------------------------------------------------------------
 # -------------------------
 # Text Embeddings using twhin-bert via SentenceTransformer
 # -------------------------
@@ -134,7 +127,7 @@ transformer_model = models.Transformer("Twitter/twhin-bert-base", model_args={'a
 pooling_model = models.Pooling(transformer_model.get_word_embedding_dimension(), pooling_mode_mean_tokens=True)
 st_model = SentenceTransformer(modules=[transformer_model, pooling_model])
 # Note: twhin-bert outputs 768-dim embeddings.
-
+# ------------------------------------------------------------
 # -------------------------
 # Data Loading Function
 # -------------------------
@@ -213,46 +206,112 @@ def load_data(data_dir, session_numbers=[], st_model=None, xnums=[]):
     ]
     
     return np.array(train_X), np.array(test_X), np.array(train_labels), np.array(test_labels)
-
+# --------------------------------------------------------------------------------------------------
 
 # -------------------------
 # Evaluation Function
 # -------------------------
-def evaluate_model(model, data_loader, device):
+def evaluate_model(model, data_loader, device, criterion):
+    """
+    Evaluates the model on the provided data_loader.
+    Returns: tuple (average loss, accuracy)
+    """
     model.eval()
     all_preds = []
     all_labels = []
+    total_loss = 0.0
+    total_samples = 0
+
     with torch.no_grad():
         for batch_X, batch_y in data_loader:
             batch_X = batch_X.to(device)
+            batch_y = batch_y.to(device)
             outputs = model(batch_X)
+            
+            # Compute batch loss and aggregate
+            loss = criterion(outputs, batch_y)
+            total_loss += loss.item() * batch_X.size(0)
+            total_samples += batch_X.size(0)
+            
+            # Get predictions
             preds = outputs.argmax(dim=1).cpu().numpy()
             all_preds.extend(preds)
-            all_labels.extend(batch_y.numpy())
-    acc = accuracy_score(all_labels, all_preds)
-    return acc
+            all_labels.extend(batch_y.cpu().numpy())
 
+    avg_loss = total_loss / total_samples
+    acc = accuracy_score(all_labels, all_preds)
+    return avg_loss, acc
+
+# -------------------------
+# Reusable Training Function
+# -------------------------
+def train_model(model, train_loader, val_loader, device, criterion, optimizer, scheduler,
+                num_epochs, verbose=False):
+    """
+    Trains the model for a fixed number of epochs and returns the validation accuracy
+    obtained after training on all (train) data.
+    
+    Args:
+        model: The neural network to train.
+        train_loader: DataLoader for training data.
+        val_loader: DataLoader for validation data.
+        device: torch.device (e.g., "cuda" or "cpu").
+        criterion: Loss function.
+        optimizer: Optimizer.
+        scheduler: Learning rate scheduler (ReduceLROnPlateau).
+        num_epochs: Number of training epochs.
+        verbose (bool): If True, prints train loss, val loss, and val accuracy per epoch.
+        
+    Returns:
+        final_val_acc: The validation accuracy obtained after training on all train data.
+    """
+
+    for epoch in range(num_epochs):
+        model.train()
+        total_train_loss = 0.0
+        total_samples = 0
+        
+        # Training loop: accumulate loss over batches
+        for batch_X, batch_y in train_loader:
+            batch_X, batch_y = batch_X.to(device), batch_y.to(device)
+            optimizer.zero_grad()
+            outputs = model(batch_X)
+            loss = criterion(outputs, batch_y)
+            loss.backward()
+            optimizer.step()
+            
+            total_train_loss += loss.item() * batch_X.size(0)
+            total_samples += batch_X.size(0)
+        
+        train_loss = total_train_loss / total_samples
+        
+        # Optionally evaluate on validation set during training for logging purposes
+        val_loss, val_acc = evaluate_model(model, val_loader, device, criterion)
+        scheduler.step(val_loss)
+        
+        if verbose:
+            print(f"Epoch {epoch+1}/{num_epochs} - Train Loss: {train_loss:.4f} "
+                  f"- Val Loss: {val_loss:.4f} - Val Acc: {val_acc:.4f} "
+                  f"- LR: {optimizer.param_groups[0]['lr']:.6f}")
+    
+    # Final evaluation on validation set after training on all data
+    final_val_loss, final_val_acc = evaluate_model(model, val_loader, device, criterion)
+    return final_val_acc
+# -----------------------------------------------------------------
 # -------------------------
 # Hyperparameter Tuning Objective Function using Optuna
 # -------------------------
 def objective(trial):
-    # For the GMU, we can tune the hidden dimension.
-    # hidden_dim = trial.suggest_categorical("hidden_dim", [128, 512])
-    # ffn_dropout_rate = trial.suggest_float("ffn_dropout_rate", 0.0, 0.5)
-    # fused_dropout_rate = trial.suggest_float("fused_dropout_rate", 0.0, 0.5)
-    model = MultiModalAttentionFusion(
-        # hidden_dim=512,
-        # ffn_dropout_rate=ffn_dropout_rate,
-        # fused_dropout_rate=fused_dropout_rate
-    )
+    model = NewMultiModalAttentionFusion()
     model.to(device)
     
-    # Use fixed learning rate and tune weight decay.
-    learning_rate = 1e-4
+    # Tune learning rate and weight decay.
+    learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-2, log=True)
     weight_decay = trial.suggest_float("weight_decay", 1e-5, 1e-2, log=True)
-    
+
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     criterion = nn.CrossEntropyLoss(weight=class_weights_tensor)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=6)
     
     # Create a stratified train/validation split.
     indices = np.arange(len(X_train_tensor))
@@ -265,26 +324,19 @@ def objective(trial):
     train_loader_trial = DataLoader(train_subset, batch_size=64, shuffle=True)
     val_loader_trial = DataLoader(val_subset, batch_size=64, shuffle=False)
     
-    best_val_acc = 0.0
-    # Train for a fixed number of epochs for tuning.
-    for epoch in range(10):
-        model.train()
-        for batch_X, batch_y in train_loader_trial:
-            batch_X, batch_y = batch_X.to(device), batch_y.to(device)
-            optimizer.zero_grad()
-            outputs = model(batch_X)
-            loss = criterion(outputs, batch_y)
-            loss.backward()
-            optimizer.step()
-        val_acc = evaluate_model(model, val_loader_trial, device)
-        best_val_acc = max(best_val_acc, val_acc)
+    # Train the model using the reusable training function.
+    # Here we don't print intermediate results.
+    best_val_acc = train_model(model, train_loader_trial, val_loader_trial,
+                            device, criterion, optimizer, scheduler,
+                            num_epochs=20, verbose=False)
     
     return best_val_acc
-
+# -----------------------------------------------------------------
 # -------------------------
 # Main Pipeline
 # -------------------------
 if __name__ == "__main__":
+    set_seed(42)
     cur_dir = os.path.dirname(__file__)
     data_dir = os.path.join(cur_dir, "../data")
     
@@ -312,7 +364,8 @@ if __name__ == "__main__":
     
     train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False)
-    test_loader = DataLoader(TensorDataset(X_test_tensor, y_test_tensor), batch_size=64, shuffle=False)
+    test_loader = DataLoader(TensorDataset(X_test_tensor, y_test_tensor), 
+                             batch_size=64, shuffle=False)
     
     # -------- device ----------
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -320,15 +373,17 @@ if __name__ == "__main__":
     # --------------------------
     
     # ----- class weights ------
+    from sklearn.utils.class_weight import compute_class_weight
     y_train_np = y_train_tensor.numpy()
-    unique_classes, counts = np.unique(y_train_np, return_counts=True)
-    weights_inv = 1.0 / counts
-    class_weights_tensor = torch.tensor(weights_inv, dtype=torch.float32)
+    classes = np.unique(y_train_np)
+    class_weights = compute_class_weight(class_weight="balanced", classes=classes, y=y_train_np)
+    class_weights_tensor = torch.tensor(class_weights, dtype=torch.float32).to(device)
     # --------------------------
     
     # ------- Hyperparameter Tuning with Optuna -------
-    study = optuna.create_study(direction="maximize", pruner=optuna.pruners.MedianPruner())
-    study.optimize(objective, n_trials=50)
+    study = optuna.create_study(direction="maximize", 
+                                pruner=optuna.pruners.MedianPruner())
+    study.optimize(objective, n_trials=15)
     
     print("Best trial:")
     best_trial = study.best_trial
@@ -337,66 +392,31 @@ if __name__ == "__main__":
         print(f"  {key}: {value}")
     # ----------------------------------
     
-    final_learning_rate = 1e-4
+    # -------------------- Final Model and Training --------------------
+    final_learning_rate = best_trial.params["learning_rate"]
     final_weight_decay = best_trial.params["weight_decay"]
-    final_hidden_dim = 512
-    # final_ffn_dropout_rate = best_trial.params["ffn_dropout_rate"]
-    # final_fused_dropout_rate = best_trial.params["fused_dropout_rate"]
     
-    final_model = MultiModalAttentionFusion(
-        # hidden_dim=final_hidden_dim,
-        # ffn_dropout_rate=final_ffn_dropout_rate,
-        # fused_dropout_rate=final_fused_dropout_rate
-    )
+    final_model = NewMultiModalAttentionFusion()
     final_model.to(device)
     
-    final_optimizer = optim.Adam(final_model.parameters(), lr=final_learning_rate, weight_decay=final_weight_decay)
+    final_optimizer = optim.Adam(final_model.parameters(), 
+                                 lr=final_learning_rate, 
+                                 weight_decay=final_weight_decay)
     final_criterion = nn.CrossEntropyLoss(weight=class_weights_tensor)
-    scheduler = torch.optim.lr_scheduler.ExponentialLR(final_optimizer, gamma=0.9)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(final_optimizer, patience=6)
     
-    num_epochs = 30
-    best_val_acc = 0.0
-    best_state = None
-    for epoch in range(num_epochs):
-        final_model.train()
-        total_loss = 0.0
-        for batch_X, batch_y in train_loader:
-            batch_X, batch_y = batch_X.to(device), batch_y.to(device)
-            final_optimizer.zero_grad()
-            outputs = final_model(batch_X)
-            loss = final_criterion(outputs, batch_y)
-            loss.backward()
-            final_optimizer.step()
-            total_loss += loss.item() * batch_X.size(0)
-        avg_loss = total_loss / len(train_loader.dataset)
-    
-        # Evaluate on validation set.
-        final_model.eval()
-        val_loss = 0.0
-        with torch.no_grad():
-            for batch_X, batch_y in val_loader:
-                batch_X, batch_y = batch_X.to(device), batch_y.to(device)
-                outputs = final_model(batch_X)
-                loss = final_criterion(outputs, batch_y)
-                val_loss += loss.item() * batch_X.size(0)
-        avg_val_loss = val_loss / len(val_loader.dataset)
-        val_acc = evaluate_model(final_model, val_loader, device)
-        
-        print(f"Epoch {epoch+1}/{num_epochs} - Train Loss: {avg_loss:.4f} - Val Loss: {avg_val_loss:.4f} - Val Acc: {val_acc:.4f} - LR: {final_optimizer.param_groups[0]['lr']:.6f}")
-        scheduler.step()
-    
-        if val_acc > best_val_acc:
-            best_val_acc = val_acc
-            best_state = final_model.state_dict()
-    
-    if best_state is not None:
-        final_model.load_state_dict(best_state)
-    
-    # Evaluate final model on test set.
-    test_acc = evaluate_model(final_model, test_loader, device)
+    # Train the final model using the reusable training function.
+    # Now we pass verbose=True to print metrics for each epoch.
+    num_epochs = 20
+    best_val_acc = train_model(final_model, train_loader, val_loader, device,
+                            final_criterion, final_optimizer, scheduler,
+                            num_epochs=num_epochs, verbose=True)
+    # -----------------------------------------------------------
+    # ------------------- Test Final Model ----------------------
+    _, test_acc = evaluate_model(final_model, test_loader, device, final_criterion)
     print("Test Accuracy: {:.4f}".format(test_acc))
-    
-    # Detailed classification report.
+    # -----------------------------------------------------------
+    # ------------------ Classification Report ------------------
     final_model.eval()
     all_preds = []
     all_labels = []
@@ -411,3 +431,5 @@ if __name__ == "__main__":
     print("Classification Report:\n", classification_report(all_labels, all_preds))
     print("Test ROC AUC: {:.4f}".format(roc_auc_score(all_labels, all_preds)))
     print("Test AUPR: {:.4f}".format(average_precision_score(all_labels, all_preds)))
+
+
