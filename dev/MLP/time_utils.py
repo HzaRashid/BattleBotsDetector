@@ -99,6 +99,7 @@ class TimeDNAEncoder(nn.Module):
             features = self.features(x)
             pooled = self.avgpool(features)
         pooled = pooled.view(pooled.size(0), -1)
+        torch.manual_seed(42)
         out = self.fc(pooled)
         return out
     

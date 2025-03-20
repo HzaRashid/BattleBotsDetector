@@ -16,7 +16,7 @@ class GatedMultimodalLayer(nn.Module):
         self.relu = nn.ReLU()
         self.sigmoid_f = nn.Sigmoid()
 
-        self.dropout = nn.Dropout(p=0.1)
+        # self.dropout = nn.Dropout(p=0.1)
 
     def forward(self, x1, x2):
         h1 = self.tanh_f(self.hidden1(x1))
@@ -63,10 +63,12 @@ class NewMultiModalAttentionFusion(nn.Module):
                                                             num_heads=6,
                                                             dropout=dropout_rate,
                                                             batch_first=True)
-        # Layer normalizations for each cross-attention output.
+        # pre normalizations for each cross-attention input.
         self.layer_norm1 = nn.LayerNorm(hidden_dim)
         self.layer_norm2 = nn.LayerNorm(hidden_dim)
         
+        self.pre_ffn_ln = nn.LayerNorm(hidden_dim)
+
         # A feedforward network to further process the concatenated tokens.
         self.ffn = nn.Sequential(
             nn.Linear(hidden_dim, 4 * hidden_dim),
@@ -74,7 +76,7 @@ class NewMultiModalAttentionFusion(nn.Module):
             nn.Dropout(dropout_rate),
             nn.Linear(4 * hidden_dim, hidden_dim)
         )
-        self.layer_norm_ffn = nn.LayerNorm(hidden_dim)
+        # self.layer_norm_ffn = nn.LayerNorm(hidden_dim)
         
         # Classification head.
         self.clf_head = nn.Sequential(
@@ -93,35 +95,38 @@ class NewMultiModalAttentionFusion(nn.Module):
         
         # Project the text modality.
         text_emb = self.relu(self.text_proj(text))
-        
         # Fuse content and time via the GMU.
         gmu_out = self.gmu(content, time)
-        
         # Prepare tokens for cross-attention by adding a sequence dimension.
         text_token = text_emb.unsqueeze(1)  # shape: (batch, 1, hidden_dim)
         gmu_token = gmu_out.unsqueeze(1)      # shape: (batch, 1, hidden_dim)
-        
+        text_tok_normed = self.layer_norm1(text_token)
+        gmu_tok_normed = self.layer_norm2(gmu_token)
+
         # First cross-attention: text as query, GMU output as key/value.
         torch.manual_seed(42)
-        attn1, _ = self.cross_attn_text_query(query=text_token,
-                                              key=gmu_token,
-                                              value=gmu_token)
-        attn1 = self.layer_norm1(text_token + self.dropout(attn1))
+        attn1, _ = self.cross_attn_text_query(query=text_tok_normed,
+                                              key=gmu_tok_normed,
+                                              value=gmu_tok_normed)
+        attn1 = text_token + self.dropout(attn1)
         
         # Second cross-attention: GMU output as query, text as key/value.
         torch.manual_seed(42)
-        attn2, _ = self.cross_attn_gmu_query(query=gmu_token,
-                                             key=text_token,
-                                             value=text_token)
-        attn2 = self.layer_norm2(gmu_token + self.dropout(attn2))
+        attn2, _ = self.cross_attn_gmu_query(query=gmu_tok_normed,
+                                             key=text_tok_normed,
+                                             value=text_tok_normed)
+        attn2 = gmu_token + self.dropout(attn2)
         
         # Concatenate the outputs along the sequence dimension.
         combined = torch.cat([attn1, attn2], dim=1)  # shape: (batch, 2, hidden_dim)
         
         # Process with an FFN (with residual connection).
-        ffn_out = self.ffn(combined)
+        ffn_out = self.ffn(
+            self.pre_ffn_ln(combined)
+        )
         ffn_out = self.relu(ffn_out)
-        ffn_out = self.layer_norm_ffn(combined + self.dropout(ffn_out))
+        ffn_out = combined + self.dropout(ffn_out)
+        
         
         # Global average pooling over the sequence dimension.
         fused = ffn_out.mean(dim=1)

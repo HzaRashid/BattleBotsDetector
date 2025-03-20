@@ -1,29 +1,47 @@
 import os
-import re
-import copy
 import ijson
 import torch
 import random
 import optuna
 import numpy as np
 import pandas as pd
-from PIL import Image
 import torch.nn as nn
 import torch.optim as optim
-from datetime import datetime
 from hybrid import NewMultiModalAttentionFusion
-from attn_model import MultiModalAttentionFusion
 from sklearn.model_selection import train_test_split
-from torchvision import transforms, models as tv_models  # for CNN encoder
+from sklearn.utils.class_weight import compute_class_weight
 from sentence_transformers import SentenceTransformer, models  # for text embeddings
 from torch.utils.data import TensorDataset, DataLoader, Subset
+from content_utils import generate_content_dna, DNACNNEncoder, encode_dna_batch_cnn
 from time_utils import generate_time_dna, TimeDNAEncoder, encode_time_dna_batch_cnn
 from sklearn.metrics import accuracy_score, classification_report, roc_auc_score, average_precision_score
-from sklearn.utils.class_weight import compute_class_weight
 
 # Instantiate and set to evaluation mode.
 time_dna_encoder = TimeDNAEncoder(output_dim=384)
 time_dna_encoder.eval()
+
+
+# -------------------------
+# Utility Function: Upload Model to Hugging Face using HfApi.upload_file
+# -------------------------
+def upload_model_to_hf(model_path, repo_id, commit_message="Upload trained model weights"):
+    """
+    Uploads the given model file to the Hugging Face Hub using HfApi.upload_file.
+
+    Args:
+        model_path (str): Path to the saved model file.
+        repo_id (str): Repository ID in the format "<username>/<repo-name>".
+        commit_message (str): Commit message for the upload.
+    """
+    from huggingface_hub import HfApi
+    api = HfApi()
+    api.upload_file(
+        path_or_fileobj=model_path,
+        path_in_repo=os.path.basename(model_path),
+        repo_id=repo_id,
+        commit_message=commit_message
+    )
+
 
 # -------------------------
 # Set Seed for Reproducibility
@@ -37,89 +55,6 @@ def set_seed(seed):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
 
-# -------------------------
-# Digital DNA Functions
-# -------------------------
-def get_content_dna_symbol(tweet_text):
-    url_present = bool(re.search(r"https?://\S+", tweet_text))
-    hashtag_present = bool(re.search(r"#\w+", tweet_text))
-    mention_present = bool(re.search(r"@\w+", tweet_text))
-    
-    entity_types = sum([url_present, hashtag_present, mention_present])
-    
-    if entity_types == 0:
-        return "N"
-    elif entity_types == 1:
-        if url_present:
-            return "U"
-        elif hashtag_present:
-            return "H"
-        elif mention_present:
-            return "M"
-    else:
-        return "X"
-
-def generate_content_dna(tweets):
-    tweets.sort(key=lambda x: datetime.fromisoformat(x["created_at"].replace("Z", "+00:00")))
-    dna = "".join(get_content_dna_symbol(tweet["text"]) for tweet in tweets)
-    return dna
-# ---------------------------------------------------------------------------
-# -------------------------
-# CNN-based DNA Encoder
-# -------------------------
-def dna_to_tensor(dna, 
-                  mapping={"N": 0, "U": 64, "H": 128, "M": 192, "X": 255},
-                  desired_size=64):
-    """
-    Converts a DNA string into a grayscale image that is resized to desired_size
-    and then converted to a normalized RGB tensor.
-    """
-    values = [mapping[symbol] for symbol in dna if symbol in mapping]
-    length = len(values)
-    n = int(np.ceil(np.sqrt(length)))
-    total = n * n
-    values += [mapping["N"]] * (total - length)
-    arr = np.array(values, dtype=np.uint8).reshape((n, n))
-    img = Image.fromarray(arr, mode="L")
-    img = img.resize((desired_size, desired_size), Image.NEAREST)
-    img = img.convert("RGB")
-    transform = transforms.Compose([
-        transforms.ToTensor(),  # scales pixels to [0,1]
-        transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                             std=[0.229, 0.224, 0.225])
-    ])
-    tensor = transform(img)
-    return tensor
-
-class DNACNNEncoder(nn.Module):
-    def __init__(self, output_dim=384):
-        super(DNACNNEncoder, self).__init__()
-        # Use pretrained MobileNetV2 from torchvision.
-        self.cnn = tv_models.mobilenet_v2(pretrained=True)
-        self.features = self.cnn.features
-        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.fc = nn.Linear(1280, output_dim)
-        
-    def forward(self, x):
-        with torch.no_grad():
-            features = self.features(x)
-            pooled = self.avgpool(features)
-        pooled = pooled.view(pooled.size(0), -1)
-        torch.manual_seed(42)
-        out = self.fc(pooled)
-        return out
-
-# Instantiate CNN-based encoder and set to evaluation mode.
-dna_cnn_encoder = DNACNNEncoder()
-dna_cnn_encoder.eval()
-
-def encode_dna_batch_cnn(dna_sequences, desired_size=64):
-    tensors = [dna_to_tensor(seq, desired_size=desired_size) for seq in dna_sequences]
-    input_tensor = torch.stack(tensors)  # shape: [batch, 3, desired_size, desired_size]
-    with torch.no_grad():
-        embeddings = dna_cnn_encoder(input_tensor)
-    return embeddings.numpy()
-# ------------------------------------------------------------
 # -------------------------
 # Text Embeddings using twhin-bert via SentenceTransformer
 # -------------------------
@@ -343,9 +278,9 @@ if __name__ == "__main__":
     # Load data.
     X_train, X_test, y_train, y_test = load_data(
         data_dir,
-        session_numbers=[12, 13],
+        session_numbers=[4, 10, 11, 12, 13, 14],
         st_model=st_model,
-        xnums=[0]
+        xnums=[]
     )
     
     # Convert numpy arrays to torch tensors.
@@ -431,5 +366,16 @@ if __name__ == "__main__":
     print("Classification Report:\n", classification_report(all_labels, all_preds))
     print("Test ROC AUC: {:.4f}".format(roc_auc_score(all_labels, all_preds)))
     print("Test AUPR: {:.4f}".format(average_precision_score(all_labels, all_preds)))
+
+
+    # ------------------- Save and Upload Model to Hugging Face ----------------------
+    model_save_path = "pytorch_model.bin"
+    torch.save(final_model.state_dict(), model_save_path)
+    
+    # Set your Hugging Face repository ID in the format "<username>/<repo-name>"
+    repo_id = "hzarashid/ForensiX"  # <-- CHANGE THIS to your repo id.
+    
+    upload_model_to_hf(model_save_path, repo_id, commit_message="Upload trained model weights")
+    print(f"Model uploaded to Hugging Face repository: {repo_id}")
 
 
