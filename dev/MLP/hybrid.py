@@ -13,15 +13,23 @@ class GatedMultimodalLayer(nn.Module):
 
         # Activation functions
         self.tanh_f = nn.Tanh()
+        self.relu = nn.ReLU()
         self.sigmoid_f = nn.Sigmoid()
+
+        self.dropout = nn.Dropout(p=0.1)
 
     def forward(self, x1, x2):
         h1 = self.tanh_f(self.hidden1(x1))
         h2 = self.tanh_f(self.hidden2(x2))  # Use hidden2 for modality 2.
         combined = torch.cat((h1, h2), dim=1)
         z = self.sigmoid_f(self.hidden_sigmoid(combined))
+        
         # Fuse the two modalities based on the gate.
-        return z * h1 + (1 - z) * h2
+        out = z * h1 + (1 - z) * h2
+        out = self.relu(out)
+        # torch.manual_seed(42)
+        # out = self.dropout(out)
+        return out
 
 class NewMultiModalAttentionFusion(nn.Module):
     def __init__(self, 
