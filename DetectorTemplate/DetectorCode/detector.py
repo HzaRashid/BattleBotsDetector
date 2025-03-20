@@ -11,10 +11,10 @@ from torchvision import transforms, models as tv_models
 from sentence_transformers import SentenceTransformer, models
 from huggingface_hub import hf_hub_download
 # ------------* custom model and utils *------------
-from hybrid import NewMultiModalAttentionFusion # Import custom model
+from .hybrid import NewMultiModalAttentionFusion # Import custom model
 # print(NewMultiModalAttentionFusion())
-from time_utils import generate_time_dna, TimeDNAEncoder, encode_time_dna_batch_cnn
-from content_utils import generate_content_dna, DNACNNEncoder, encode_dna_batch_cnn
+from .time_utils import generate_time_dna, TimeDNAEncoder, encode_time_dna_batch_cnn
+from .content_utils import generate_content_dna, DNACNNEncoder, encode_dna_batch_cnn
 # -------------------------------------------------
 
 
