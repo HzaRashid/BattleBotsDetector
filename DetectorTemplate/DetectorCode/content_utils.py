@@ -6,6 +6,7 @@ import torch.nn as nn
 from PIL import Image
 from datetime import datetime
 from torchvision import transforms, models as tv_models  # for CNN encoder
+
 # -------------------------
 # Digital DNA Functions
 # -------------------------
