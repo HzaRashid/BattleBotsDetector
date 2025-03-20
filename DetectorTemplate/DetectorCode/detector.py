@@ -11,11 +11,6 @@ from torchvision import transforms, models as tv_models
 from sentence_transformers import SentenceTransformer, models
 from huggingface_hub import hf_hub_download
 # ------------* custom model and utils *------------
-import os
-cur_dur = os.path.dirname(__file__)
-model_utils_dir = os.path.join(cur_dur, "../../dev/MLP")
-import sys
-sys.path.insert(1, model_utils_dir)
 from hybrid import NewMultiModalAttentionFusion # Import custom model
 # print(NewMultiModalAttentionFusion())
 from time_utils import generate_time_dna, TimeDNAEncoder, encode_time_dna_batch_cnn

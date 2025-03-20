@@ -69,3 +69,5 @@ dev/data
 dev/debug
 
 dev/process_data
+
+*.bin
