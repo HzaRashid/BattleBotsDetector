@@ -27,8 +27,6 @@ class GatedMultimodalLayer(nn.Module):
         # Fuse the two modalities based on the gate.
         out = z * h1 + (1 - z) * h2
         out = self.relu(out)
-        # torch.manual_seed(42)
-        # out = self.dropout(out)
         return out
 
 class NewMultiModalAttentionFusion(nn.Module):
@@ -122,6 +120,7 @@ class NewMultiModalAttentionFusion(nn.Module):
         
         # Process with an FFN (with residual connection).
         ffn_out = self.ffn(combined)
+        ffn_out = self.relu(ffn_out)
         ffn_out = self.layer_norm_ffn(combined + self.dropout(ffn_out))
         
         # Global average pooling over the sequence dimension.
