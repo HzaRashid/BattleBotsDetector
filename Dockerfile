@@ -19,17 +19,7 @@ RUN pip install sentencepiece
 RUN pip install --upgrade huggingface_hub
 RUN pip install transformers
 RUN pip install ijson
-RUN pip install --upgrade pip && \
-    pip install \
-        torch \
-        torchvision \
-        optuna \
-        numpy \
-        pandas \
-        pillow \
-        scikit-learn \
-        sentence-transformers \
-        ijson
+RUN pip install emoji
 
 
 # Copy source files (ensuring run.sh is available)

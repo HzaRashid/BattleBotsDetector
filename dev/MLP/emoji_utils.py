@@ -1,5 +1,7 @@
-
+import os
 import re
+import json
+import emoji
 import torch
 import numpy as np
 import torch.nn as nn
@@ -7,38 +9,57 @@ from PIL import Image
 from datetime import datetime
 from torchvision import transforms, models as tv_models  # for CNN encoder
 
-# -------------------------
-# Digital DNA Functions
-# -------------------------
-def get_content_dna_symbol(tweet_text):
-    url_present = bool(re.search(r"https?://\S+", tweet_text))
-    hashtag_present = bool(re.search(r"#\w+", tweet_text))
-    mention_present = bool(re.search(r"@\w+", tweet_text))
-    
-    entity_types = sum([url_present, hashtag_present, mention_present])
-    
-    if entity_types == 0:
-        return "N"
-    elif entity_types == 1:
-        if url_present:
-            return "U"
-        elif hashtag_present:
-            return "H"
-        elif mention_present:
-            return "M"
-    else:
-        return "X"
 
-def generate_content_dna(tweets):
-    tweets.sort(key=lambda x: datetime.fromisoformat(x["created_at"].replace("Z", "+00:00")))
-    dna = "".join(get_content_dna_symbol(tweet["text"]) for tweet in tweets)
-    return dna
-# ---------------------------------------------------------------------------
+# Load your pre-built emoji lookup table (assumed to be saved as JSON).
+with open(os.path.join(
+    os.path.dirname(__file__), '../emoji_lookup.json'), "r", encoding="utf-8") as f: 
+    emoji_lookup = json.load(f)
+
 # -------------------------
-# CNN-based DNA Encoder
+# Digital DNA Functions for Emojis
+# -------------------------
+def get_emoji_dna_symbol(tweet_text):
+    # Extract all emojis from the tweet using the emoji package.
+    # The emoji_list function returns a list of dicts with the key 'emoji'
+    extracted_emojis = [entry['emoji'] for entry in emoji.emoji_list(tweet_text)]
+    
+    # Look up the category for each emoji using the emoji_lookup dictionary.
+    # If an emoji is not in the lookup, it will be skipped.
+    categories = {emoji_lookup.get(e, None) for e in extracted_emojis if e in emoji_lookup}
+    
+    if len(categories) == 0:
+        return "N"  # No emoji present.
+    elif len(categories) == 1:
+        return categories.pop()  # Exactly one emoji category present.
+    else:
+        return "X"  # Multiple distinct emoji categories present.
+
+def generate_emoji_dna(tweets):
+    # Sort tweets chronologically.
+    tweets.sort(key=lambda x: datetime.fromisoformat(x["created_at"].replace("Z", "+00:00")))
+    # Concatenate the emoji DNA symbol for each tweet.
+    dna = "".join(get_emoji_dna_symbol(tweet["text"]) for tweet in tweets)
+    return dna
+
+# ---------------------------------------------------------------------------
+
+# -------------------------
+# CNN-based DNA Encoder (unchanged)
 # -------------------------
 def dna_to_tensor(dna, 
-                  mapping={"N": 0, "U": 64, "H": 128, "M": 192, "X": 255},
+                  mapping={\
+                      "N": 0, 
+                      "S": 26,    # Smileys & Emotion
+                      "P": 52,    # People & Body
+                      "A": 78,    # Animals & Nature
+                      "F": 104,    # Food & Drink
+                      "T": 130,    # Travel & Places
+                      "R": 156,    # Activities
+                      "O": 182,   # Objects
+                      "Y": 208,   # Symbols
+                      "L": 234,   # Flags
+                      "X": 255,   
+                          },
                   desired_size=64):
     """
     Converts a DNA string into a grayscale image that is resized to desired_size
@@ -78,7 +99,7 @@ class DNACNNEncoder(nn.Module):
         out = self.fc(pooled)
         return out
 
-# Instantiate CNN-based encoder and set to evaluation mode.
+# Instantiate the CNN-based encoder and set to evaluation mode.
 dna_cnn_encoder = DNACNNEncoder()
 dna_cnn_encoder.eval()
 

@@ -71,3 +71,5 @@ dev/debug
 dev/process_data
 
 *.bin
+
+*.onnx

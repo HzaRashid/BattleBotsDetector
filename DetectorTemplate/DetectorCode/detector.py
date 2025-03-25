@@ -106,5 +106,5 @@ class Detector(ADetector):
                 is_bot = (pred_class == 1)  # Assuming class '1' represents bots.
             
             marked_accounts.append(DetectionMark(user_id=uid, confidence=confidence, bot=is_bot))
-        
+        print(marked_accounts)
         return marked_accounts

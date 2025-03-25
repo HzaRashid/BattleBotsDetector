@@ -12,36 +12,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.utils.class_weight import compute_class_weight
 from sentence_transformers import SentenceTransformer, models  # for text embeddings
 from torch.utils.data import TensorDataset, DataLoader, Subset
-from content_utils import generate_content_dna, DNACNNEncoder, encode_dna_batch_cnn
-from time_utils import generate_time_dna, TimeDNAEncoder, encode_time_dna_batch_cnn
+from content_utils import generate_content_dna, encode_dna_batch_cnn
+from time_utils import generate_time_dna, encode_time_dna_batch_cnn
 from sklearn.metrics import accuracy_score, classification_report, roc_auc_score, average_precision_score
-
-# Instantiate and set to evaluation mode.
-time_dna_encoder = TimeDNAEncoder(output_dim=384)
-time_dna_encoder.eval()
-
-
-# -------------------------
-# Utility Function: Upload Model to Hugging Face using HfApi.upload_file
-# -------------------------
-def upload_model_to_hf(model_path, repo_id, commit_message="Upload trained model weights"):
-    """
-    Uploads the given model file to the Hugging Face Hub using HfApi.upload_file.
-
-    Args:
-        model_path (str): Path to the saved model file.
-        repo_id (str): Repository ID in the format "<username>/<repo-name>".
-        commit_message (str): Commit message for the upload.
-    """
-    from huggingface_hub import HfApi
-    api = HfApi()
-    api.upload_file(
-        path_or_fileobj=model_path,
-        path_in_repo=os.path.basename(model_path),
-        repo_id=repo_id,
-        commit_message=commit_message
-    )
-
+from focal_loss import FocalLoss
 
 # -------------------------
 # Set Seed for Reproducibility
@@ -127,8 +101,8 @@ def load_data(data_dir, session_numbers=[], st_model=None, xnums=[]):
     # Get DNA embeddings.
     train_dna_embs = encode_dna_batch_cnn(train_dna_list)
     test_dna_embs = encode_dna_batch_cnn(test_dna_list)
-    train_time_dna_embs = encode_time_dna_batch_cnn(train_time_dna_list, time_dna_encoder=time_dna_encoder)
-    test_time_dna_embs = encode_time_dna_batch_cnn(test_time_dna_list, time_dna_encoder=time_dna_encoder)
+    train_time_dna_embs = encode_time_dna_batch_cnn(train_time_dna_list)
+    test_time_dna_embs = encode_time_dna_batch_cnn(test_time_dna_list)
 
     # Concatenate text, content DNA, and time DNA embeddings.
     train_X = [
@@ -181,7 +155,7 @@ def evaluate_model(model, data_loader, device, criterion):
 # Reusable Training Function
 # -------------------------
 def train_model(model, train_loader, val_loader, device, criterion, optimizer, scheduler,
-                num_epochs, verbose=False):
+                num_epochs, verbose=False, trial=None):
     """
     Trains the model for a fixed number of epochs and returns the validation accuracy
     obtained after training on all (train) data.
@@ -198,7 +172,7 @@ def train_model(model, train_loader, val_loader, device, criterion, optimizer, s
         verbose (bool): If True, prints train loss, val loss, and val accuracy per epoch.
         
     Returns:
-        final_val_acc: The validation accuracy obtained after training on all train data.
+        (final_val_acc, final_val_loss): The validation accuracy/loss obtained after training on all train data.
     """
 
     for epoch in range(num_epochs):
@@ -223,19 +197,45 @@ def train_model(model, train_loader, val_loader, device, criterion, optimizer, s
         # Optionally evaluate on validation set during training for logging purposes
         val_loss, val_acc = evaluate_model(model, val_loader, device, criterion)
         scheduler.step(val_loss)
+
+        if trial:
+            trial.report(val_acc, epoch)
+            if trial.should_prune(): 
+                raise optuna.exceptions.TrialPruned()
         
         if verbose:
             print(f"Epoch {epoch+1}/{num_epochs} - Train Loss: {train_loss:.4f} "
                   f"- Val Loss: {val_loss:.4f} - Val Acc: {val_acc:.4f} "
                   f"- LR: {optimizer.param_groups[0]['lr']:.6f}")
-    
+            
+
     # Final evaluation on validation set after training on all data
     final_val_loss, final_val_acc = evaluate_model(model, val_loader, device, criterion)
-    return final_val_acc
+    return final_val_acc, final_val_loss
 # -----------------------------------------------------------------
+
+# -------------------------
+# Helper function to downsample negatives in a given set of indices.
+# The target ratio is positive:negative = 1:10.
+def downsample_indices(indices, labels, target_ratio=10):
+    # Convert to numpy array for convenience.
+    indices = np.array(indices)
+    # Identify positive and negative indices based on the label.
+    pos_idx = indices[labels[indices] == 1]
+    neg_idx = indices[labels[indices] == 0]
+    
+    # Calculate the maximum allowed negatives.
+    desired_neg_count = min(len(neg_idx), target_ratio * len(pos_idx))
+    # Randomly select the negatives.
+    neg_idx_downsampled = np.random.choice(neg_idx, size=desired_neg_count, replace=False)
+    
+    # Combine and shuffle the indices.
+    combined = np.concatenate([pos_idx, neg_idx_downsampled])
+    np.random.shuffle(combined)
+    return combined
+
 # -------------------------
 # Hyperparameter Tuning Objective Function using Optuna
-# -------------------------
 def objective(trial):
     model = NewMultiModalAttentionFusion()
     model.to(device)
@@ -243,33 +243,41 @@ def objective(trial):
     # Tune learning rate and weight decay.
     learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-2, log=True)
     weight_decay = trial.suggest_float("weight_decay", 1e-5, 1e-2, log=True)
+    # gamma = trial.suggest_float("gamma", 1.0, 4.0)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    criterion = nn.CrossEntropyLoss(weight=class_weights_tensor)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=6)
+    # criterion = nn.CrossEntropyLoss(weight=class_weights_tensor)
+    criterion = FocalLoss(gamma=2.75, alpha=0.025)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, factor=0.25)
     
     # Create a stratified train/validation split.
     indices = np.arange(len(X_train_tensor))
     train_idx, val_idx = train_test_split(
-        indices, test_size=0.1, random_state=42, stratify=y_train_tensor.numpy()
+        indices, 
+        test_size=0.2, 
+        random_state=random.randint(1,100), 
+        stratify=y_train_tensor.numpy()
     )
+    # Downsample negatives (class 0) in the training indices.
+    train_idx_downsampled = downsample_indices(train_idx, y_train_tensor.numpy(), target_ratio=8)
+    rejected_idx = np.setdiff1d(train_idx, train_idx_downsampled) # Get the rejected indices
+    val_idx_updated = np.concatenate([val_idx, rejected_idx]) # add rejected samples to validation set
+
     train_subset = Subset(TensorDataset(X_train_tensor, y_train_tensor), train_idx)
-    val_subset = Subset(TensorDataset(X_train_tensor, y_train_tensor), val_idx)
+    val_subset = Subset(TensorDataset(X_train_tensor, y_train_tensor), val_idx_updated)
     
     train_loader_trial = DataLoader(train_subset, batch_size=64, shuffle=True)
     val_loader_trial = DataLoader(val_subset, batch_size=64, shuffle=False)
     
     # Train the model using the reusable training function.
-    # Here we don't print intermediate results.
-    best_val_acc = train_model(model, train_loader_trial, val_loader_trial,
-                            device, criterion, optimizer, scheduler,
-                            num_epochs=20, verbose=False)
+    val_acc, val_loss = train_model(model, train_loader_trial, val_loader_trial,
+                                    device, criterion, optimizer, scheduler,
+                                    num_epochs=20, verbose=False, trial=trial)
     
-    return best_val_acc
-# -----------------------------------------------------------------
+    return val_acc
+
 # -------------------------
 # Main Pipeline
-# -------------------------
 if __name__ == "__main__":
     set_seed(42)
     cur_dir = os.path.dirname(__file__)
@@ -278,9 +286,9 @@ if __name__ == "__main__":
     # Load data.
     X_train, X_test, y_train, y_test = load_data(
         data_dir,
-        session_numbers=[4, 10, 11, 12, 13, 14],
+        session_numbers=[],
         st_model=st_model,
-        xnums=[]
+        xnums=[0]
     )
     
     # Convert numpy arrays to torch tensors.
@@ -294,6 +302,9 @@ if __name__ == "__main__":
     train_idx, val_idx = train_test_split(
         indices, test_size=0.1, random_state=42, stratify=y_train_tensor.numpy()
     )
+    # Downsample negatives in the final training set.
+    train_idx_downsampled = downsample_indices(train_idx, y_train_tensor.numpy(), target_ratio=8)
+    
     train_dataset = Subset(TensorDataset(X_train_tensor, y_train_tensor), train_idx)
     val_dataset = Subset(TensorDataset(X_train_tensor, y_train_tensor), val_idx)
     
@@ -307,18 +318,10 @@ if __name__ == "__main__":
     print("Training on device:", device)
     # --------------------------
     
-    # ----- class weights ------
-    from sklearn.utils.class_weight import compute_class_weight
-    y_train_np = y_train_tensor.numpy()
-    classes = np.unique(y_train_np)
-    class_weights = compute_class_weight(class_weight="balanced", classes=classes, y=y_train_np)
-    class_weights_tensor = torch.tensor(class_weights, dtype=torch.float32).to(device)
-    # --------------------------
-    
     # ------- Hyperparameter Tuning with Optuna -------
     study = optuna.create_study(direction="maximize", 
                                 pruner=optuna.pruners.MedianPruner())
-    study.optimize(objective, n_trials=15)
+    study.optimize(objective, n_trials=30)
     
     print("Best trial:")
     best_trial = study.best_trial
@@ -330,6 +333,7 @@ if __name__ == "__main__":
     # -------------------- Final Model and Training --------------------
     final_learning_rate = best_trial.params["learning_rate"]
     final_weight_decay = best_trial.params["weight_decay"]
+    # final_gamma = best_trial.params["gamma"]
     
     final_model = NewMultiModalAttentionFusion()
     final_model.to(device)
@@ -337,15 +341,14 @@ if __name__ == "__main__":
     final_optimizer = optim.Adam(final_model.parameters(), 
                                  lr=final_learning_rate, 
                                  weight_decay=final_weight_decay)
-    final_criterion = nn.CrossEntropyLoss(weight=class_weights_tensor)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(final_optimizer, patience=6)
-    
+    # final_criterion = nn.CrossEntropyLoss(weight=class_weights_tensor)
+    final_criterion = FocalLoss(gamma=2.75, alpha=0.025)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(final_optimizer, patience=5, factor=0.25)
     # Train the final model using the reusable training function.
-    # Now we pass verbose=True to print metrics for each epoch.
     num_epochs = 20
-    best_val_acc = train_model(final_model, train_loader, val_loader, device,
-                            final_criterion, final_optimizer, scheduler,
-                            num_epochs=num_epochs, verbose=True)
+    val_acc, val_loss = train_model(final_model, train_loader, val_loader, device,
+                                    final_criterion, final_optimizer, scheduler,
+                                    num_epochs=num_epochs, verbose=True)
     # -----------------------------------------------------------
     # ------------------- Test Final Model ----------------------
     _, test_acc = evaluate_model(final_model, test_loader, device, final_criterion)
@@ -368,14 +371,25 @@ if __name__ == "__main__":
     print("Test AUPR: {:.4f}".format(average_precision_score(all_labels, all_preds)))
 
 
+
+
+    # ----- class weights ------
+    # from sklearn.utils.class_weight import compute_class_weight
+    # y_train_np = y_train_tensor.numpy()
+    # classes = np.unique(y_train_np)
+    # class_weights = compute_class_weight(class_weight="balanced", classes=classes, y=y_train_np)
+    # class_weights_tensor = torch.tensor(class_weights, dtype=torch.float32).to(device)
+    # --------------------------
+
     # ------------------- Save and Upload Model to Hugging Face ----------------------
-    model_save_path = "pytorch_model.bin"
-    torch.save(final_model.state_dict(), model_save_path)
+    # from upload_model import upload_model_to_hf
+    # model_save_path = "foo.bin"
+    # torch.save(final_model.state_dict(), model_save_path)
     
-    # Set your Hugging Face repository ID in the format "<username>/<repo-name>"
-    repo_id = "hzarashid/ForensiX"  # <-- CHANGE THIS to your repo id.
+    # # Set your Hugging Face repository ID in the format "<username>/<repo-name>"
+    # repo_id = "hzarashid/ForensiX"  # <-- CHANGE THIS to your repo id.
     
-    upload_model_to_hf(model_save_path, repo_id, commit_message="Upload trained model weights")
-    print(f"Model uploaded to Hugging Face repository: {repo_id}")
+    # upload_model_to_hf(model_save_path, repo_id, commit_message="Upload trained model weights")
+    # print(f"Model uploaded to Hugging Face repository: {repo_id}")
 
 

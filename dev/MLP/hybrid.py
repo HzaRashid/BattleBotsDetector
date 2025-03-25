@@ -86,12 +86,12 @@ class NewMultiModalAttentionFusion(nn.Module):
             nn.Linear(ffn_hidden_dim, num_classes)
         )
 
-    def forward(self, x):
+    def forward(self, text, content, time):
         # Split the concatenated input into modalities.
         # x shape: (batch, text_dim + content_dim + time_dim)
-        text = x[:, :self.text_dim]
-        content = x[:, self.text_dim:self.text_dim + self.content_dim]
-        time = x[:, self.text_dim + self.content_dim:]
+        # text = x[:, :self.text_dim]
+        # content = x[:, self.text_dim:self.text_dim + self.content_dim]
+        # time = x[:, self.text_dim + self.content_dim:]
         
         # Project the text modality.
         text_emb = self.relu(self.text_proj(text))
@@ -108,6 +108,7 @@ class NewMultiModalAttentionFusion(nn.Module):
         attn1, _ = self.cross_attn_text_query(query=text_tok_normed,
                                               key=gmu_tok_normed,
                                               value=gmu_tok_normed)
+        torch.manual_seed(42)
         attn1 = text_token + self.dropout(attn1)
         
         # Second cross-attention: GMU output as query, text as key/value.
@@ -115,16 +116,19 @@ class NewMultiModalAttentionFusion(nn.Module):
         attn2, _ = self.cross_attn_gmu_query(query=gmu_tok_normed,
                                              key=text_tok_normed,
                                              value=text_tok_normed)
+        torch.manual_seed(42)
         attn2 = gmu_token + self.dropout(attn2)
         
         # Concatenate the outputs along the sequence dimension.
         combined = torch.cat([attn1, attn2], dim=1)  # shape: (batch, 2, hidden_dim)
         
         # Process with an FFN (with residual connection).
+        torch.manual_seed(42)
         ffn_out = self.ffn(
             self.pre_ffn_ln(combined)
         )
         ffn_out = self.relu(ffn_out)
+        torch.manual_seed(42)
         ffn_out = combined + self.dropout(ffn_out)
         
         

@@ -89,7 +89,7 @@ class TimeDNAEncoder(nn.Module):
     def __init__(self, output_dim=384):
         super(TimeDNAEncoder, self).__init__()
         # Use pretrained MobileNetV2 from torchvision.
-        self.cnn = tv_models.mobilenet_v2(pretrained=True)
+        self.cnn = tv_models.mobilenet_v2(weights=tv_models.MobileNet_V2_Weights.DEFAULT)
         self.features = self.cnn.features
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(1280, output_dim)
@@ -99,12 +99,14 @@ class TimeDNAEncoder(nn.Module):
             features = self.features(x)
             pooled = self.avgpool(features)
         pooled = pooled.view(pooled.size(0), -1)
-        torch.manual_seed(42)
         out = self.fc(pooled)
         return out
     
+# Instantiate and set to evaluation mode.
+time_dna_encoder = TimeDNAEncoder(output_dim=384)
+time_dna_encoder.eval()
 
-def encode_time_dna_batch_cnn(time_dna_sequences=[], desired_size=64, time_dna_encoder=None):
+def encode_time_dna_batch_cnn(time_dna_sequences=[], desired_size=64):
     tensors = [time_dna_to_tensor(seq, desired_size=desired_size) for seq in time_dna_sequences]
     input_tensor = torch.stack(tensors)  # shape: [batch, 3, desired_size, desired_size]
     with torch.no_grad():
