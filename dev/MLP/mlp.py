@@ -8,17 +8,20 @@ import pandas as pd
 import torch.nn as nn
 import torch.optim as optim
 from hybrid import NewMultiModalAttentionFusion
+from hybridv2 import GMUAttention
 from sklearn.model_selection import train_test_split
-from sklearn.utils.class_weight import compute_class_weight
 from sentence_transformers import SentenceTransformer, models  # for text embeddings
 from torch.utils.data import TensorDataset, DataLoader, Subset
-from content_utils import generate_content_dna, encode_dna_batch_cnn
+from content_utils import generate_content_dna, encode_content_dna_batch_cnn
 from time_utils import generate_time_dna, encode_time_dna_batch_cnn
+from emoji_utils import generate_emoji_dna, encode_emoji_dna_batch_cnn
 from sklearn.metrics import accuracy_score, classification_report, roc_auc_score, average_precision_score
 from focal_loss import FocalLoss
 
+# --- fixed batch size ---
+BATCH_SIZE = 64
 # -------------------------
-# Set Seed for Reproducibility
+# seeds for reproducability
 # -------------------------
 def set_seed(seed):
     torch.manual_seed(seed)
@@ -30,15 +33,16 @@ def set_seed(seed):
     os.environ['PYTHONHASHSEED'] = str(seed)
 
 # -------------------------
-# Text Embeddings using twhin-bert via SentenceTransformer
+# twhin-bert for sentence (user description) embeddings
 # -------------------------
 transformer_model = models.Transformer("Twitter/twhin-bert-base", model_args={'attn_implementation': 'eager'})
 pooling_model = models.Pooling(transformer_model.get_word_embedding_dimension(), pooling_mode_mean_tokens=True)
 st_model = SentenceTransformer(modules=[transformer_model, pooling_model])
-# Note: twhin-bert outputs 768-dim embeddings.
-# ------------------------------------------------------------
+# outputs 768-dim embeddings
+# --------------------------------------------
+
 # -------------------------
-# Data Loading Function
+# Data Loading Function (returns separate modalities)
 # -------------------------
 def load_data(data_dir, session_numbers=[], st_model=None, xnums=[]):
     user_info_list = []
@@ -61,68 +65,83 @@ def load_data(data_dir, session_numbers=[], st_model=None, xnums=[]):
                 if uid is not None:
                     user_posts_dict.setdefault(uid, []).append(post)
 
+    # stratified train/test split
     user_info_df = pd.DataFrame(user_info_list)[['user_id', 'is_bot']].drop_duplicates()
     train_users, test_users = train_test_split(
         user_info_df, test_size=0.2, random_state=42, stratify=user_info_df['is_bot']
     )
     train_user_ids = set(train_users['user_id'])
     test_user_ids = set(test_users['user_id'])
-    
-    train_descs, train_dna_list, train_labels = [], [], []
-    test_descs, test_dna_list, test_labels = [], [], []
 
-    train_time_dna_list, test_time_dna_list = [], []
-    
+    train_texts, test_texts = [], []
+    train_dna_list, test_dna_list = [], []
+    train_time_list, test_time_list = [], []
+    train_emoji, test_emoji = [], []
+    train_labels, test_labels = [], []
+
     for user in user_info_list:
         uid = user.get("user_id")
         if uid is None or uid not in user_posts_dict:
             continue
         description = user.get("description", "")
-        desc_emb = st_model.encode(description)  # 768-dim text embedding
-
-        # Generate content DNA.
+        # Get text embedding.
+        desc_emb = st_model.encode(description)  # 768-dim
+        # generate the DNA sequences
         content_dna = generate_content_dna(user_posts_dict[uid])
-        # Generate time DNA.
         time_dna = generate_time_dna(user_posts_dict[uid])
-
+        emoji_dna = generate_emoji_dna(user_posts_dict[uid])
+        # user's true label
         label = int(user.get("is_bot", 0))
 
         if uid in train_user_ids:
-            train_descs.append(desc_emb)
+            train_texts.append(desc_emb)
             train_dna_list.append(content_dna)
-            train_time_dna_list.append(time_dna)
+            train_time_list.append(time_dna)
+            train_emoji.append(emoji_dna)
             train_labels.append(label)
         elif uid in test_user_ids:
-            test_descs.append(desc_emb)
+            test_texts.append(desc_emb)
             test_dna_list.append(content_dna)
-            test_time_dna_list.append(time_dna)
+            test_time_list.append(time_dna)
+            test_emoji.append(emoji_dna)
             test_labels.append(label)
     
-    # Get DNA embeddings.
-    train_dna_embs = encode_dna_batch_cnn(train_dna_list)
-    test_dna_embs = encode_dna_batch_cnn(test_dna_list)
-    train_time_dna_embs = encode_time_dna_batch_cnn(train_time_dna_list)
-    test_time_dna_embs = encode_time_dna_batch_cnn(test_time_dna_list)
+    # generate the CNN embeddings of the DNA sequences
+    train_dna_embs = encode_content_dna_batch_cnn(train_dna_list)
+    train_time_embs = encode_time_dna_batch_cnn(train_time_list)
+    train_emoji_embs = encode_emoji_dna_batch_cnn(train_emoji)
 
-    # Concatenate text, content DNA, and time DNA embeddings.
-    train_X = [
-        np.concatenate([desc, dna_emb, time_emb])
-        for desc, dna_emb, time_emb in zip(train_descs, train_dna_embs, train_time_dna_embs)
-    ]
-    test_X = [
-        np.concatenate([desc, dna_emb, time_emb])
-        for desc, dna_emb, time_emb in zip(test_descs, test_dna_embs, test_time_dna_embs)
-    ]
-    
-    return np.array(train_X), np.array(test_X), np.array(train_labels), np.array(test_labels)
-# --------------------------------------------------------------------------------------------------
+    test_dna_embs = encode_content_dna_batch_cnn(test_dna_list)
+    test_time_embs = encode_time_dna_batch_cnn(test_time_list)
+    test_emoji_embs = encode_emoji_dna_batch_cnn(test_emoji)
+
+    # return split with seperable modalities
+    train = (np.array(x) 
+             for x in [
+                 train_texts,
+                 train_dna_embs,
+                 train_time_embs,
+                 train_emoji_embs,
+                 train_labels
+                 ])
+    test = (np.array(x) 
+            for x in [
+                test_texts,
+                test_dna_embs,
+                test_time_embs,
+                test_emoji_embs,
+                test_labels
+                ])
+
+    return (*train, *test)
 
 # -------------------------
-# Evaluation Function
+# Evaluation Function (updated for separate modalities)
 # -------------------------
 def evaluate_model(model, data_loader, device, criterion):
     """
     Evaluates the model on the provided data_loader.
+    
     Returns: tuple (average loss, accuracy)
     """
     model.eval()
@@ -132,75 +151,50 @@ def evaluate_model(model, data_loader, device, criterion):
     total_samples = 0
 
     with torch.no_grad():
-        for batch_X, batch_y in data_loader:
-            batch_X = batch_X.to(device)
-            batch_y = batch_y.to(device)
-            outputs = model(batch_X)
-            
-            # Compute batch loss and aggregate
-            loss = criterion(outputs, batch_y)
-            total_loss += loss.item() * batch_X.size(0)
-            total_samples += batch_X.size(0)
-            
-            # Get predictions
+        for batch in data_loader:
+            inputs = [x.to(device) for x in batch[:-1]]
+            labels = batch[-1].to(device)
+            outputs = model(*inputs)
+            loss = criterion(outputs, labels)
+            total_loss += loss.item() * inputs[0].size(0)
+            total_samples += inputs[0].size(0)
             preds = outputs.argmax(dim=1).cpu().numpy()
             all_preds.extend(preds)
-            all_labels.extend(batch_y.cpu().numpy())
+            all_labels.extend(labels.cpu().numpy())
 
     avg_loss = total_loss / total_samples
     acc = accuracy_score(all_labels, all_preds)
     return avg_loss, acc
 
 # -------------------------
-# Reusable Training Function
+# Reusable Training Function (updated for separate modalities)
 # -------------------------
-def train_model(model, train_loader, val_loader, device, criterion, optimizer, scheduler,
+def train_model(model, train_loader, val_loader, 
+                device, criterion, optimizer, scheduler,
                 num_epochs, verbose=False, trial=None):
-    """
-    Trains the model for a fixed number of epochs and returns the validation accuracy
-    obtained after training on all (train) data.
-    
-    Args:
-        model: The neural network to train.
-        train_loader: DataLoader for training data.
-        val_loader: DataLoader for validation data.
-        device: torch.device (e.g., "cuda" or "cpu").
-        criterion: Loss function.
-        optimizer: Optimizer.
-        scheduler: Learning rate scheduler (ReduceLROnPlateau).
-        num_epochs: Number of training epochs.
-        verbose (bool): If True, prints train loss, val loss, and val accuracy per epoch.
-        
-    Returns:
-        (final_val_acc, final_val_loss): The validation accuracy/loss obtained after training on all train data.
-    """
-
     for epoch in range(num_epochs):
         model.train()
         total_train_loss = 0.0
         total_samples = 0
         
-        # Training loop: accumulate loss over batches
-        for batch_X, batch_y in train_loader:
-            batch_X, batch_y = batch_X.to(device), batch_y.to(device)
+        for batch in train_loader:
+            inputs = [x.to(device) for x in batch[:-1]]
+            labels = batch[-1].to(device)
             optimizer.zero_grad()
-            outputs = model(batch_X)
-            loss = criterion(outputs, batch_y)
+            outputs = model(*inputs)
+            loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
-            
-            total_train_loss += loss.item() * batch_X.size(0)
-            total_samples += batch_X.size(0)
+            total_train_loss += loss.item() * inputs[0].size(0)
+            total_samples += inputs[0].size(0)
         
         train_loss = total_train_loss / total_samples
-        
-        # Optionally evaluate on validation set during training for logging purposes
         val_loss, val_acc = evaluate_model(model, val_loader, device, criterion)
         scheduler.step(val_loss)
 
         if trial:
             trial.report(val_acc, epoch)
-            if trial.should_prune(): 
+            if trial.should_prune():
                 raise optuna.exceptions.TrialPruned()
         
         if verbose:
@@ -208,68 +202,36 @@ def train_model(model, train_loader, val_loader, device, criterion, optimizer, s
                   f"- Val Loss: {val_loss:.4f} - Val Acc: {val_acc:.4f} "
                   f"- LR: {optimizer.param_groups[0]['lr']:.6f}")
             
-
-    # Final evaluation on validation set after training on all data
     final_val_loss, final_val_acc = evaluate_model(model, val_loader, device, criterion)
     return final_val_acc, final_val_loss
-# -----------------------------------------------------------------
-
-# -------------------------
-# Helper function to downsample negatives in a given set of indices.
-# The target ratio is positive:negative = 1:10.
-def downsample_indices(indices, labels, target_ratio=10):
-    # Convert to numpy array for convenience.
-    indices = np.array(indices)
-    # Identify positive and negative indices based on the label.
-    pos_idx = indices[labels[indices] == 1]
-    neg_idx = indices[labels[indices] == 0]
-    
-    # Calculate the maximum allowed negatives.
-    desired_neg_count = min(len(neg_idx), target_ratio * len(pos_idx))
-    # Randomly select the negatives.
-    neg_idx_downsampled = np.random.choice(neg_idx, size=desired_neg_count, replace=False)
-    
-    # Combine and shuffle the indices.
-    combined = np.concatenate([pos_idx, neg_idx_downsampled])
-    np.random.shuffle(combined)
-    return combined
 
 # -------------------------
 # Hyperparameter Tuning Objective Function using Optuna
+# -------------------------
 def objective(trial):
-    model = NewMultiModalAttentionFusion()
+    model = GMUAttention()
     model.to(device)
-    
-    # Tune learning rate and weight decay.
+    # hyperparameters for tuning
     learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-2, log=True)
     weight_decay = trial.suggest_float("weight_decay", 1e-5, 1e-2, log=True)
-    # gamma = trial.suggest_float("gamma", 1.0, 4.0)
-
+    # optimizer and scheduler settings
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    # criterion = nn.CrossEntropyLoss(weight=class_weights_tensor)
-    criterion = FocalLoss(gamma=2.75, alpha=0.025)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, factor=0.25)
-    
-    # Create a stratified train/validation split.
-    indices = np.arange(len(X_train_tensor))
+    criterion = FocalLoss(gamma=2, alpha=0.25)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, factor=0.1)
+    # stratified train/validation split
+    indices = np.arange(len(X_train_text_tensor))
     train_idx, val_idx = train_test_split(
         indices, 
         test_size=0.2, 
-        random_state=random.randint(1,100), 
+        random_state=random.randint(1, 100), 
         stratify=y_train_tensor.numpy()
     )
-    # Downsample negatives (class 0) in the training indices.
-    train_idx_downsampled = downsample_indices(train_idx, y_train_tensor.numpy(), target_ratio=8)
-    rejected_idx = np.setdiff1d(train_idx, train_idx_downsampled) # Get the rejected indices
-    val_idx_updated = np.concatenate([val_idx, rejected_idx]) # add rejected samples to validation set
-
-    train_subset = Subset(TensorDataset(X_train_tensor, y_train_tensor), train_idx)
-    val_subset = Subset(TensorDataset(X_train_tensor, y_train_tensor), val_idx_updated)
+    train_subset = Subset(TensorDataset(*train_tensors), train_idx)
+    val_subset = Subset(TensorDataset(*train_tensors), val_idx)
     
-    train_loader_trial = DataLoader(train_subset, batch_size=64, shuffle=True)
-    val_loader_trial = DataLoader(val_subset, batch_size=64, shuffle=False)
+    train_loader_trial = DataLoader(train_subset, batch_size=BATCH_SIZE, shuffle=True)
+    val_loader_trial = DataLoader(val_subset, batch_size=BATCH_SIZE, shuffle=False)
     
-    # Train the model using the reusable training function.
     val_acc, val_loss = train_model(model, train_loader_trial, val_loader_trial,
                                     device, criterion, optimizer, scheduler,
                                     num_epochs=20, verbose=False, trial=trial)
@@ -278,49 +240,70 @@ def objective(trial):
 
 # -------------------------
 # Main Pipeline
+# -------------------------
 if __name__ == "__main__":
     set_seed(42)
     cur_dir = os.path.dirname(__file__)
     data_dir = os.path.join(cur_dir, "../data")
     
-    # Load data.
-    X_train, X_test, y_train, y_test = load_data(
-        data_dir,
-        session_numbers=[],
-        st_model=st_model,
-        xnums=[0]
-    )
+    # Load data. X_train_emoji X_test_emoji
+    (X_train_text, 
+     X_train_content, 
+     X_train_time, 
+     X_train_emoji,  
+     y_train,
+     X_test_text, 
+     X_test_content, 
+     X_test_time, 
+     X_test_emoji, 
+     y_test) = load_data(data_dir, 
+                         session_numbers=[], 
+                         st_model=st_model, 
+                         xnums=[0]
+                         )
     
     # Convert numpy arrays to torch tensors.
-    X_train_tensor = torch.tensor(X_train, dtype=torch.float32)
+    X_train_text_tensor = torch.tensor(X_train_text, dtype=torch.float32)
+    X_train_content_tensor = torch.tensor(X_train_content, dtype=torch.float32)
+    X_train_time_tensor = torch.tensor(X_train_time, dtype=torch.float32)
+    X_train_emoji_tensor = torch.tensor(X_train_emoji, dtype=torch.float32)
     y_train_tensor = torch.tensor(y_train, dtype=torch.long)
-    X_test_tensor = torch.tensor(X_test, dtype=torch.float32)
+    
+    X_test_text_tensor = torch.tensor(X_test_text, dtype=torch.float32)
+    X_test_content_tensor = torch.tensor(X_test_content, dtype=torch.float32)
+    X_test_time_tensor = torch.tensor(X_test_time, dtype=torch.float32)
+    X_test_emoji_tensor = torch.tensor(X_test_emoji, dtype=torch.float32)
     y_test_tensor = torch.tensor(y_test, dtype=torch.long)
     
-    # Create stratified train/validation split for final training.
-    indices = np.arange(len(X_train_tensor))
+    # stratified train/validation split for final training.
+    indices = np.arange(len(X_train_text_tensor))
     train_idx, val_idx = train_test_split(
         indices, test_size=0.1, random_state=42, stratify=y_train_tensor.numpy()
     )
-    # Downsample negatives in the final training set.
-    train_idx_downsampled = downsample_indices(train_idx, y_train_tensor.numpy(), target_ratio=8)
+
+    train_tensors = (X_train_text_tensor, 
+                     X_train_content_tensor, 
+                     X_train_time_tensor, 
+                     X_train_emoji_tensor, 
+                     y_train_tensor)
+    test_tensors = (X_test_text_tensor, 
+                    X_test_content_tensor, 
+                    X_test_time_tensor, 
+                    X_test_emoji_tensor,
+                    y_test_tensor)
+    train_dataset = Subset(TensorDataset(*train_tensors), train_idx)
+    val_dataset = Subset(TensorDataset(*train_tensors), val_idx)
+    test_dataset = TensorDataset(*test_tensors)
     
-    train_dataset = Subset(TensorDataset(X_train_tensor, y_train_tensor), train_idx)
-    val_dataset = Subset(TensorDataset(X_train_tensor, y_train_tensor), val_idx)
+    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
     
-    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False)
-    test_loader = DataLoader(TensorDataset(X_test_tensor, y_test_tensor), 
-                             batch_size=64, shuffle=False)
-    
-    # -------- device ----------
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Training on device:", device)
-    # --------------------------
     
     # ------- Hyperparameter Tuning with Optuna -------
-    study = optuna.create_study(direction="maximize", 
-                                pruner=optuna.pruners.MedianPruner())
+    study = optuna.create_study(direction="maximize", pruner=optuna.pruners.MedianPruner())
     study.optimize(objective, n_trials=30)
     
     print("Best trial:")
@@ -328,43 +311,39 @@ if __name__ == "__main__":
     print("  Best Validation Accuracy:", best_trial.value)
     for key, value in best_trial.params.items():
         print(f"  {key}: {value}")
-    # ----------------------------------
     
     # -------------------- Final Model and Training --------------------
     final_learning_rate = best_trial.params["learning_rate"]
     final_weight_decay = best_trial.params["weight_decay"]
-    # final_gamma = best_trial.params["gamma"]
     
-    final_model = NewMultiModalAttentionFusion()
+    final_model = GMUAttention()
     final_model.to(device)
     
-    final_optimizer = optim.Adam(final_model.parameters(), 
-                                 lr=final_learning_rate, 
-                                 weight_decay=final_weight_decay)
-    # final_criterion = nn.CrossEntropyLoss(weight=class_weights_tensor)
-    final_criterion = FocalLoss(gamma=2.75, alpha=0.025)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(final_optimizer, patience=5, factor=0.25)
-    # Train the final model using the reusable training function.
+    final_optimizer = optim.Adam(final_model.parameters(), lr=final_learning_rate, weight_decay=final_weight_decay)
+    final_criterion = FocalLoss(gamma=2, alpha=0.25)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(final_optimizer, patience=5, factor=0.1)
+    
     num_epochs = 20
     val_acc, val_loss = train_model(final_model, train_loader, val_loader, device,
                                     final_criterion, final_optimizer, scheduler,
                                     num_epochs=num_epochs, verbose=True)
-    # -----------------------------------------------------------
+    
     # ------------------- Test Final Model ----------------------
     _, test_acc = evaluate_model(final_model, test_loader, device, final_criterion)
     print("Test Accuracy: {:.4f}".format(test_acc))
-    # -----------------------------------------------------------
+    
     # ------------------ Classification Report ------------------
     final_model.eval()
     all_preds = []
     all_labels = []
     with torch.no_grad():
-        for batch_X, batch_y in test_loader:
-            batch_X = batch_X.to(device)
-            outputs = final_model(batch_X)
+        for batch in test_loader:
+            inputs = [x.to(device) for x in batch[:-1]]
+            labels = batch[-1]
+            outputs = final_model(*inputs)
             preds = outputs.argmax(dim=1).cpu().numpy()
             all_preds.extend(preds)
-            all_labels.extend(batch_y.numpy())
+            all_labels.extend(labels.numpy())
     
     print("Classification Report:\n", classification_report(all_labels, all_preds))
     print("Test ROC AUC: {:.4f}".format(roc_auc_score(all_labels, all_preds)))
@@ -373,13 +352,35 @@ if __name__ == "__main__":
 
 
 
-    # ----- class weights ------
+    # ----- optional class weights if using BCE loss ------
     # from sklearn.utils.class_weight import compute_class_weight
     # y_train_np = y_train_tensor.numpy()
     # classes = np.unique(y_train_np)
     # class_weights = compute_class_weight(class_weight="balanced", classes=classes, y=y_train_np)
     # class_weights_tensor = torch.tensor(class_weights, dtype=torch.float32).to(device)
     # --------------------------
+    # -------------------------
+    # Helper function to downsample negatives in a given set of indices.
+    # The target ratio is positive:negative = 1:10.
+    # -------------------------
+    # def downsample_indices(indices, labels, target_ratio=10):
+    #     indices = np.array(indices)
+    #     pos_idx = indices[labels[indices] == 1]
+    #     neg_idx = indices[labels[indices] == 0]
+    #     desired_neg_count = min(len(neg_idx), target_ratio * len(pos_idx))
+    #     neg_idx_downsampled = np.random.choice(neg_idx, size=desired_neg_count, replace=False)
+    #     combined = np.concatenate([pos_idx, neg_idx_downsampled])
+    #     np.random.shuffle(combined)
+    #     return combined
+    # ----- optional downsampling for entire training set -----
+    # train_idx_downsampled = downsample_indices(train_idx, y_train_tensor.numpy(), target_ratio=8)
+    # ---------------------------------
+
+    # ----- optional downsampling for optuna -----
+    # train_idx_downsampled = downsample_indices(train_idx, y_train_tensor.numpy(), target_ratio=8)
+    # rejected_idx = np.setdiff1d(train_idx, train_idx_downsampled)
+    # val_idx_updated = np.concatenate([val_idx, rejected_idx])
+    # -------------------------------
 
     # ------------------- Save and Upload Model to Hugging Face ----------------------
     # from upload_model import upload_model_to_hf

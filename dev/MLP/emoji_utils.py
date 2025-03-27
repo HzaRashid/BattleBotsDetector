@@ -12,7 +12,7 @@ from torchvision import transforms, models as tv_models  # for CNN encoder
 
 # Load your pre-built emoji lookup table (assumed to be saved as JSON).
 with open(os.path.join(
-    os.path.dirname(__file__), '../emoji_lookup.json'), "r", encoding="utf-8") as f: 
+    os.path.dirname(__file__), '../lookup_table/emoji_lookup.json'), "r", encoding="utf-8") as f: 
     emoji_lookup = json.load(f)
 
 # -------------------------
@@ -103,9 +103,33 @@ class DNACNNEncoder(nn.Module):
 dna_cnn_encoder = DNACNNEncoder()
 dna_cnn_encoder.eval()
 
-def encode_dna_batch_cnn(dna_sequences, desired_size=64):
+def encode_emoji_dna_batch_cnn(dna_sequences, desired_size=64):
     tensors = [dna_to_tensor(seq, desired_size=desired_size) for seq in dna_sequences]
     input_tensor = torch.stack(tensors)  # shape: [batch, 3, desired_size, desired_size]
     with torch.no_grad():
         embeddings = dna_cnn_encoder(input_tensor)
     return embeddings.numpy()
+
+
+# -------------------------
+# Test Code
+# -------------------------
+if __name__ == "__main__":
+    # Define a few test tweets.
+    tweets = [
+        {"created_at": "2023-01-01T00:00:00Z", "text": "Happy New Year! 😀"},
+        {"created_at": "2023-01-02T00:00:00Z", "text": "Let's celebrate! 😂👍"},
+        {"created_at": "2023-01-03T00:00:00Z", "text": "No emoji here."},
+    ]
+    
+    # Generate the emoji DNA from the tweets.
+    emoji_dna = generate_emoji_dna(tweets)
+    print("Generated Emoji DNA:", emoji_dna)
+    
+    # Convert the DNA string to a tensor.
+    dna_tensor = dna_to_tensor(emoji_dna)
+    print("DNA tensor shape:", dna_tensor.shape)
+    
+    # Encode the DNA batch using the CNN-based encoder.
+    embeddings = encode_emoji_dna_batch_cnn([emoji_dna])
+    print("Embeddings shape:", embeddings.shape)

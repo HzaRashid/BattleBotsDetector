@@ -82,7 +82,7 @@ class DNACNNEncoder(nn.Module):
 dna_cnn_encoder = DNACNNEncoder()
 dna_cnn_encoder.eval()
 
-def encode_dna_batch_cnn(dna_sequences, desired_size=64):
+def encode_content_dna_batch_cnn(dna_sequences, desired_size=64):
     tensors = [dna_to_tensor(seq, desired_size=desired_size) for seq in dna_sequences]
     input_tensor = torch.stack(tensors)  # shape: [batch, 3, desired_size, desired_size]
     with torch.no_grad():

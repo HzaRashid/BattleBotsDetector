@@ -103,7 +103,7 @@ class TimeDNAEncoder(nn.Module):
         return out
     
 # Instantiate and set to evaluation mode.
-time_dna_encoder = TimeDNAEncoder(output_dim=384)
+time_dna_encoder = TimeDNAEncoder()
 time_dna_encoder.eval()
 
 def encode_time_dna_batch_cnn(time_dna_sequences=[], desired_size=64):
