@@ -1,3 +1,3 @@
 __all__ = ["focal_loss"]
 
-from . import focal_loss
+from ..MLP import focal_loss

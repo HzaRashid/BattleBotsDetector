@@ -65,7 +65,7 @@ class DNACNNEncoder(nn.Module):
     def __init__(self, output_dim=384):
         super(DNACNNEncoder, self).__init__()
         # Use pretrained MobileNetV2 from torchvision.
-        self.cnn = tv_models.mobilenet_v2(pretrained=True)
+        self.cnn = tv_models.mobilenet_v2(weights=tv_models.MobileNet_V2_Weights.DEFAULT)
         self.features = self.cnn.features
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(1280, output_dim)
@@ -75,7 +75,6 @@ class DNACNNEncoder(nn.Module):
             features = self.features(x)
             pooled = self.avgpool(features)
         pooled = pooled.view(pooled.size(0), -1)
-        torch.manual_seed(42)
         out = self.fc(pooled)
         return out
 
@@ -83,7 +82,7 @@ class DNACNNEncoder(nn.Module):
 dna_cnn_encoder = DNACNNEncoder()
 dna_cnn_encoder.eval()
 
-def encode_dna_batch_cnn(dna_sequences, desired_size=64):
+def encode_content_dna_batch_cnn(dna_sequences, desired_size=64):
     tensors = [dna_to_tensor(seq, desired_size=desired_size) for seq in dna_sequences]
     input_tensor = torch.stack(tensors)  # shape: [batch, 3, desired_size, desired_size]
     with torch.no_grad():

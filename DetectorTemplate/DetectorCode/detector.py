@@ -1,4 +1,3 @@
-
 import re
 import ijson
 import numpy as np
@@ -10,13 +9,13 @@ from PIL import Image
 from torchvision import transforms, models as tv_models
 from sentence_transformers import SentenceTransformer, models
 from huggingface_hub import hf_hub_download
-# ------------* custom model and utils *------------
-from .hybrid import NewMultiModalAttentionFusion # Import custom model
-# print(NewMultiModalAttentionFusion())
-from .time_utils import generate_time_dna, TimeDNAEncoder, encode_time_dna_batch_cnn
-from .content_utils import generate_content_dna, DNACNNEncoder, encode_dna_batch_cnn
-# -------------------------------------------------
 
+# ------------* custom model and utils *------------
+from .hybridv2 import GMUAttention   # updated: use GMUAttention from hybridv2 to match training
+from .time_utils import generate_time_dna, TimeDNAEncoder, encode_time_dna_batch_cnn
+from .content_utils import generate_content_dna, encode_content_dna_batch_cnn  # updated for consistency with training
+from .emoji_utils import generate_emoji_dna, encode_emoji_dna_batch_cnn           # added emoji utilities
+# -------------------------------------------------
 
 # -------------------------
 # Set Seed for Reproducibility
@@ -32,12 +31,6 @@ pooling_model = models.Pooling(transformer_model.get_word_embedding_dimension(),
 st_model = SentenceTransformer(modules=[transformer_model, pooling_model])
 
 # -------------------------
-# Instantiate Time DNA Encoder (from training)
-# -------------------------
-time_dna_encoder = TimeDNAEncoder(output_dim=384)
-time_dna_encoder.eval()
-
-# -------------------------
 # Detector Class Using the Trained PyTorch Model
 # -------------------------
 from abc_classes import ADetector
@@ -49,19 +42,19 @@ class Detector(ADetector):
         self.st_model = st_model
 
         # Load the trained PyTorch model from Hugging Face.
-        # Replace 'your-username/model-repo' with your actual repository identifier.
-        model_path = hf_hub_download(repo_id="hzarashid/ForensiX", filename="pytorch_model.bin")
-        self.model = NewMultiModalAttentionFusion()  # Ensure same initialization parameters as in training if needed.
-        self.model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+        model_path = hf_hub_download(repo_id="hzarashid/ForensiX", filename="hybridv2_weights.bin")
+        self.model = GMUAttention()  # updated: use GMUAttention as in training
+        self.model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')), strict=False)
         self.model.eval()
         
     def detect_bot(self, session_data):
         """
-        For each user in the session, compute the feature vector by concatenating:
-         - description embedding (768-dim)
-         - content DNA embedding (384-dim, via CNN)
-         - time DNA embedding (384-dim)
-        Then, run the feature vector through the trained model to predict bot probability.
+        For each user in the session, compute the feature vectors from four modalities:
+         - Description embedding (768-dim)
+         - Content DNA embedding (384-dim, via CNN)
+         - Time DNA embedding (384-dim)
+         - Emoji DNA embedding (e.g., 384-dim)
+        Then, run these features through the trained model to predict the bot probability.
         Returns a list of DetectionMark objects.
         """
         # Group posts by user_id.
@@ -71,7 +64,6 @@ class Detector(ADetector):
             if uid is not None:
                 user_posts.setdefault(uid, []).append(post)
         
-        user_ids = []
         marked_accounts = []
         
         for user in session_data.users:
@@ -86,25 +78,31 @@ class Detector(ADetector):
             # Generate content DNA from user's posts and compute its CNN embedding.
             posts = user_posts[uid]
             content_dna = generate_content_dna(posts)
-            dna_emb = encode_dna_batch_cnn([content_dna])[0]  # 384-dim vector
+            dna_emb = encode_content_dna_batch_cnn([content_dna])[0]  # 384-dim vector
             
-            # Generate time DNA and compute its embedding.
+            # Generate time DNA and compute its CNN embedding.
             time_dna = generate_time_dna(posts)
-            time_emb = encode_time_dna_batch_cnn([time_dna], time_dna_encoder=time_dna_encoder)[0]  # 384-dim vector
+            time_emb = encode_time_dna_batch_cnn([time_dna])[0]  # 384-dim vector
             
-            # Concatenate all three modalities (total 768+384+384 = 1536 dimensions).
-            feature_vector = np.concatenate([desc_emb, dna_emb, time_emb])
-            user_ids.append(uid)
+            # Generate emoji DNA and compute its CNN embedding.
+            emoji_dna = generate_emoji_dna(posts)
+            emoji_emb = encode_emoji_dna_batch_cnn([emoji_dna])[0]  # assumed 384-dim vector
             
-            # Convert feature vector to tensor and run through the trained model.
-            input_tensor = torch.tensor(feature_vector, dtype=torch.float32).unsqueeze(0)
+            # Convert each modality to a tensor and add a batch dimension.
+            text_tensor = torch.tensor(desc_emb, dtype=torch.float32).unsqueeze(0)
+            dna_tensor = torch.tensor(dna_emb, dtype=torch.float32).unsqueeze(0)
+            time_tensor = torch.tensor(time_emb, dtype=torch.float32).unsqueeze(0)
+            emoji_tensor = torch.tensor(emoji_emb, dtype=torch.float32).unsqueeze(0)
+            
+            # Run through the trained model.
             with torch.no_grad():
-                logits = self.model(input_tensor)
+                logits = self.model(text_tensor, dna_tensor, time_tensor, emoji_tensor)
                 probabilities = torch.softmax(logits, dim=1)
                 pred_class = probabilities.argmax(dim=1).item()
                 confidence = int(probabilities[0, 1].item() * 100)
                 is_bot = (pred_class == 1)  # Assuming class '1' represents bots.
             
             marked_accounts.append(DetectionMark(user_id=uid, confidence=confidence, bot=is_bot))
+        
         print(marked_accounts)
         return marked_accounts

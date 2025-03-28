@@ -213,10 +213,10 @@ def objective(trial):
     model.to(device)
     # hyperparameters for tuning
     learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-2, log=True)
-    weight_decay = trial.suggest_float("weight_decay", 1e-5, 1e-2, log=True)
+    weight_decay = trial.suggest_float("weight_decay", 1e-5, 1e-3, log=True)
     # optimizer and scheduler settings
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    criterion = FocalLoss(gamma=2, alpha=0.25)
+    criterion = FocalLoss(gamma=2.00, alpha=0.25)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, factor=0.1)
     # stratified train/validation split
     indices = np.arange(len(X_train_text_tensor))
@@ -257,9 +257,9 @@ if __name__ == "__main__":
      X_test_time, 
      X_test_emoji, 
      y_test) = load_data(data_dir, 
-                         session_numbers=[], 
+                         session_numbers=[4, 10, 11, 12, 13, 14, 15, 16, 17], 
                          st_model=st_model, 
-                         xnums=[0]
+                         xnums=[]
                          )
     
     # Convert numpy arrays to torch tensors.
@@ -320,7 +320,7 @@ if __name__ == "__main__":
     final_model.to(device)
     
     final_optimizer = optim.Adam(final_model.parameters(), lr=final_learning_rate, weight_decay=final_weight_decay)
-    final_criterion = FocalLoss(gamma=2, alpha=0.25)
+    final_criterion = FocalLoss(gamma=2.00, alpha=0.25)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(final_optimizer, patience=5, factor=0.1)
     
     num_epochs = 20
@@ -349,8 +349,16 @@ if __name__ == "__main__":
     print("Test ROC AUC: {:.4f}".format(roc_auc_score(all_labels, all_preds)))
     print("Test AUPR: {:.4f}".format(average_precision_score(all_labels, all_preds)))
 
-
-
+    # ------------------- Save and Upload Model to Hugging Face ----------------------
+    from upload_model import upload_model_to_hf
+    model_save_path = "hybridv2_weights.bin"
+    torch.save(final_model.state_dict(), model_save_path)
+    
+    # Set your Hugging Face repository ID in the format "<username>/<repo-name>"
+    repo_id = "hzarashid/ForensiX"  # <-- CHANGE THIS to your repo id.
+    
+    upload_model_to_hf(model_save_path, repo_id, commit_message="Upload trained model weights")
+    print(f"Model uploaded to Hugging Face repository: {repo_id}")
 
     # ----- optional class weights if using BCE loss ------
     # from sklearn.utils.class_weight import compute_class_weight
@@ -382,15 +390,6 @@ if __name__ == "__main__":
     # val_idx_updated = np.concatenate([val_idx, rejected_idx])
     # -------------------------------
 
-    # ------------------- Save and Upload Model to Hugging Face ----------------------
-    # from upload_model import upload_model_to_hf
-    # model_save_path = "foo.bin"
-    # torch.save(final_model.state_dict(), model_save_path)
-    
-    # # Set your Hugging Face repository ID in the format "<username>/<repo-name>"
-    # repo_id = "hzarashid/ForensiX"  # <-- CHANGE THIS to your repo id.
-    
-    # upload_model_to_hf(model_save_path, repo_id, commit_message="Upload trained model weights")
-    # print(f"Model uploaded to Hugging Face repository: {repo_id}")
+
 
 
