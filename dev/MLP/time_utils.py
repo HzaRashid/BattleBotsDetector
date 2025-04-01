@@ -41,8 +41,11 @@ def generate_time_dna(tweets):
     for each tweet based on the time since the previous post.
     """
     # Sort tweets by creation time.
+    # print([t['created_at'] for t in tweets])
     tweets.sort(key=lambda tweet: datetime.fromisoformat(tweet["created_at"].replace("Z", "+00:00")))
-    
+    # print()
+    # print()
+    # print([t['created_at'] for t in tweets])
     time_dna = ""
     prev_time = None
     for tweet in tweets:

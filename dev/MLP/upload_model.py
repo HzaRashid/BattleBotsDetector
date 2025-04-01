@@ -16,3 +16,15 @@ def upload_model_to_hf(model_path, repo_id, commit_message="Upload trained model
         repo_id=repo_id,
         commit_message=commit_message
     )
+
+
+    # ------------------- Save and Upload Model to Hugging Face ----------------------
+    # from upload_model import upload_model_to_hf
+    # model_save_path = "hybridv3_weights.bin"
+    # torch.save(final_model.state_dict(), model_save_path)
+    
+    # # Set your Hugging Face repository ID in the format "<username>/<repo-name>"
+    # repo_id = "hzarashid/ForensiX"  # <-- CHANGE THIS to your repo id.
+    
+    # upload_model_to_hf(model_save_path, repo_id, commit_message="Upload trained model weights")
+    # print(f"Model uploaded to Hugging Face repository: {repo_id}")

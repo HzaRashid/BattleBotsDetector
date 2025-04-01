@@ -2,49 +2,56 @@ import torch
 import torch.nn as nn
 
     
-class GatedMultimodalUnit(nn.Module):
+class GatedMultimodalUnitGeneral(nn.Module):
     """
-    A GMU variant that fuses three modalities.
-    It projects each input, then computes gating coefficients over the three,
-    and finally returns a gated sum (with a ReLU activation).
+    A GMU that fuses arbitrary number of modalities.
+    It projects each input, then computes gating coefficients over the them,
+    and finally returns a gated sum.
     """
-    def __init__(self, size_in1, size_in2, size_in3, size_out):
-        super(GatedMultimodalUnit, self).__init__()
-        self.linear1 = nn.Linear(size_in1, size_out, bias=False)
-        self.linear2 = nn.Linear(size_in2, size_out, bias=False)
-        self.linear3 = nn.Linear(size_in3, size_out, bias=False)
+    def __init__(self, size_ins=None, size_out=0):
+        super(GatedMultimodalUnitGeneral, self).__init__()
+        
+        if not size_ins: 
+            size_ins = []
+        
+        self.linears = nn.ModuleList([
+            nn.Linear(size_in, size_out, bias=False) 
+            for size_in in size_ins
+        ])
         
         # Gate layer: maps the concatenated projections to three scalars
-        self.gate_linear = nn.Linear(size_out * 3, 3, bias=False)
+        self.gate_linear = nn.Linear(size_out * (len(size_ins)), len(size_ins), bias=False)
         
         self.tanh = nn.Tanh()
         self.relu = nn.ReLU()
         self.softmax = nn.Softmax(dim=1)
         
-    def forward(self, x1, x2, x3):
-        h1 = self.tanh(self.linear1(x1))
-        h2 = self.tanh(self.linear2(x2))
-        h3 = self.tanh(self.linear3(x3))
-        
+    def forward(self, *x):
+        n = len(x)
+        hiddens = [
+            self.tanh(self.linears[i](x[i]))
+            for i in range(n)
+
+        ]
         # Concatenate along the feature dimension.
-        combined = torch.cat((h1, h2, h3), dim=1)
-        # Compute gates (one per modality) and normalize with softmax.
-        gates = self.softmax(self.gate_linear(combined))  # shape: (batch, 3)
-        g1, g2, g3 = gates[:, 0].unsqueeze(1), gates[:, 1].unsqueeze(1), gates[:, 2].unsqueeze(1)
+        combined = torch.cat([hiddens[i] for i in range(n)], dim=1)
+        # compute gates and normalize with softmax.
+        gates = self.softmax(self.gate_linear(combined))
+        weights = [gates[:, i].unsqueeze(1) for i in range(n)]
         
-        out = g1 * h1 + g2 * h2 + g3 * h3
+        out = sum(weights[i] * hiddens[i] for i in range(n))
         return out 
+
     
 class GMUAttention(nn.Module):
     def __init__(self, 
                  text_dim=768,
                  content_dim=384,
                  time_dim=384,
-                 emoji_dim=384,
                  hidden_dim=384,
                  clf_hidden_dim=64,
                  num_classes=2,
-                 dropout_rate=0.1):
+                 dropout_rate=0.2):
         super(GMUAttention, self).__init__()
         
         # Projection layer for the text modality.
@@ -57,7 +64,8 @@ class GMUAttention(nn.Module):
         self.dropout = nn.Dropout(dropout_rate)
 
         # GMU to fuse content and time modalities.
-        self.dna_gmu = GatedMultimodalUnit(content_dim, time_dim, emoji_dim, hidden_dim)
+        self.dna_gmu = GatedMultimodalUnitGeneral(size_ins=[content_dim, time_dim], 
+                                                  size_out=hidden_dim)
         
         # Cross-attention layer: text as query, GMU output as key/value.
         self.cross_attn_text_query = nn.MultiheadAttention(embed_dim=hidden_dim,
@@ -81,7 +89,6 @@ class GMUAttention(nn.Module):
             nn.Dropout(dropout_rate),
             nn.Linear(4 * hidden_dim, hidden_dim)
         )
-        # self.layer_norm_ffn = nn.LayerNorm(hidden_dim)
         
         # Classification head.
         self.clf_head = nn.Sequential(
@@ -91,11 +98,11 @@ class GMUAttention(nn.Module):
             nn.Linear(clf_hidden_dim, num_classes)
         )
 
-    def forward(self, text, content, time, emoji):
+    def forward(self, text, content, time):
         # Project the text modality.
         text_emb = self.relu(self.text_proj(text))
         # Fuse content and time via the GMU.
-        gmu_out = self.dna_gmu(content, time, emoji)
+        gmu_out = self.dna_gmu(content, time)
 
         # Prepare tokens for cross-attention by adding a sequence dimension.
         text_token = text_emb.unsqueeze(1)      # shape: (batch, 1, hidden_dim)
