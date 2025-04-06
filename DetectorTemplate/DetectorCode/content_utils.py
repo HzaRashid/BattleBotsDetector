@@ -1,11 +1,13 @@
-
 import re
 import torch
 import numpy as np
 import torch.nn as nn
 from PIL import Image
 from datetime import datetime
-from torchvision import transforms, models as tv_models  # for CNN encoder
+from torchvision import transforms
+# Removed unused torchvision models import since we're switching to MobileViT-Small
+
+from transformers import MobileViTImageProcessor, MobileViTForImageClassification
 
 # -------------------------
 # Digital DNA Functions
@@ -34,15 +36,17 @@ def generate_content_dna(tweets):
     dna = "".join(get_content_dna_symbol(tweet["text"]) for tweet in tweets)
     return dna
 # ---------------------------------------------------------------------------
+
+DESIRED_SIZE = 128
 # -------------------------
 # CNN-based DNA Encoder
 # -------------------------
 def dna_to_tensor(dna, 
                   mapping={"N": 0, "U": 64, "H": 128, "M": 192, "X": 255},
-                  desired_size=64):
+                  desired_size=DESIRED_SIZE):
     """
-    Converts a DNA string into a grayscale image that is resized to desired_size
-    and then converted to a normalized RGB tensor.
+    Converts a DNA string into a grayscale image that is resized to desired_size,
+    then converts it to a normalized RGB tensor.
     """
     values = [mapping[symbol] for symbol in dna if symbol in mapping]
     length = len(values)
@@ -61,30 +65,36 @@ def dna_to_tensor(dna,
     tensor = transform(img)
     return tensor
 
-class DNACNNEncoder(nn.Module):
-    def __init__(self, output_dim=384):
-        super(DNACNNEncoder, self).__init__()
-        # Use pretrained MobileNetV2 from torchvision.
-        self.cnn = tv_models.mobilenet_v2(weights=tv_models.MobileNet_V2_Weights.DEFAULT)
-        self.features = self.cnn.features
-        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.fc = nn.Linear(1280, output_dim)
-        
-    def forward(self, x):
-        with torch.no_grad():
-            features = self.features(x)
-            pooled = self.avgpool(features)
-        pooled = pooled.view(pooled.size(0), -1)
-        out = self.fc(pooled)
-        return out
-
-# Instantiate CNN-based encoder and set to evaluation mode.
-dna_cnn_encoder = DNACNNEncoder()
+# Load MobileViT-Small model and feature extractor from Hugging Face
+feature_extractor = MobileViTImageProcessor.from_pretrained("apple/mobilevit-small")
+dna_cnn_encoder = MobileViTForImageClassification.from_pretrained("apple/mobilevit-small")
+# Replace the final classification layer with an identity mapping
+dna_cnn_encoder.classifier = nn.Identity()
 dna_cnn_encoder.eval()
 
-def encode_content_dna_batch_cnn(dna_sequences, desired_size=64):
+def encode_content_dna_batch_cnn(dna_sequences, desired_size=DESIRED_SIZE):
     tensors = [dna_to_tensor(seq, desired_size=desired_size) for seq in dna_sequences]
     input_tensor = torch.stack(tensors)  # shape: [batch, 3, desired_size, desired_size]
     with torch.no_grad():
-        embeddings = dna_cnn_encoder(input_tensor)
+        # Note: MobileViT expects the input under the keyword 'pixel_values'
+        outputs = dna_cnn_encoder(pixel_values=input_tensor)
+        embeddings = outputs.logits
     return embeddings.numpy()
+
+
+if __name__ == "__main__":
+    # Sample test tweets
+    tweets = [
+        {"created_at": "2023-04-01T12:00:00Z", "text": "Hello world! Check out http://example.com"},
+        {"created_at": "2023-04-01T13:00:00Z", "text": "Another tweet with #hashtag"},
+        {"created_at": "2023-04-01T14:00:00Z", "text": "Tweet with @mention"},
+        {"created_at": "2023-04-01T15:00:00Z", "text": "Just a simple tweet."}
+    ]
+
+    # Generate DNA string from tweets
+    dna_str = generate_content_dna(tweets)
+    print("Generated DNA:", dna_str)
+
+    # Encode the generated DNA using MobileViT-Small CNN encoder
+    embeddings = encode_content_dna_batch_cnn([dna_str])
+    print("Embeddings shape:", embeddings.shape)

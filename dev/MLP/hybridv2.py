@@ -5,8 +5,6 @@ import torch.nn as nn
 class GatedMultimodalUnitGeneral(nn.Module):
     """
     A GMU that fuses arbitrary number of modalities.
-    It projects each input, then computes gating coefficients over the them,
-    and finally returns a gated sum.
     """
     def __init__(self, size_ins=None, size_out=0):
         super(GatedMultimodalUnitGeneral, self).__init__()
@@ -31,7 +29,6 @@ class GatedMultimodalUnitGeneral(nn.Module):
         hiddens = [
             self.tanh(self.linears[i](x[i]))
             for i in range(n)
-
         ]
         # Concatenate along the feature dimension.
         combined = torch.cat([hiddens[i] for i in range(n)], dim=1)
@@ -46,12 +43,12 @@ class GatedMultimodalUnitGeneral(nn.Module):
 class GMUAttention(nn.Module):
     def __init__(self, 
                  text_dim=768,
-                 content_dim=384,
-                 time_dim=384,
-                 hidden_dim=384,
-                 clf_hidden_dim=64,
+                 content_dim=640,
+                 time_dim=640,
+                 hidden_dim=256,
+                 clf_hidden_dim=128,
                  num_classes=2,
-                 dropout_rate=0.2):
+                 dropout_rate=0.1):
         super(GMUAttention, self).__init__()
         
         # Projection layer for the text modality.
@@ -67,14 +64,15 @@ class GMUAttention(nn.Module):
         self.dna_gmu = GatedMultimodalUnitGeneral(size_ins=[content_dim, time_dim], 
                                                   size_out=hidden_dim)
         
+        
         # Cross-attention layer: text as query, GMU output as key/value.
         self.cross_attn_text_query = nn.MultiheadAttention(embed_dim=hidden_dim,
-                                                           num_heads=6,
+                                                           num_heads=4,
                                                            dropout=dropout_rate,
                                                            batch_first=True)
         # Cross-attention layer: GMU output as query, text as key/value.
         self.cross_attn_gmu_query = nn.MultiheadAttention(embed_dim=hidden_dim,
-                                                          num_heads=6,
+                                                          num_heads=4,
                                                           dropout=dropout_rate,
                                                           batch_first=True)
         # pre normalizations for each cross-attention input.
@@ -84,10 +82,10 @@ class GMUAttention(nn.Module):
 
         # A feedforward network to further process the concatenated tokens.
         self.ffn = nn.Sequential(
-            nn.Linear(hidden_dim, 4 * hidden_dim),
+            nn.Linear(hidden_dim, clf_hidden_dim),
             nn.ReLU(),
             nn.Dropout(dropout_rate),
-            nn.Linear(4 * hidden_dim, hidden_dim)
+            nn.Linear(clf_hidden_dim, hidden_dim)
         )
         
         # Classification head.
@@ -124,7 +122,6 @@ class GMUAttention(nn.Module):
 
         # Concatenate the outputs along the sequence dimension.
         combined = torch.cat([attn1, attn2], dim=1)  # shape: (batch, 2, hidden_dim)
-
 
         # Process with an FFN (with residual connection).
         ffn_out = self.ffn(
