@@ -22,7 +22,7 @@ from .tweet_embs import sample_evenly_tweets, compute_mean_embeddings  # new twe
 torch.manual_seed(42)
 np.random.seed(42)
 
-BATCH_SIZE = 64
+BATCH_SIZE = 32
 
 # -------------------------
 # Load Description Embedding Model (SentenceTransformer)
