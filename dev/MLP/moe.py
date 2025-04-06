@@ -87,7 +87,7 @@ class MOEExpert(nn.Module):
         self.expert = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
             nn.ReLU(),
-            nn.Dropout(p=0.1),
+            nn.Dropout(p=0.3),
             nn.Linear(hidden_dim, output_dim),
             # nn.ReLU(),
         )
