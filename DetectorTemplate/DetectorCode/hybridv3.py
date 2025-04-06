@@ -1,29 +1,35 @@
 import torch
 import torch.nn as nn
-from moe import MixtureOfExperts  # assuming your MOE module is in moe.py
+# from moe import MixtureOfExperts  # assuming your MOE module is in moe.py
 import torch.nn.functional as F
+from .moe2 import MixtureOfExperts
 
 class FeatureAlign(nn.Module):
     def __init__(self,align_size):
         super(FeatureAlign,self).__init__()
+
         self.linear_relu_des=nn.Sequential(
             nn.Linear(768,int(align_size)),
-            nn.ReLU()
+            nn.LeakyReLU(),
+            # nn.Linear(int(align_size),int(align_size)),
         )
         self.linear_relu_tweet=nn.Sequential(
             nn.Linear(768,int(align_size)),
-            nn.ReLU()
+            nn.LeakyReLU(),
+            # nn.Linear(int(align_size),int(align_size)),
         )
         self.linear_content_dna=nn.Sequential(
             nn.Linear(640,int(align_size)),
-            nn.ReLU()
+            nn.LeakyReLU(),
+            # nn.Linear(int(align_size),int(align_size)),
         )
         self.linear_time_dna=nn.Sequential(
             nn.Linear(640,int(align_size)),
-            nn.ReLU()
+            nn.LeakyReLU(),
+            # nn.Linear(int(align_size),int(align_size)),
         )
 
-    def forward(self,des_tensor,tweets_tensor,content_dna_tensor,time_dna_tensor):
+    def forward(self, des_tensor,tweets_tensor,content_dna_tensor,time_dna_tensor):
         des_tensor,tweets_tensor,content_dna_tensor,time_dna_tensor=self.linear_relu_des(des_tensor),self.linear_relu_tweet(tweets_tensor),\
                                                         self.linear_content_dna(content_dna_tensor),self.linear_time_dna(time_dna_tensor)
         return des_tensor,tweets_tensor,content_dna_tensor,time_dna_tensor
@@ -51,7 +57,7 @@ class LModel(nn.Module):
         super(LModel, self).__init__()
         self.multihead_attention = nn.MultiheadAttention(embed_dim=embed_dim, 
                                                          num_heads=num_heads,
-                                                        #  dropout=0.1, 
+                                                         dropout=0.1, 
                                                          batch_first=True)
         # if activation == 'ReLU':
         #     self.activation = nn.ReLU()
@@ -61,9 +67,9 @@ class LModel(nn.Module):
         #     self.activation = nn.SELU()
         self.norm_first = norm_first
         self.norm1 = nn.LayerNorm(embed_dim)
-        # self.norm2 = nn.LayerNorm(embed_dim, eps=layer_norm_eps)
-        # self.dropout1 = nn.Dropout(p=dropout)
-        # self.dropout2 = nn.Dropout(p=dropout)
+        # self.norm2 = nn.LayerNorm(embed_dim)
+        # self.dropout1 = nn.Dropout(p=0.1)
+        # self.dropout2 = nn.Dropout(p=0.1)
 
     def forward(self, text_src):
         if self.norm_first:
@@ -77,6 +83,7 @@ class LModel(nn.Module):
         text, attention_weight = self.multihead_attention(text, text, text)
         # text = self.dropout1(text)
         return text, attention_weight
+    
 
 # Simplified MOEAttention model.
 class MOEAttention(nn.Module):
@@ -90,14 +97,15 @@ class MOEAttention(nn.Module):
         self.align_size = 128
         self.align = FeatureAlign(align_size=self.align_size)
         self.expert_out_dim = 128
+
         # MOE for fusing text and tweet embeddings.
         self.text_tweet_moe = MixtureOfExperts(
             input_dim=2*self.align_size, 
             num_experts=2,
             expert_hidden_dim=expert_hidden_dim,
-            expert_output_dim=self.expert_out_dim,       # Changed from 2 to hidden_dim.
-            router_hidden_dim=router_hidden_dim,
-            sparse_routing=True,
+            expert_output_dim=self.expert_out_dim,
+            # router_hidden_dim=router_hidden_dim,
+            # sparse_routing=True,
             top_k=top_k
         )
         # MOE for fusing content and time embeddings.
@@ -105,9 +113,9 @@ class MOEAttention(nn.Module):
             input_dim=2*self.align_size,
             num_experts=2,
             expert_hidden_dim=expert_hidden_dim,
-            expert_output_dim=self.expert_out_dim,       # Changed from 2 to hidden_dim.
-            router_hidden_dim=router_hidden_dim,
-            sparse_routing=True,
+            expert_output_dim=self.expert_out_dim,
+            # router_hidden_dim=router_hidden_dim,
+            # sparse_routing=True,
             top_k=top_k
         )
         
@@ -116,6 +124,7 @@ class MOEAttention(nn.Module):
         
         # Fixed pooling as used in AllInOne.
         self.fixed_pooling = FixedPooling(fixed_size=4)
+        # self.adaptive_pooling = nn.AdaptiveMaxPool2d((4, 4))
         
         # Batch normalization applied to the stacked outputs.
         self.bn1 = nn.BatchNorm1d(self.expert_out_dim)
@@ -123,21 +132,17 @@ class MOEAttention(nn.Module):
         
         # The final feature dimension is the concatenation of:
         # - Fused tokens: here, we have 2 tokens each of dimension hidden_dim.
-        # - Pooled attention: fixed pooling produces a (6 x 6) map → 36 features.
+        # - Pooled attention: fixed pooling produces a (4 x 4) map → 16 features.
         final_feature_dim = self.expert_out_dim * 2 + 16
         self.bn2 = nn.BatchNorm1d(final_feature_dim)
         # self.dropout2 = nn.Dropout(p=0.1)
-        self.mlp_classifier = nn.Sequential(
-            nn.Linear(final_feature_dim, 64),
-            nn.ReLU(),
-            nn.Linear(64, num_classes))
+        self.mlp_classifier = nn.Linear(final_feature_dim, num_classes)
 
         self.apply(init_weights)
 
     def forward(self, text, tweet, content, time):
 
         text, tweet, content, time = self.align(text, tweet, content, time)
-        
         text_out, aux_loss_text = self.text_tweet_moe(torch.cat((text, tweet), dim=1))
         dna_out, aux_loss_dna = self.dna_moe(torch.cat((content, time), dim=1))
         aux_loss = aux_loss_text + aux_loss_dna
@@ -152,16 +157,16 @@ class MOEAttention(nn.Module):
         
         # Fuse tokens using LModel.
         fused, attn = self.fusion(out_tensor)  # fused: (batch, 2, hidden_dim), attn: (batch, num_heads, 2, 2)
-        
+        # print("attention shape:", attn.shape)
         # Apply fixed pooling to the attention map.
         attn = self.fixed_pooling(attn)  # Expected output shape: (batch, 6, 6)
-        
+        # attn = self.adaptive_pooling(attn)
         # Flatten the fused tokens and attention map.
         fused_flat = fused.reshape(fused.size(0), -1)       # (batch, 2*hidden_dim)
-        attn_flat = attn.reshape(attn.size(0), -1)            # (batch, 36)
+        attn_flat = attn.reshape(attn.size(0), -1)            # (batch, 16)
         
         # Concatenate and classify.
-        final_features = torch.cat([fused_flat, attn_flat], dim=1)  # (batch, 2*hidden_dim + 36)
+        final_features = torch.cat([fused_flat, attn_flat], dim=1)  # (batch, 2*hidden_dim + 16)
         final_features = self.bn2(final_features)
         # final_features = self.dropout2(final_features)
         logits = self.mlp_classifier(final_features)
@@ -171,6 +176,8 @@ class MOEAttention(nn.Module):
 def init_weights(m):
     if type(m)==nn.Linear:
         nn.init.xavier_uniform_(m.weight)
+        if m.bias is not None:
+            nn.init.constant_(m.bias, 0)
 
 # Example usage:
 if __name__ == "__main__":
@@ -181,6 +188,7 @@ if __name__ == "__main__":
     time_dim = 640
 
     # Dummy inputs.
+    # naive_input = torch.randn(batch_size, 20)       # Description embeddings.
     text_input = torch.randn(batch_size, text_dim)       # Description embeddings.
     tweet_input = torch.randn(batch_size, tweet_dim)       # Meta tweet embeddings.
     content_input = torch.randn(batch_size, content_dim)

@@ -11,17 +11,18 @@ from sentence_transformers import SentenceTransformer, models
 from huggingface_hub import hf_hub_download
 
 # ------------* custom model and utils *------------
-from .hybridv2 import GMUAttention   # updated: use GMUAttention from hybridv2 to match training
-from .time_utils import generate_time_dna, TimeDNAEncoder, encode_time_dna_batch_cnn
+from .hybridv3 import MOEAttention   # updated: use GMUAttention from hybridv2 to match training
+from .time_utils import generate_time_dna, encode_time_dna_batch_cnn
 from .content_utils import generate_content_dna, encode_content_dna_batch_cnn  # updated for consistency with training
-from .emoji_utils import generate_emoji_dna, encode_emoji_dna_batch_cnn           # added emoji utilities
-# -------------------------------------------------
+from .tweet_embs import sample_evenly_tweets, compute_mean_embeddings  # new tweet embedding utilities
 
 # -------------------------
 # Set Seed for Reproducibility
 # -------------------------
 torch.manual_seed(42)
 np.random.seed(42)
+
+BATCH_SIZE = 64
 
 # -------------------------
 # Load Description Embedding Model (SentenceTransformer)
@@ -42,8 +43,8 @@ class Detector(ADetector):
         self.st_model = st_model
 
         # Load the trained PyTorch model from Hugging Face.
-        model_path = hf_hub_download(repo_id="hzarashid/ForensiX", filename="hybridv2_weights.bin")
-        self.model = GMUAttention()  # updated: use GMUAttention as in training
+        model_path = hf_hub_download(repo_id="hzarashid/ForensiX", filename="hybridv3_weights.bin")
+        self.model = MOEAttention()  # updated: use GMUAttention as in training
         self.model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')), strict=False)
         self.model.eval()
         
@@ -51,9 +52,9 @@ class Detector(ADetector):
         """
         For each user in the session, compute the feature vectors from four modalities:
          - Description embedding (768-dim)
+         - Mean tweet embedding (via compute_mean_embeddings)
          - Content DNA embedding (384-dim, via CNN)
          - Time DNA embedding (384-dim)
-         - Emoji DNA embedding (e.g., 384-dim)
         Then, run these features through the trained model to predict the bot probability.
         Returns a list of DetectionMark objects.
         """
@@ -64,45 +65,58 @@ class Detector(ADetector):
             if uid is not None:
                 user_posts.setdefault(uid, []).append(post)
         
-        marked_accounts = []
+        # Prepare lists for batch processing.
+        user_ids = []
+        desc_texts = []
+        tweet_texts_list = []  # each entry is a list of sampled tweet texts for the user
+        content_dna_list = []
+        time_dna_list = []
         
         for user in session_data.users:
             uid = user.get("id")
             if uid is None or uid not in user_posts:
                 continue
-            
-            # Compute description embedding.
+            user_ids.append(uid)
             description = user.get("description", "")
-            desc_emb = self.st_model.encode(description)  # 768-dim vector
+            desc_texts.append(description)
             
-            # Generate content DNA from user's posts and compute its CNN embedding.
             posts = user_posts[uid]
+            # Sort posts by creation time.
+            posts_sorted = sorted(posts, key=lambda x: datetime.fromisoformat(x["created_at"].replace("Z", "+00:00")))
+            texts = [post.get("text", "") for post in posts_sorted]
+            # Sample tweets evenly (e.g., 5 tweets per user).
+            sampled_tweets = sample_evenly_tweets(texts, n=5)
+            tweet_texts_list.append(sampled_tweets)
+            
+            # Generate content and time DNA sequences.
             content_dna = generate_content_dna(posts)
-            dna_emb = encode_content_dna_batch_cnn([content_dna])[0]  # 384-dim vector
-            
-            # Generate time DNA and compute its CNN embedding.
             time_dna = generate_time_dna(posts)
-            time_emb = encode_time_dna_batch_cnn([time_dna])[0]  # 384-dim vector
-            
-            # Generate emoji DNA and compute its CNN embedding.
-            emoji_dna = generate_emoji_dna(posts)
-            emoji_emb = encode_emoji_dna_batch_cnn([emoji_dna])[0]  # assumed 384-dim vector
-            
-            # Convert each modality to a tensor and add a batch dimension.
-            text_tensor = torch.tensor(desc_emb, dtype=torch.float32).unsqueeze(0)
-            dna_tensor = torch.tensor(dna_emb, dtype=torch.float32).unsqueeze(0)
-            time_tensor = torch.tensor(time_emb, dtype=torch.float32).unsqueeze(0)
-            emoji_tensor = torch.tensor(emoji_emb, dtype=torch.float32).unsqueeze(0)
-            
-            # Run through the trained model.
-            with torch.no_grad():
-                logits = self.model(text_tensor, dna_tensor, time_tensor, emoji_tensor)
-                probabilities = torch.softmax(logits, dim=1)
-                pred_class = probabilities.argmax(dim=1).item()
-                confidence = int(probabilities[0, 1].item() * 100)
-                is_bot = (pred_class == 1)  # Assuming class '1' represents bots.
-            
-            marked_accounts.append(DetectionMark(user_id=uid, confidence=confidence, bot=is_bot))
+            content_dna_list.append(content_dna)
+            time_dna_list.append(time_dna)
+        
+        # Batch encode the modalities.
+        desc_embs = self.st_model.encode(desc_texts, batch_size=BATCH_SIZE)
+        tweet_embs = compute_mean_embeddings(tweet_texts_list, self.st_model, batch_size=BATCH_SIZE)
+        dna_embs = encode_content_dna_batch_cnn(content_dna_list)
+        time_embs = encode_time_dna_batch_cnn(time_dna_list)
+        
+        # Convert embeddings to tensors.
+        desc_tensor = torch.tensor(desc_embs, dtype=torch.float32)
+        tweet_tensor = torch.tensor(tweet_embs, dtype=torch.float32)
+        dna_tensor = torch.tensor(dna_embs, dtype=torch.float32)
+        time_tensor = torch.tensor(time_embs, dtype=torch.float32)
+        
+        # Run through the trained model in batch.
+        with torch.no_grad():
+            logits, loss = self.model(desc_tensor, tweet_tensor, dna_tensor, time_tensor)
+            probabilities = torch.softmax(logits, dim=1)
+            pred_classes = probabilities.argmax(dim=1).tolist()
+            confidences = (probabilities[:, 1] * 100).tolist()  # assuming class '1' represents bots
+        
+        marked_accounts = []
+        for uid, pred, conf in zip(user_ids, pred_classes, confidences):
+            is_bot = (pred == 1)
+            marked_accounts.append(DetectionMark(user_id=uid, confidence=int(conf), bot=is_bot))
         
         print(marked_accounts)
         return marked_accounts

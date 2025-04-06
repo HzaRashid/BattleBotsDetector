@@ -4,3 +4,4 @@ dev/debug
 dev/inspect_data
 dev/process_data
 pytorch_model.bin
+*.bin

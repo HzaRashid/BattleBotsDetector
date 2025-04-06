@@ -93,9 +93,9 @@ if __name__ == "__main__":
     
     # Load data
     (train, test) = load_data(data_dir, 
-                              session_numbers=[], 
+                              session_numbers=[10, 16, 17, 18, 19], 
                               st_model=st_model, 
-                              xnums=[0]
+                              xnums=[]
                               )
     train_tensors = [torch.tensor(train[i], dtype=dtypes[i]) for i in range(len(train))]
     test_tensors = [torch.tensor(test[i], dtype=dtypes[i]) for i in range(len(test))]
@@ -170,7 +170,15 @@ if __name__ == "__main__":
     print("Test ROC AUC: {:.4f}".format(roc_auc_score(all_labels, all_preds)))
     print("Test AUPR: {:.4f}".format(average_precision_score(all_labels, all_preds)))
 
-
+    from upload_model import upload_model_to_hf
+    model_save_path = "hybridv3_weights.bin"
+    torch.save(final_model.state_dict(), model_save_path)
+    
+    # Set your Hugging Face repository ID in the format "<username>/<repo-name>"
+    repo_id = "hzarashid/ForensiX"  # <-- CHANGE THIS to your repo id.
+    
+    upload_model_to_hf(model_save_path, repo_id, commit_message="Upload trained model weights")
+    print(f"Model uploaded to Hugging Face repository: {repo_id}")
 
 # # ------------------ Evaluation with Min-Max Scaled Positive-Class Confidences ------------------
 # # Here we collect the positive class confidence (probabilities) from softmax for each test example.
