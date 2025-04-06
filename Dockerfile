@@ -7,6 +7,7 @@ RUN apt-get update && \
 # Install necessary Python packages
 RUN pip install requests
 RUN pip install pydantic
+
 RUN pip install pandas
 RUN pip install polars
 RUN pip install scikit-learn
@@ -15,16 +16,20 @@ RUN pip install protobuf
 RUN pip install tiktoken
 RUN pip install sentencepiece
 RUN pip install --upgrade huggingface_hub
-RUN pip install transformers
 RUN pip install ijson
 RUN pip install emoji
+# https://github.com/huggingface/transformers/issues/37311
+# https://github.com/opendatalab/MinerU/issues/2112
+RUN pip install transformers==4.51.0
 RUN pip install --upgrade pip && \
     pip install \
-        torch \
+        torch>=2.5.1 \
         torchvision \
         optuna \
         numpy \
-        pillow 
+        pillow \
+        accelerate==1.6.0
+
 
 
 # Copy source files (ensuring run.sh is available)
