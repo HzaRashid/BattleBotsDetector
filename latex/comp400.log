@@ -1,10 +1,10 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.9.18)  20 APR 2025 16:39
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.9.18)  20 APR 2025 19:50
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
  %&-line parsing enabled.
-**/Users/hamzarashid/Desktop/comp400/latex/Comp400-Report.tex
-(/Users/hamzarashid/Desktop/comp400/latex/Comp400-Report.tex
+**/Users/hamzarashid/Desktop/comp400/latex/comp400.tex
+(/Users/hamzarashid/Desktop/comp400/latex/comp400.tex
 LaTeX2e <2024-06-01> patch level 2
 L3 programming layer <2024-08-30>
 (/usr/local/texlive/2024/texmf-dist/tex/latex/ieeetran/IEEEtran.cls
@@ -325,45 +325,76 @@ Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
 LaTeX Info: Redefining \cite on input line 302.
 LaTeX Info: Redefining \nocite on input line 332.
 Package: cite 2015/02/27  v 5.5
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/caption/subcaption.sty
+Package: subcaption 2023/07/28 v1.6b Sub-captions (AR)
+ (/usr/local/texlive/2024/texmf-dist/tex/latex/caption/caption.sty
+Package: caption 2023/08/05 v3.6o Customizing captions (AR)
+ (/usr/local/texlive/2024/texmf-dist/tex/latex/caption/caption3.sty
+Package: caption3 2023/07/31 v2.4d caption3 kernel (AR)
+\caption@tempdima=\dimen193
+\captionmargin=\dimen194
+\caption@leftmargin=\dimen195
+\caption@rightmargin=\dimen196
+\caption@width=\dimen197
+\caption@indent=\dimen198
+\caption@parindent=\dimen199
+\caption@hangindent=\dimen256
+Package caption Info: Unknown document class (or package),
+(caption)             standard defaults will be used.
+Package caption Info: \@makecaption = \long macro:#1#2->\ifx \@captype \@IEEEtablestring \footnotesize \bgroup \par \centering \@IEEEtabletopskipstrut {\normalfont \footnotesize #1}\\{\normalfont \footnotesize \scshape #2}\par \addvspace {0.5\baselineskip }\egroup \@IEEEtablecaptionsepspace \else \@IEEEfigurecaptionsepspace \setbox \@tempboxa \hbox {\normalfont \footnotesize {#1.}\nobreakspace \nobreakspace #2}\ifdim \wd \@tempboxa >\hsize \setbox \@tempboxa \hbox {\normalfont \footnotesize {#1.}\nobreakspace \nobreakspace }\parbox [t]{\hsize }{\normalfont \footnotesize \noindent \unhbox \@tempboxa #2}\else \ifCLASSOPTIONconference \hbox to\hsize {\normalfont \footnotesize \hfil \box \@tempboxa \hfil }\else \hbox to\hsize {\normalfont \footnotesize \box \@tempboxa \hfil }\fi \fi \fi  on input line 1175.
+)
+
+Package caption Warning: Unknown document class (or package),
+(caption)                standard defaults will be used.
+See the caption package documentation for explanation.
+
+\c@caption@flags=\count303
+\c@continuedfloat=\count304
+Package caption Info: hyperref package is loaded.
+)
+Package caption Info: New subtype `subfigure' on input line 238.
+\c@subfigure=\count305
+Package caption Info: New subtype `subtable' on input line 238.
+\c@subtable=\count306
 ) (/usr/local/texlive/2024/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2024-05-08 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count303
+\l__color_backend_stack_int=\count307
 \l__pdf_internal_box=\box56
-) (./Comp400-Report.aux)
-\openout1 = `Comp400-Report.aux'.
+) (./comp400.aux)
+\openout1 = `comp400.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 13.
-LaTeX Font Info:    ... okay on input line 13.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 13.
-LaTeX Font Info:    ... okay on input line 13.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 13.
-LaTeX Font Info:    ... okay on input line 13.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 13.
-LaTeX Font Info:    ... okay on input line 13.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 13.
-LaTeX Font Info:    ... okay on input line 13.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 13.
-LaTeX Font Info:    ... okay on input line 13.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 13.
-LaTeX Font Info:    ... okay on input line 13.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 13.
-LaTeX Font Info:    ... okay on input line 13.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 13.
-LaTeX Font Info:    ... okay on input line 13.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
 
 -- Lines per column: 56 (exact).
 (/usr/local/texlive/2024/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count304
-\scratchdimen=\dimen193
+\scratchcounter=\count308
+\scratchdimen=\dimen257
 \scratchbox=\box57
-\nofMPsegments=\count305
-\nofMParguments=\count306
+\nofMPsegments=\count309
+\nofMParguments=\count310
 \everyMPshowfont=\toks24
-\MPscratchCnt=\count307
-\MPscratchDim=\dimen194
-\MPnumerator=\count308
-\makeMPintoPDFobject=\count309
+\MPscratchCnt=\count311
+\MPscratchDim=\dimen258
+\MPnumerator=\count312
+\makeMPintoPDFobject=\count313
 \everyMPtoPDFconversion=\toks25
 ) (/usr/local/texlive/2024/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
@@ -371,11 +402,13 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 48
  (/usr/local/texlive/2024/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
 ))
-Package hyperref Info: Link coloring OFF on input line 13.
- (./Comp400-Report.out) (./Comp400-Report.out)
+Package hyperref Info: Link coloring OFF on input line 14.
+ (./comp400.out) (./comp400.out)
 \@outlinefile=\write3
-\openout3 = `Comp400-Report.out'.
+\openout3 = `comp400.out'.
 
+Package caption Info: Begin \AtBeginDocument code.
+Package caption Info: End \AtBeginDocument code.
 
 
 
@@ -384,11 +417,11 @@ Package hyperref Info: Link coloring OFF on input line 13.
 
 
 ]
-LaTeX Font Info:    Trying to load font information for U+msa on input line 88.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 89.
  (/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 88.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 89.
  (/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
@@ -396,36 +429,65 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 
 
 [2]
-LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 221.
+LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 224.
  (/usr/local/texlive/2024/texmf-dist/tex/latex/psnfss/ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 )
-Underfull \hbox (badness 1596) in paragraph at lines 221--222
+Underfull \hbox (badness 1596) in paragraph at lines 224--225
 []\OT1/ptm/m/n/10 Refined Pre-pro-cess-ing: Hash-tags were par-tially pre-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 223--224
+Underfull \hbox (badness 10000) in paragraph at lines 226--227
 []\OT1/ptm/m/n/10 Normalized Em-bed-dings: Sen-tence em-bed-dings
  []
 
 
 
 
-Underfull \hbox (badness 6236) in paragraph at lines 272--274
+Underfull \hbox (badness 6236) in paragraph at lines 275--277
 []\OT1/ptm/m/n/10 Sensitivity to Ses-sion Ar-ti-facts: A non-pretrained
  []
 
 
 
 [3]
+<../figures/ks_exponential.pdf, id=98, 425.95259pt x 280.7978pt>
+File: ../figures/ks_exponential.pdf Graphic file (type pdf)
+<use ../figures/ks_exponential.pdf>
+Package pdftex.def Info: ../figures/ks_exponential.pdf  used on input line 313.
+(pdftex.def)             Requested size: 120.95892pt x 79.73685pt.
+<../figures/ks_lognormal.pdf, id=99, 425.95259pt x 280.7978pt>
+File: ../figures/ks_lognormal.pdf Graphic file (type pdf)
+<use ../figures/ks_lognormal.pdf>
+Package pdftex.def Info: ../figures/ks_lognormal.pdf  used on input line 319.
+(pdftex.def)             Requested size: 120.95892pt x 79.73685pt.
+<../figures/ks_normal.pdf, id=100, 425.95259pt x 280.7978pt>
+File: ../figures/ks_normal.pdf Graphic file (type pdf)
+<use ../figures/ks_normal.pdf>
+Package pdftex.def Info: ../figures/ks_normal.pdf  used on input line 327.
+(pdftex.def)             Requested size: 120.95892pt x 79.73685pt.
+<../figures/ks_weibull.pdf, id=101, 425.95259pt x 280.7978pt>
+File: ../figures/ks_weibull.pdf Graphic file (type pdf)
+<use ../figures/ks_weibull.pdf>
+Package pdftex.def Info: ../figures/ks_weibull.pdf  used on input line 333.
+(pdftex.def)             Requested size: 120.95892pt x 79.73685pt.
+
+Underfull \hbox (badness 1484) in paragraph at lines 342--347
+[]\OT1/ptm/m/n/10 The KS-based anal-y-sis con-firms that sim-ple tem-po-ral
+ []
 
 
-Underfull \hbox (badness 4291) in paragraph at lines 357--358
+
+
+Underfull \hbox (badness 4291) in paragraph at lines 422--423
 []\OT1/ptm/m/n/10 Sparsely gated Mixture-of-Experts (MOE) with self-
  []
 
-No file Comp400-Report.bbl.
+
+
+[4 <../figures/ks_exponential.pdf> <../figures/ks_lognormal.pdf> <../figures/ks_normal.pdf> <../figures/ks_weibull.pdf>]
+No file comp400.bbl.
 
 ** Conference Paper **
 Before submitting the final camera ready copy, remember to:
@@ -439,27 +501,31 @@ Before submitting the final camera ready copy, remember to:
 
 
 
-[4] (./Comp400-Report.aux)
+
+
+[5
+
+] (./comp400.aux)
  ***********
 LaTeX2e <2024-06-01> patch level 2
 L3 programming layer <2024-08-30>
  ***********
-Package rerunfilecheck Info: File `Comp400-Report.out' has not changed.
-(rerunfilecheck)             Checksum: FA9532F364635835F90B780116EF8EFB;3435.
+Package rerunfilecheck Info: File `comp400.out' has not changed.
+(rerunfilecheck)             Checksum: B9129C0C4A1390F76CD9854756C90B59;3800.
  ) 
 Here is how much of TeX's memory you used:
- 10704 strings out of 473579
- 167157 string characters out of 5728234
- 578657 words of memory out of 5000000
- 33461 multiletter control sequences out of 15000+600000
- 590757 words of font info for 95 fonts, out of 8000000 for 9000
+ 12179 strings out of 473579
+ 196016 string characters out of 5728234
+ 603832 words of memory out of 5000000
+ 34922 multiletter control sequences out of 15000+600000
+ 591835 words of font info for 96 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,8n,79p,637b,442s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,8n,79p,630b,502s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on Comp400-Report.pdf (4 pages, 102391 bytes).
+Output written on comp400.pdf (5 pages, 148647 bytes).
 PDF statistics:
- 131 PDF objects out of 1000 (max. 8388607)
- 109 compressed objects within 2 object streams
- 21 named destinations out of 1000 (max. 500000)
- 129 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 297 PDF objects out of 1000 (max. 8388607)
+ 144 compressed objects within 2 object streams
+ 25 named destinations out of 1000 (max. 500000)
+ 165 words of extra memory for PDF output out of 10000 (max. 10000000)
 

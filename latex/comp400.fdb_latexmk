@@ -1,14 +1,18 @@
 # Fdb version 4
-["bibtex Comp400-Report"] 0 "Comp400-Report.aux" "Comp400-Report.bbl" "Comp400-Report" 1745181576.95715 0
+["bibtex comp400"] 0 "comp400.aux" "comp400.bbl" "comp400" 1745193045.07004 0
   "/usr/local/texlive/2024/texmf-dist/bibtex/bst/ieeetran/IEEEtran.bst" 1440712899 57748 7c8250ecf02814ce6ddc0cdbb63df1dd ""
-  "Comp400-Report.aux" 0 -1 0 "pdflatex"
+  "comp400.aux" 0 -1 0 "pdflatex"
   "references.bib" 0 -1 0 ""
   (generated)
-  "Comp400-Report.bbl"
-  "Comp400-Report.blg"
+  "comp400.bbl"
+  "comp400.blg"
   (rewritten before read)
-["pdflatex"] 1745181576.18435 "/Users/hamzarashid/Desktop/comp400/latex/Comp400-Report.tex" "Comp400-Report.pdf" "Comp400-Report" 1745181576.95731 0
-  "/Users/hamzarashid/Desktop/comp400/latex/Comp400-Report.tex" 1745181575.94718 22600 e75431885cbb360189ab7ad89434604d ""
+["pdflatex"] 1745193044.28937 "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" "comp400.pdf" "comp400" 1745193045.07019 0
+  "../figures/ks_exponential.pdf" 1745190391.70922 13776 4bb0dfeb9b436f6523b1153f3d86f3c3 ""
+  "../figures/ks_lognormal.pdf" 1745190396.84376 14371 35ea9f4a7909ce60306976713595202d ""
+  "../figures/ks_normal.pdf" 1745190401.3511 13909 5401c604576fcaea0192d237b3160d86 ""
+  "../figures/ks_weibull.pdf" 1745190405.22455 14264 359d3dc05da30636a690272d80308ee8 ""
+  "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" 1745193044.10698 25497 2e6d18a2592d2eda6c860519c145a5c4 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/base/8r.enc" 1165713224 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/local/texlive/2024/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/tfm/adobe/courier/pcrr7t.tfm" 1136768653 960 379cc0019370a9e0208a0a3f949f847a ""
@@ -69,6 +73,9 @@
   "/usr/local/texlive/2024/texmf-dist/tex/latex/base/atbegshi-ltx.sty" 1717359999 2963 e56732bbb93cfa019febfd0c7eaf1d21 ""
   "/usr/local/texlive/2024/texmf-dist/tex/latex/base/atveryend-ltx.sty" 1717359999 2378 05fbb4f2b23b0e142f8cd3440c37e72e ""
   "/usr/local/texlive/2024/texmf-dist/tex/latex/booktabs/booktabs.sty" 1579038678 6078 f1cb470c9199e7110a27851508ed7a5c ""
+  "/usr/local/texlive/2024/texmf-dist/tex/latex/caption/caption.sty" 1696191071 56128 c2ccf1a29d78c33bc553880402e4fb9a ""
+  "/usr/local/texlive/2024/texmf-dist/tex/latex/caption/caption3.sty" 1696191071 72619 ee90b6612147680fd73c3b1406a74245 ""
+  "/usr/local/texlive/2024/texmf-dist/tex/latex/caption/subcaption.sty" 1690576852 12494 0c0cdb824278a4d51cefeb2e79901315 ""
   "/usr/local/texlive/2024/texmf-dist/tex/latex/cite/cite.sty" 1425427964 26218 19edeff8cdc2bcb704e8051dc55eb5a7 ""
   "/usr/local/texlive/2024/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty" 1579991033 13886 d1306dcf79a944f6988e688c1785f9ce ""
   "/usr/local/texlive/2024/texmf-dist/tex/latex/etoolbox/etoolbox.sty" 1601931149 46845 3b58f70c6e861a13d927bff09d35ecbc ""
@@ -98,13 +105,13 @@
   "/usr/local/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1726687478 5498206 6c0f03cb370063b7ddbd563e5f9ce23a ""
   "/usr/local/texlive/2024/texmf-var/web2c/pdftex/pdflatex.fmt" 1726687597 3326097 67d158ddf1124cb5acae0cccb2750d58 ""
   "/usr/local/texlive/2024/texmf.cnf" 1726687468.2814 577 e590dabc9e28c5b61546e15f63eebcdf ""
-  "Comp400-Report.aux" 1745181576.72896 2513 b204455bebbb90e465f589a73c755478 "pdflatex"
-  "Comp400-Report.bbl" 0 -1 0 "bibtex Comp400-Report"
-  "Comp400-Report.out" 1745181576.72942 3435 fa9532f364635835f90b780116ef8efb "pdflatex"
-  "Comp400-Report.tex" 1745181575.94718 22600 e75431885cbb360189ab7ad89434604d ""
+  "comp400.aux" 1745193044.81837 3774 7c7914fc41545b183c148d2c1f9659c5 "pdflatex"
+  "comp400.bbl" 0 -1 0 "bibtex comp400"
+  "comp400.out" 1745193044.81911 3800 b9129c0c4a1390f76cd9854756c90b59 "pdflatex"
+  "comp400.tex" 1745193044.10698 25497 2e6d18a2592d2eda6c860519c145a5c4 ""
   (generated)
-  "Comp400-Report.aux"
-  "Comp400-Report.log"
-  "Comp400-Report.out"
-  "Comp400-Report.pdf"
+  "comp400.aux"
+  "comp400.log"
+  "comp400.out"
+  "comp400.pdf"
   (rewritten before read)

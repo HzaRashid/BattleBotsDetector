@@ -5,6 +5,7 @@
 \usepackage{amssymb}
 \usepackage{booktabs}
 \usepackage{cite}
+\usepackage{subcaption}
 
 \title{Multimodal Bot Detection on X}
 \author{Hamza Rashid \\ McGill University \\ COMP 400}
@@ -109,6 +110,8 @@ Sessions were divided into multiple sequential sub-sessions to mimic the real-ti
 \subsection{Technical Setup}
 
 Participant submissions (bot and detector code) were managed via public GitHub repositories cloned into Docker images deployed on EC2 instances, ensuring standardized computing resources and fair evaluation conditions. Submissions were required to execute fully within a one-hour timeframe, after which automated shutdown procedures terminated any ongoing processes.
+
+\section{fuck aroudn}
 
 
 
@@ -285,6 +288,68 @@ its limitations became evident in detecting sophisticated or adaptive bots (incr
 motivating the shift to multimodal neural architectures whose underlying features can adapt to evolving behaviours on X.
 
 
+\subsection{Temporal Feature Analysis via KS Tests}
+To assess the discriminative power of static temporal features, 
+we computed inter-post interval distributions for each user and 
+performed Kolmogorov--Smirnov (KS) tests against four theoretical 
+models: exponential, normal, lognormal, and Weibull. Figures~\ref{fig:ks_exponential}-\ref{fig:ks_weibull} 
+display the resulting KS statistic distributions for bots versus humans. The significant overlap indicates 
+that these time-based summaries alone are insufficient, motivating the temporal-DNA in our multimodal architectures.
+
+% To motivate our use of temporal-DNA in the multimodal architecture, we provide statistical 
+% goodness-of-fit tests using the Kolmogorov–Smirnov (KS) statistic, showing little difference between humans and bots, 
+% except for outliers. 
+% For each user, we fit four different distributions---Exponential, Lognormal, Normal, 
+% and Weibull—--to their inter-post gaps and computed the KS statistic between the 
+% empirical and fitted distributions.
+A lower KS value indicates a better fit to 
+the assumed distribution, while a higher value 
+implies greater deviation from the theoretical model. 
+
+\begin{figure}[htbp]
+    \centering
+
+    \begin{subfigure}[b]{0.48\linewidth}
+        \includegraphics[width=\linewidth]{../figures/ks_exponential.pdf}
+        \caption{Exponential model}
+        \label{fig:ks_exponential}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\linewidth}
+        \includegraphics[width=\linewidth]{../figures/ks_lognormal.pdf}
+        \caption{Lognormal model}
+        \label{fig:ks_lognormal}
+    \end{subfigure}
+
+    \vspace{1em}
+
+    \begin{subfigure}[b]{0.48\linewidth}
+        \includegraphics[width=\linewidth]{../figures/ks_normal.pdf}
+        \caption{Normal model}
+        \label{fig:ks_normal}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\linewidth}
+        \includegraphics[width=\linewidth]{../figures/ks_weibull.pdf}
+        \caption{Weibull model}
+        \label{fig:ks_weibull}
+    \end{subfigure}
+
+    \caption{KS statistic distributions for inter-post intervals under various distributional fits.}
+    \label{fig:ks_all_models}
+\end{figure}
+
+The KS-based analysis confirms that simple temporal 
+descriptors--—modeled via exponential, normal, lognormal, or Weibull fits--—fail to 
+distinguish bots from humans with sufficient clarity. The substantial overlap in 
+KS statistics across all four models indicates that these static summaries cannot 
+capture the complex timing behaviors exhibited by sophisticated bots.
+
+This finding motivates our shift toward deep multimodal architectures, 
+where temporal information is represented and learned jointly with other 
+behavioral signals, enabling the model to uncover subtle, context-dependent 
+patterns that handcrafted temporal features miss.
+
 
 \subsection{Final - Multimodal Architecture}
 
@@ -316,10 +381,10 @@ Our primary modalities include:
     
 \end{itemize}
 
-This architectural shift is motivated by modern methods such as \textit{``Multimodal Detection of Bots on X (Twitter) using
+This architectural shift draws inspiration from modern methods such as \textit{``Multimodal Detection of Bots on X (Twitter) using
 Transformers''} (Ilias et al., 2023), and \textit{``BotMoE: Twitter Bot Detection with Community-Aware
 Mixtures of Modal-Specific Experts''} (Liu et al., 2023). Utilizing DNA representations allows us to 
-model user behaviour in novel way given the restrictions of the features available to us, and multimodal interactions
+model user behaviour in novel way given the restriced features available to us, while multimodal interactions
 help offset hard-to-identify bots with respect to any one of the modalities.
 
 We also hypothesize that no single fusion strategy is optimal across all bot types. Some bots may exhibit obvious semantic repetition, while others may mimic natural text but fall short on timing regularity. As such, we design and evaluate three complementary architectures:
