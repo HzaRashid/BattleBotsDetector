@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.9.18)  20 APR 2025 19:50
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.9.18)  20 APR 2025 19:58
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -429,58 +429,58 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 
 
 [2]
-LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 224.
+LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 220.
  (/usr/local/texlive/2024/texmf-dist/tex/latex/psnfss/ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 )
-Underfull \hbox (badness 1596) in paragraph at lines 224--225
+Underfull \hbox (badness 1596) in paragraph at lines 220--221
 []\OT1/ptm/m/n/10 Refined Pre-pro-cess-ing: Hash-tags were par-tially pre-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 226--227
+Underfull \hbox (badness 10000) in paragraph at lines 222--223
 []\OT1/ptm/m/n/10 Normalized Em-bed-dings: Sen-tence em-bed-dings
  []
 
 
 
 
-Underfull \hbox (badness 6236) in paragraph at lines 275--277
+Underfull \hbox (badness 6236) in paragraph at lines 271--273
 []\OT1/ptm/m/n/10 Sensitivity to Ses-sion Ar-ti-facts: A non-pretrained
  []
 
 
 
 [3]
-<../figures/ks_exponential.pdf, id=98, 425.95259pt x 280.7978pt>
+<../figures/ks_exponential.pdf, id=94, 425.95259pt x 280.7978pt>
 File: ../figures/ks_exponential.pdf Graphic file (type pdf)
 <use ../figures/ks_exponential.pdf>
-Package pdftex.def Info: ../figures/ks_exponential.pdf  used on input line 313.
+Package pdftex.def Info: ../figures/ks_exponential.pdf  used on input line 309.
 (pdftex.def)             Requested size: 120.95892pt x 79.73685pt.
-<../figures/ks_lognormal.pdf, id=99, 425.95259pt x 280.7978pt>
+<../figures/ks_lognormal.pdf, id=95, 425.95259pt x 280.7978pt>
 File: ../figures/ks_lognormal.pdf Graphic file (type pdf)
 <use ../figures/ks_lognormal.pdf>
-Package pdftex.def Info: ../figures/ks_lognormal.pdf  used on input line 319.
+Package pdftex.def Info: ../figures/ks_lognormal.pdf  used on input line 315.
 (pdftex.def)             Requested size: 120.95892pt x 79.73685pt.
-<../figures/ks_normal.pdf, id=100, 425.95259pt x 280.7978pt>
+<../figures/ks_normal.pdf, id=96, 425.95259pt x 280.7978pt>
 File: ../figures/ks_normal.pdf Graphic file (type pdf)
 <use ../figures/ks_normal.pdf>
-Package pdftex.def Info: ../figures/ks_normal.pdf  used on input line 327.
+Package pdftex.def Info: ../figures/ks_normal.pdf  used on input line 323.
 (pdftex.def)             Requested size: 120.95892pt x 79.73685pt.
-<../figures/ks_weibull.pdf, id=101, 425.95259pt x 280.7978pt>
+<../figures/ks_weibull.pdf, id=97, 425.95259pt x 280.7978pt>
 File: ../figures/ks_weibull.pdf Graphic file (type pdf)
 <use ../figures/ks_weibull.pdf>
-Package pdftex.def Info: ../figures/ks_weibull.pdf  used on input line 333.
+Package pdftex.def Info: ../figures/ks_weibull.pdf  used on input line 329.
 (pdftex.def)             Requested size: 120.95892pt x 79.73685pt.
 
-Underfull \hbox (badness 1484) in paragraph at lines 342--347
+Underfull \hbox (badness 1484) in paragraph at lines 338--343
 []\OT1/ptm/m/n/10 The KS-based anal-y-sis con-firms that sim-ple tem-po-ral
  []
 
 
 
 
-Underfull \hbox (badness 4291) in paragraph at lines 422--423
+Underfull \hbox (badness 4291) in paragraph at lines 418--419
 []\OT1/ptm/m/n/10 Sparsely gated Mixture-of-Experts (MOE) with self-
  []
 
@@ -511,21 +511,21 @@ LaTeX2e <2024-06-01> patch level 2
 L3 programming layer <2024-08-30>
  ***********
 Package rerunfilecheck Info: File `comp400.out' has not changed.
-(rerunfilecheck)             Checksum: B9129C0C4A1390F76CD9854756C90B59;3800.
+(rerunfilecheck)             Checksum: 3B385CC75F4C3C5BD6E47D01AF0D022E;3698.
  ) 
 Here is how much of TeX's memory you used:
- 12179 strings out of 473579
- 196016 string characters out of 5728234
+ 12177 strings out of 473579
+ 195996 string characters out of 5728234
  603832 words of memory out of 5000000
- 34922 multiletter control sequences out of 15000+600000
+ 34921 multiletter control sequences out of 15000+600000
  591835 words of font info for 96 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  75i,8n,79p,630b,502s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on comp400.pdf (5 pages, 148647 bytes).
+Output written on comp400.pdf (5 pages, 148495 bytes).
 PDF statistics:
- 297 PDF objects out of 1000 (max. 8388607)
- 144 compressed objects within 2 object streams
- 25 named destinations out of 1000 (max. 500000)
- 165 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 292 PDF objects out of 1000 (max. 8388607)
+ 139 compressed objects within 2 object streams
+ 24 named destinations out of 1000 (max. 500000)
+ 157 words of extra memory for PDF output out of 10000 (max. 10000000)
 

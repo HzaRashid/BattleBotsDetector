@@ -1,5 +1,5 @@
 # Fdb version 4
-["bibtex comp400"] 0 "comp400.aux" "comp400.bbl" "comp400" 1745193045.07004 0
+["bibtex comp400"] 0 "comp400.aux" "comp400.bbl" "comp400" 1745193484.15595 0
   "/usr/local/texlive/2024/texmf-dist/bibtex/bst/ieeetran/IEEEtran.bst" 1440712899 57748 7c8250ecf02814ce6ddc0cdbb63df1dd ""
   "comp400.aux" 0 -1 0 "pdflatex"
   "references.bib" 0 -1 0 ""
@@ -7,12 +7,12 @@
   "comp400.bbl"
   "comp400.blg"
   (rewritten before read)
-["pdflatex"] 1745193044.28937 "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" "comp400.pdf" "comp400" 1745193045.07019 0
+["pdflatex"] 1745193483.41083 "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" "comp400.pdf" "comp400" 1745193484.15608 0
   "../figures/ks_exponential.pdf" 1745190391.70922 13776 4bb0dfeb9b436f6523b1153f3d86f3c3 ""
   "../figures/ks_lognormal.pdf" 1745190396.84376 14371 35ea9f4a7909ce60306976713595202d ""
   "../figures/ks_normal.pdf" 1745190401.3511 13909 5401c604576fcaea0192d237b3160d86 ""
   "../figures/ks_weibull.pdf" 1745190405.22455 14264 359d3dc05da30636a690272d80308ee8 ""
-  "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" 1745193044.10698 25497 2e6d18a2592d2eda6c860519c145a5c4 ""
+  "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" 1745193482.32687 25472 5b8b529fbe2dad06ef1c7652c676cb57 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/base/8r.enc" 1165713224 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/local/texlive/2024/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/tfm/adobe/courier/pcrr7t.tfm" 1136768653 960 379cc0019370a9e0208a0a3f949f847a ""
@@ -105,10 +105,10 @@
   "/usr/local/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1726687478 5498206 6c0f03cb370063b7ddbd563e5f9ce23a ""
   "/usr/local/texlive/2024/texmf-var/web2c/pdftex/pdflatex.fmt" 1726687597 3326097 67d158ddf1124cb5acae0cccb2750d58 ""
   "/usr/local/texlive/2024/texmf.cnf" 1726687468.2814 577 e590dabc9e28c5b61546e15f63eebcdf ""
-  "comp400.aux" 1745193044.81837 3774 7c7914fc41545b183c148d2c1f9659c5 "pdflatex"
+  "comp400.aux" 1745193483.91439 3674 91106aba1a3c7d2d5d6ba50d11435790 "pdflatex"
   "comp400.bbl" 0 -1 0 "bibtex comp400"
-  "comp400.out" 1745193044.81911 3800 b9129c0c4a1390f76cd9854756c90b59 "pdflatex"
-  "comp400.tex" 1745193044.10698 25497 2e6d18a2592d2eda6c860519c145a5c4 ""
+  "comp400.out" 1745193483.9149 3698 3b385cc75f4c3c5bd6e47d01af0d022e "pdflatex"
+  "comp400.tex" 1745193482.32687 25472 5b8b529fbe2dad06ef1c7652c676cb57 ""
   (generated)
   "comp400.aux"
   "comp400.log"
