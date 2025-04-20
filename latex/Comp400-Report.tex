@@ -6,8 +6,8 @@
 \usepackage{booktabs}
 \usepackage{cite}
 
-\title{Bot Detection on Twitter Using Machine Learning}
-\author{Hamza Rashid \\ McGill University \\ Research Class}
+\title{Multimodal Bot Detection on X}
+\author{Hamza Rashid \\ McGill University \\ COMP 400}
 \date{\today}
 
 \begin{document}
@@ -15,26 +15,365 @@
 \maketitle
 
 \begin{abstract}
-This paper investigates bot detection on Twitter using machine learning techniques. We analyze tweet content and user metadata to identify patterns that distinguish bots from humans. Our approach involves topic categorization, feature extraction, and classification models to assess predictive performance. The findings provide insights into automated behavior and its implications for social media integrity.
+This research investigates multimodal bot
+detection methods on X, in a setting where
+the labels are not known a priori, and graph data is not available.
+We present a comprehensive evaluation of bot detection 
+by benchmarking classical machine-learning baselines
+and feature engineering techniques, 
+and later develop deep multimodal architectures. 
+Our work begins with conventional classifiers---a random forest 
+on text, temporal, and topic-distribution features, 
+yielding moderate baseline performance. 
+We next investigate how humans and bots differ in their 
+temporal posting behaviour, finding little
+distinction except for outliers. As
+feature engineering approaches are easily deceived by sophisticated bots, 
+we move on to multimodal architectures with an emphasis on DNA-inspired 
+behaviour modeling. For this, we embed the user description with 
+Twhin-BERT and model posting behavior with two DNA formulations, 
+one that captures content across posts, and another capturing inter-post times.
+We find that CNN embeddings of inter-post time DNA may capture deep
+patterns in time series data that conventional methods miss.
+We investigate three methods for processing the modalities 
+and final fusion; a GMU (gated multimodal unit), 
+a cross-attention mechanism, and a sparsely gated MOE (mixture-of-experts) 
+with a self-attention fusion layer and a convolution learned on attention weights
+that addresses manipulated features. 
+We find that the MOE performs best, and gather counter-intuitive results along the way. 
+Namely, the MOE is the smallest of our multimodal models, and does not require any treatment
+of the class imbalance found in bot detection datasets. 
+More broadly, we find that a multimodal approach to bot detection 
+improves robustness against sophisticated bots, and that a MOE
+architecture helps in addressing the diversity of user communities on X. 
 \end{abstract}
 
 \section{Introduction}
-The prevalence of bot accounts on social media platforms like X (formerly Twitter) is at the center of bot detection literature. Such research targets a particular class of bots, namely, ones deployed for malicious purposes, such as inciting arguments or spreading misinformation. We present and compare various methods for this task, including rule-based heuristics, feature engineering, and deep learning, while addressing the limitations of supervised techniques tested on static datasets.
+Social media platforms like X (formerly Twitter) have 
+enabled unprecedented global connectivity. 
+As an open platform is vulnerabe, X is fertile ground for malicious content,
+often originating from automated accounts—bots—that manipulate discourse, spread misinformation, or artificially amplify content. 
+Detecting and mitigating such bot activities remains a challenging yet essential task for preserving authentic online interactions.
+
+Traditional approaches to bot detection typically rely on supervised classification methods trained on manually labeled datasets. Yet, in real-world scenarios, labeled data are often scarce, outdated, or non-representative of the evolving behaviors exhibited by sophisticated bots. Consequently, there is a pressing need for detection methods that generalize beyond known bot patterns, especially in contexts where labeled data is not readily available.
+
+In this report, we address this challenge by evaluating a range of bot detection strategies, beginning with classical machine-learning techniques enhanced by extensive feature engineering. We initially employ a random forest classifier incorporating textual features, temporal posting patterns, and inferred topic distributions, achieving moderate baseline performance. Our analysis reveals that traditional temporal features often fail to effectively distinguish sophisticated bots from genuine users, underscoring the limitations of classical approaches.
+
+Building on these insights, we introduce deep multimodal architectures designed to exploit richer behavioral patterns. Inspired by the concept of digital DNA, our method integrates user descriptions embedded via Twhin-BERT and models posting behavior through two distinct DNA formulations: one capturing the content across posts and another encoding inter-post timing patterns. 
+In addition to the known efficacy of content DNA, our experiments demonstrate that CNNs applied to temporal-DNA-generated images effectively uncover nuanced behavioral patterns overlooked by conventional methods. As most of the frontier literature 
+overlooks temporal bevahiour, this result signifies that it could be worth further investigation.
+
+We further explore several fusion techniques to integrate multimodal signals, including gated multimodal units (GMUs), cross-attention mechanisms, and a novel application of a sparsely gated mixture-of-experts (MOE) architecture. 
+Our results highlight the MOE model's superior performance and efficiency, notably without necessitating explicit strategies to address class imbalance. Overall, our research emphasizes the 
+robustness of multimodal approaches and illustrates the potential of MOE architectures to adapt effectively to the diverse user communities found on X.
+
+
+\section{Dataset and Experimental Setup}
+
+Our experiments were conducted within the "Bot Or Not" (B.O.N.) competitive infrastructure, designed specifically for assessing bot detection strategies in realistic social media scenarios. 
+The competition environment described below will become publicly accessible later this year. This environment featured interactions between bot and detector teams, simulating genuine activities on the X platform. The primary goal was to evaluate the effectiveness of detection methodologies under conditions closely resembling actual social media dynamics.
+
+\subsection{Data Collection and Characteristics}
+
+The dataset comprised real posts gathered from the X API across multiple collection sessions, 
+each lasting the same duration but occurring on different days. For each session, posts were 
+initially collected based on predefined sets of topical keywords relevant to that session. 
+After gathering initial posts, users flagged as obvious bots were removed, and the dataset was 
+expanded by including all additional posts from the remaining users within the session period. 
+% This approach is subject to change in future versions, as we are considering leaving the obvious bots
+% to further test the detectors' robustness and generalizability.
+
+There were several restrictions limiting the scope of our research:
+\begin{itemize}
+    \item Text-only Posts: Posts containing images, videos, or memes were excluded.
+
+    \item Static Metadata: Dynamic metadata such as likes, comments, and follower counts were excluded to maintain consistency and simplicity.
+
+    \item Anonymized Links and Mentions: Hyperlinks were standardized to ``https://t.co/twitter\_link'', and user mentions were anonymized to ``@mention'' to prevent easy verification of authenticity.
+    
+    \item Activity Thresholds: Each included user produced between 10 and 100 posts during the session period, ensuring active participation.
+    
+\end{itemize}
+
+Datasets were structured into two main JSON formats:
+\begin{itemize}
+    \item Posts Dataset: Included text content, timestamp, unique post ID, author ID, and language.
+    
+    \item Users Dataset: Contained user-specific metadata, including user ID, username, display name, profile description, location, tweet count, and a calculated activity-based z-score.
+\end{itemize}
+
+\subsection{Session Structure}
+
+Sessions were divided into multiple sequential sub-sessions to mimic the real-time flow of social media feeds, gradually introducing new posts to participants. Bot teams generated content incrementally across these sub-sessions, with the requirement to post between 10 and 100 posts per bot by session completion. Detector teams subsequently analyzed the fully compiled datasets post-session to identify bots, providing both binary verdicts and confidence scores for each account.
+
+\subsection{Technical Setup}
+
+Participant submissions (bot and detector code) were managed via public GitHub repositories cloned into Docker images deployed on EC2 instances, ensuring standardized computing resources and fair evaluation conditions. Submissions were required to execute fully within a one-hour timeframe, after which automated shutdown procedures terminated any ongoing processes.
+
+
+
 
 \section{Methodology}
-Our dataset consists of Twitter posts in JSON format, containing tweet text, timestamps, user metadata, and other features. Our pipeline includes data preprocessing, feature extraction, unsupervised topic categorization, and classification model training.
+Our approach involved a systematic progression from classical machine learning methods to advanced multimodal architectures, aimed at overcoming limitations observed at each stage.
 
-Given the small datasets and unbalanced classes (majority non-bots), initial methods struggled with low bot recall. Combining TF-IDF with LDA improved recall on a single batch but struggled with noisy bots.
+\subsection{Baseline - Random Forest}
+Our baseline method involved training a Random Forest classifier using various 
+handcrafted and learned features from user posts. We organized our experiments across 
+multiple data collection sessions to assess how well feature-based models generalize 
+across batches of social media activity. The sub-approaches below correspond to progressively 
+enriched feature sets tested on different sessions. The primary motivation
+for employing a random forest is that it enables rapid feature exporation due to its
+flexibility (allowing multiple types in its feature set), and its proven efficacy in bot detection,
+most notably in Botometer.
 
-When we expanded our dataset to four sessions, the accuracy of TF-IDF+LDA (treating all tweets from a user as a single document) dropped from the mid-90s to the mid-70s. Adding embeddings from all-MiniLM-v6 (on the concatenated tweets) improved accuracy to 89.4%. Dropping TF-IDF and using only LDA+embeddings maintained the performance, indicating embeddings provided more meaningful information.
+\subsubsection{Session 11 – Embeddings + LDA}
+Overview:
+We began with a straightforward approach combining sentence-level embeddings with LDA (Latent Dirichlet Allocation)-based topic distributions. 
+Each user’s posts were aggregated into a single document, from which features were extracted.
 
-To generalize better, we used individual tweets per user, extracting mean embeddings, topic distributions with BERTopic+HDBSCAN, and temporal features (mean time of posts and standard deviation). This latest approach achieved 97\% accuracy on the expanded dataset.
+Implementation Summary:
+\begin{itemize}
+    \item Text Cleaning: URLs, mentions, and hashtags were anonymized. Tokenization, lemmatization, and stopword filtering were performed using spaCy.
+    
+    \item Embedding: Posts were embedded using all-MiniLM-L6-v2 from SentenceTransformers.
+    
+    \item Topic Modeling: CountVectorizer was used for bag-of-words representations, followed by LDA with 10 topics.
+    
+    \item Sentence embeddings (384-dim) were concatenated with LDA topic distributions.
+    
+    \item Classifier: A balanced Random Forest with 100 trees was trained and evaluated using stratified 80/20 train/test splits.
+\end{itemize}
+
+Result:
+The model exbihibted low confidence and marked all samples as negatives. This likely owes
+to its reliance on predefined topics, which vary across sessions, resulting in sparse vectors 
+on unseen data.
+
+Limitations:
+\begin{itemize}
+    \item Did not use individual tweets as independent samples, thereby lacking granulrity.
+    
+    \item Static topic modeling limited generalization to new sessions.
+\end{itemize}
+
+\subsubsection{Session 12 – Mean Embedding + BERTopic + Temporal Stats}
+In this session, we shifted to using per-tweet embeddings and adopted BERTopic for more dynamic topic modeling. Additional temporal statistics were introduced to capture behavioral rhythms.
+
+Implementation Summary:
+\begin{itemize}
+    \item Tweet-Level Processing: Individual tweets were embedded and clustered into topics using BERTopic with HDBSCAN.
+    
+    \item Aggregation: User-level features were computed via:
+    \begin{itemize}
+        \item  Mean of sentence embeddings
+        
+        \item Normalized topic distribution (padded to 361 dimensions)
+    \end{itemize}
+    
+    \item Temporal features: mean and standard deviation of post timestamps
+    
+    \item Static features: Post count
+    
+    \item Classifier: The same Random Forest model from Session 11 was applied.
+\end{itemize}
+
+
+Result:
+The use of dynamic topic modeling and behavioral signals significantly improved classification performance. Bot recall improved due to BERTopic's unsupervised generalization across sessions.
+
+Limitations:
+\begin{itemize}
+    \item Topic dimension padding was static and could introduce noise.
+    
+    \item Temporal features were still limited to coarse statistics.
+\end{itemize}
+
+\subsubsection{Session 13 – Enhanced Temporal Behavior Modeling}
+Session 13 introduced a novel temporal feature: duplicate post timestamps within bucketed time intervals, designed to capture artificial timing artifacts used by bots.
+
+Implementation Summary:
+\begin{itemize}
+    \item Building on Session 12, we added:
+    
+    \item Inter-post Interval Statistics: Mean and standard deviation of time gaps between posts.
+    
+    \item Bucketed Duplicate Counts: Time was split into 10 buckets, and duplicate post counts were computed per bucket.
+    
+    \item Features Used: Combined embeddings, topic distributions, post frequency, inter-post intervals, and bucketed duplicates.
+\end{itemize}
+    
+Result:
+This was the strongest-performing Random Forest baseline. The bucketed duplicates provided a clear signal in identifying bots with repeated behavior patterns or scheduled posts.
+
+Limitations:
+\begin{itemize}
+    \item Still relied heavily on session-specific BERTopic clusters.
+    
+    \item Lacked modeling of inter-feature dependencies (e.g., topic-time correlations).
+\end{itemize}
+
+\subsubsection{Session 14 – Topic Statistics + Temporal Entropy + Intra-Topic Similarity}
+This final Random Forest setup expanded feature engineering to include statistical, temporal, and semantic regularities observed in bot behavior. 
+The design aimed to encode not just what a user posts, but also how, and when, consistently.
+
+Implementation Summary:
+\begin{itemize}
+    \item Refined Preprocessing: Hashtags were partially preserved (\texttt{\#arena $\rightarrow$ <HashtagMention:arena>}), preserving topic cues often used by bots.
+    
+    \item Normalized Embeddings: Sentence embeddings (MiniLM-L6-v2) were explicitly normalized to prevent variance from dominating downstream signals.
+    
+    \item Topic Modeling: BERTopic + HDBSCAN, followed by:
+    \begin{itemize}
+        \item Topic Histogram (topic mention counts across topics)
+        \item Summary Statistics: Mean, variance, std, entropy, and dominance ratio across topic indices.
+    \end{itemize}
+    
+    \item Temporal Signals:
+    \begin{itemize}
+        \item  Mean, std, and variance of time between posts.
+        \item Bucketed duplicate timestamps (tolerance-aware) to flag spam bursts
+    \end{itemize}
+    
+    \item Intra-topic Semantic Consistency:
+    \begin{itemize}
+        \item Mean, median, and std of pairwise cosine similarities across tweets within each user-topic group.
+    \end{itemize}
+\end{itemize}
+
+Result:
+In session 14, the bots became particularly hard to distinguish upon 
+manual inspection. Although this model outperformed our previous attempt under the same training conditions
+when applied to the previous session, its performance was worse on the latest.
+% Insert final accuracy, precision, recall, F1 scores here.
+% Note if performance improved significantly over earlier sessions.
+% Mention if any new features proved particularly important (e.g., topic entropy, similarity mean).
+
+Limitations:
+\begin{itemize}
+    \item Feature dimensionality increased significantly, potentially stressing interpretability.
+    
+    \item BERTopic remains sensitive to session-specific clustering variance.
+\end{itemize}
+
+\subsection{Summary and Reflection on Random Forest Baseline}
+Our progression through four sessions using Random Forest classifiers illustrates the evolving challenge of distinguishing bots from humans on X through feature engineering alone.
+
+What Went Right:
+\begin{itemize}
+    \item Rich Feature Design: Session 14 demonstrates that carefully designed user-level features (temporal, semantic, topical) can yield strong performance using classical models despite evolving bots.
+    
+    \item Dynamic Topic Modeling: Transitioning from static LDA to BERTopic+HDBSCAN enabled models to better capture cross-session topical drift.
+    
+    \item Behavioral Signals Help: Features such as inter-post intervals and intra-topic semantic consistency offered important signals for detecting scripted or bursty behavior patterns.
+\end{itemize}
+
+What Went Wrong:
+\begin{itemize}
+    \item Sensitivity to Session Artifacts: A non-pretrained BERTopic model was applied to each session, 
+    which likely created inconsistencies in how topic-features were interpreted by the classifier.
+    
+    \item Appropriateness of features: Despite being a universal approximator, Random Forest's are typically geared towards categorical features; introducing several related continuous features like embeddings can introduce noise.
+    
+    \item Limited Generalization: Although high accuracy may have been achieved on per-session splits, the performance likely degraded when faced with unseen session distributions or bot styles.
+    
+    \item Feature Brittleness: Despite capturing many dimensions, these features are often brittle against slight changes in bot strategies (e.g., using synonyms or reworded hashtags).
+    
+    \item Scalability Concerns: Computing transformer embeddings, pairwise similarities, multiple topic stats, and padded histograms scales poorly for large user datasets.
+\end{itemize}
+While the Random Forest baseline allowed us to test many ideas rapidly, 
+its limitations became evident in detecting sophisticated or adaptive bots (increasing complexity of feature engineering was needed to keep up with the bots), 
+motivating the shift to multimodal neural architectures whose underlying features can adapt to evolving behaviours on X.
+
+
+
+\subsection{Final - Multimodal Architecture}
+
+% To address the shortcomings of the Random Forest model, 
+% we explored advanced multimodal methods, integrating 
+% text embeddings, temporal dynamics, and metadata.
+Despite the incremental improvements from updating features with Random Forest classifiers, 
+we found their performance to be bounded by feature engineering upkeep and a lack of deep interaction between behavioral, 
+textual, and temporal signals. While we designed increasingly rich user-level features, these features
+mised fine-grained cues that emerge only when considering raw sequences, local dependencies, 
+and cross-modal interactions. 
+
+To overcome these limitations, we turn to multimodal neural architectures 
+that ingest different sources of information in their rawer or less-compressed 
+forms, elimitating much of the feature engineering and allowing the model to learn features closer to the source. 
+While this approach significantly departs from the random forest, 
+the underlying intuition remains the same; to model user behaviour from multiple perspectives
+in order to improve robustness against sophisticated bots that have manipulated features in any one modality.
+
+Our primary modalities include:
+\begin{itemize}
+    \item User description, modeled via transformer embeddings.
+    \item DNA:
+    \begin{itemize}
+        \item Content: A symbolic abstraction of the sequence of post types (e.g., punctuation, emojis, keywords).
+        
+        \item Temporal: A sequence encoding of inter-post time gaps, modeled as time-series data.
+    \end{itemize}
+    
+\end{itemize}
+
+This architectural shift is motivated by modern methods such as \textit{``Multimodal Detection of Bots on X (Twitter) using
+Transformers''} (Ilias et al., 2023), and \textit{``BotMoE: Twitter Bot Detection with Community-Aware
+Mixtures of Modal-Specific Experts''} (Liu et al., 2023). Utilizing DNA representations allows us to 
+model user behaviour in novel way given the restrictions of the features available to us, and multimodal interactions
+help offset hard-to-identify bots with respect to any one of the modalities.
+
+We also hypothesize that no single fusion strategy is optimal across all bot types. Some bots may exhibit obvious semantic repetition, while others may mimic natural text but fall short on timing regularity. As such, we design and evaluate three complementary architectures:
+
+Gated Multimodal Unit (GMU): Learns how to weight each modality dynamically using learned gates.
+
+Cross-Attention Fusion: Enables one modality to attend over the sequence of another, allowing richer cross-modal alignment.
+
+Sparse Mixture-of-Experts (MOE): Allows subsets of the model to specialize in different user types, with attention-based fusion and a learned convolution over attention weights.
+
+These architectures not only provide greater modeling capacity, but also offer more robustness against feature manipulation, as they do not rely on manually crafted statistics. Instead, they operate directly over sequences of observed user behavior and learn to extract structure.
+
+In the following sections, we describe each architecture in detail, including:
+
+The input representation for each modality
+
+How the architecture fuses modalities
+
+The training setup and results
+
+Intuition behind each design choice and what we learned
+
+\subsubsection{Procedure}
+
+Embedding user descriptions with transformer models (e.g., Twhin-BERT)
+
+Modeling posting behavior through digital DNA techniques (content DNA and temporal DNA)
+
+Experimenting with multiple multimodal fusion methods:
+
+Gated Multimodal Unit (GMU)
+
+Cross-attention mechanisms
+
+Sparsely gated Mixture-of-Experts (MOE) with self-attention fusion
+
+Training, tuning, and validation of models
+
+Result
+
+Detailed performance analysis indicated that the multimodal approach substantially improved detection robustness, with MOE architectures demonstrating the strongest performance due to their effective handling of diverse community behaviors and resilience against sophisticated bot manipulation.
+% Our dataset consists of Twitter posts in JSON format, containing tweet text, timestamps, user metadata, and other features. Our pipeline includes data preprocessing, feature extraction, unsupervised topic categorization, and classification model training.
+
+% Given the small datasets and unbalanced classes (majority non-bots), initial methods struggled with low bot recall. Combining TF-IDF with LDA improved recall on a single batch but struggled with noisy bots.
+
+% When we expanded our dataset to four sessions, the accuracy of TF-IDF+LDA (treating all tweets from a user as a single document) dropped from the mid-90s to the mid-70s. Adding embeddings from all-MiniLM-v6 (on the concatenated tweets) improved accuracy to 89.4%. Dropping TF-IDF and using only LDA+embeddings maintained the performance, indicating embeddings provided more meaningful information.
+
+% To generalize better, we used individual tweets per user, extracting mean embeddings, topic distributions with BERTopic+HDBSCAN, and temporal features (mean time of posts and standard deviation). This latest approach achieved 97\% accuracy on the expanded dataset.
 
 \section{Discussion}
-HDBSCAN, a density-based clustering method, is beneficial as it identifies tweet clusters without a predefined number, making it robust to noise and adaptable to varying data distributions.
+blah blah....
 
 \section{Conclusion and Future Work}
-Our findings highlight the importance of embeddings and dynamic topic modeling. Future work includes exploring faster embeddings, preventing data leakage, and refining HDBSCAN for evolving datasets.
+blah blah...
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}

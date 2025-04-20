@@ -1,0 +1,84 @@
+<mxfile host="65bd71144e">
+    <diagram id="model_diagram" name="PyTorch Model Diagram">
+        <mxGraphModel dx="838" dy="438" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="text" value="Text Input (768)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;" parent="1" vertex="1">
+                    <mxGeometry x="10" y="50" width="150" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="content" value="Content Input (384)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;" parent="1" vertex="1">
+                    <mxGeometry x="10" y="120" width="150" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="time" value="Time Input (384)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;" parent="1" vertex="1">
+                    <mxGeometry x="10" y="190" width="150" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="" style="edgeStyle=none;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="text_proj" target="cross_attn_1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" style="edgeStyle=none;html=1;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=0;entryDy=0;fillColor=#dae8fc;strokeColor=#6c8ebf;" edge="1" parent="1" source="text_proj" target="cross_attn_2">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="text_proj" value="Linear Projection (Text)" style="rounded=1;fillColor=#fff2cc;" parent="1" vertex="1">
+                    <mxGeometry x="210" y="80" width="160" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" style="edgeStyle=none;html=1;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0;entryDx=0;entryDy=0;fillColor=#fff2cc;strokeColor=#d6b656;" edge="1" parent="1" source="gmu" target="cross_attn_1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="gmu" value="Gated Multimodal Unit (GMU)" style="rounded=1;fillColor=#fff2cc;" parent="1" vertex="1">
+                    <mxGeometry x="205" y="150" width="170" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="cross_attn_1" value="Cross-Attention (Text query)" style="rounded=1;fillColor=#e1d5e7;direction=west;" parent="1" vertex="1">
+                    <mxGeometry x="410" y="75" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="cross_attn_2" value="Cross-Attention (GMU query)" style="rounded=1;fillColor=#e1d5e7;" parent="1" vertex="1">
+                    <mxGeometry x="410" y="155" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="ffn" value="Feedforward Network (FFN)" style="rounded=1;fillColor=#c9daf8;" parent="1" vertex="1">
+                    <mxGeometry x="640" y="120" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" style="edgeStyle=none;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="clf_head" target="2">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="clf_head" value="Mean Pooling" style="rounded=1;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+                    <mxGeometry x="640" y="220" width="180" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge1" style="endArrow=block;" parent="1" source="text" target="text_proj" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge2" style="endArrow=block;" parent="1" source="content" target="gmu" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge3" style="endArrow=block;" parent="1" source="time" target="gmu" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge6" style="endArrow=block;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="gmu" target="cross_attn_2" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge7" style="endArrow=block;" parent="1" source="text_proj" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="330" y="120" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge8" style="endArrow=block;" parent="1" source="cross_attn_1" target="ffn" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge9" style="endArrow=block;" parent="1" source="cross_attn_2" target="ffn" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge10" style="endArrow=block;entryX=0.25;entryY=0;entryDx=0;entryDy=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;" parent="1" source="ffn" target="clf_head" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="2" value="Classification Head (2 Classes)" style="rounded=1;fillColor=#f4cccc;" vertex="1" parent="1">
+                    <mxGeometry x="640" y="300" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" style="endArrow=block;entryX=0.75;entryY=0;entryDx=0;entryDy=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="ffn" target="clf_head">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="725" y="180" as="sourcePoint"/>
+                        <mxPoint x="695" y="230" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
