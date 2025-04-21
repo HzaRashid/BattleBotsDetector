@@ -1,5 +1,5 @@
 # Fdb version 4
-["bibtex comp400"] 0 "comp400.aux" "comp400.bbl" "comp400" 1745193484.15595 0
+["bibtex comp400"] 0 "comp400.aux" "comp400.bbl" "comp400" 1745279470.18457 0
   "/usr/local/texlive/2024/texmf-dist/bibtex/bst/ieeetran/IEEEtran.bst" 1440712899 57748 7c8250ecf02814ce6ddc0cdbb63df1dd ""
   "comp400.aux" 0 -1 0 "pdflatex"
   "references.bib" 0 -1 0 ""
@@ -7,12 +7,12 @@
   "comp400.bbl"
   "comp400.blg"
   (rewritten before read)
-["pdflatex"] 1745193483.41083 "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" "comp400.pdf" "comp400" 1745193484.15608 0
+["pdflatex"] 1745279469.34423 "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" "comp400.pdf" "comp400" 1745279470.1847 0
   "../figures/ks_exponential.pdf" 1745190391.70922 13776 4bb0dfeb9b436f6523b1153f3d86f3c3 ""
   "../figures/ks_lognormal.pdf" 1745190396.84376 14371 35ea9f4a7909ce60306976713595202d ""
   "../figures/ks_normal.pdf" 1745190401.3511 13909 5401c604576fcaea0192d237b3160d86 ""
   "../figures/ks_weibull.pdf" 1745190405.22455 14264 359d3dc05da30636a690272d80308ee8 ""
-  "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" 1745193482.32687 25472 5b8b529fbe2dad06ef1c7652c676cb57 ""
+  "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" 1745279469.06621 31053 ed632d64d32a6d0c792f5ac7780d6bb0 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/base/8r.enc" 1165713224 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/local/texlive/2024/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/tfm/adobe/courier/pcrr7t.tfm" 1136768653 960 379cc0019370a9e0208a0a3f949f847a ""
@@ -33,8 +33,17 @@
   "/usr/local/texlive/2024/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm10.tfm" 1246382020 908 2921f8a10601f252058503cc6570e581 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm5.tfm" 1246382020 940 75ac932a52f80982a9f8ea75d03a34cf ""
   "/usr/local/texlive/2024/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm7.tfm" 1246382020 940 228d6584342e91276bf566bcf9716b83 ""
+  "/usr/local/texlive/2024/texmf-dist/fonts/tfm/public/cm/cmbx10.tfm" 1136768653 1328 c834bbb027764024c09d3d2bf908b5f0 ""
+  "/usr/local/texlive/2024/texmf-dist/fonts/tfm/public/cm/cmbx5.tfm" 1136768653 1332 f817c21a1ba54560425663374f1b651a ""
+  "/usr/local/texlive/2024/texmf-dist/fonts/tfm/public/cm/cmbx7.tfm" 1136768653 1336 3125ccb448c1a09074e3aa4a9832f130 ""
+  "/usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb" 1248133631 34811 78b52f49e893bcba91bd7581cdc144c0 ""
+  "/usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb" 1248133631 36299 5f9df58c2139e7edcf37c8fca4bd384d ""
+  "/usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb" 1248133631 36281 c355509802a035cadc5f15869451dcee ""
+  "/usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb" 1248133631 35752 024fb6c41858982481f6968b5fc26508 ""
+  "/usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb" 1248133631 32762 224316ccc9ad3ca0423a14971cfa7fc1 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb" 1248133631 32569 5e5ddc8df908dea60932f3c484a54c0d ""
   "/usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb" 1248133631 32716 08e384dc442464e7285e891af9f45947 ""
+  "/usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb" 1248133631 34694 ad62b13721ee8eda1dcc8993c8bd7041 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb" 1136849748 45758 19968a0990191524e34e1994d4a31cb6 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmb8a.pfb" 1136849748 44729 811d6c62865936705a31c797a1d5dada ""
   "/usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb" 1136849748 44656 0cbca70e0534538582128f6b54593cca ""
@@ -105,10 +114,10 @@
   "/usr/local/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1726687478 5498206 6c0f03cb370063b7ddbd563e5f9ce23a ""
   "/usr/local/texlive/2024/texmf-var/web2c/pdftex/pdflatex.fmt" 1726687597 3326097 67d158ddf1124cb5acae0cccb2750d58 ""
   "/usr/local/texlive/2024/texmf.cnf" 1726687468.2814 577 e590dabc9e28c5b61546e15f63eebcdf ""
-  "comp400.aux" 1745193483.91439 3674 91106aba1a3c7d2d5d6ba50d11435790 "pdflatex"
+  "comp400.aux" 1745279469.94029 3836 a0b625b9d8d1c7c102932f4bd1d90272 "pdflatex"
   "comp400.bbl" 0 -1 0 "bibtex comp400"
-  "comp400.out" 1745193483.9149 3698 3b385cc75f4c3c5bd6e47d01af0d022e "pdflatex"
-  "comp400.tex" 1745193482.32687 25472 5b8b529fbe2dad06ef1c7652c676cb57 ""
+  "comp400.out" 1745279469.94079 3956 afcc8cbb910b02e18dc05787531c738c "pdflatex"
+  "comp400.tex" 1745279469.06621 31053 ed632d64d32a6d0c792f5ac7780d6bb0 ""
   (generated)
   "comp400.aux"
   "comp400.log"

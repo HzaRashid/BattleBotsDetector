@@ -32,7 +32,7 @@ distinction except for outliers. As
 feature engineering approaches are easily deceived by sophisticated bots, 
 we move on to multimodal architectures with an emphasis on DNA-inspired 
 behaviour modeling. For this, we embed the user description with 
-Twhin-BERT and model posting behavior with two DNA formulations, 
+TwHIN-BERT and model posting behavior with two DNA formulations, 
 one that captures content across posts, and another capturing inter-post times.
 We find that CNN embeddings of inter-post time DNA may capture deep
 patterns in time series data that conventional methods miss.
@@ -60,7 +60,7 @@ Traditional approaches to bot detection typically rely on supervised classificat
 
 In this report, we address this challenge by evaluating a range of bot detection strategies, beginning with classical machine-learning techniques enhanced by extensive feature engineering. We initially employ a random forest classifier incorporating textual features, temporal posting patterns, and inferred topic distributions, achieving moderate baseline performance. Our analysis reveals that traditional temporal features often fail to effectively distinguish sophisticated bots from genuine users, underscoring the limitations of classical approaches.
 
-Building on these insights, we introduce deep multimodal architectures designed to exploit richer behavioral patterns. Inspired by the concept of digital DNA, our method integrates user descriptions embedded via Twhin-BERT and models posting behavior through two distinct DNA formulations: one capturing the content across posts and another encoding inter-post timing patterns. 
+Building on these insights, we introduce deep multimodal architectures designed to exploit richer behavioral patterns. Inspired by the concept of digital DNA, our method integrates user descriptions embedded via TwHIN-BERT and models posting behavior through two distinct DNA formulations: one capturing the content across posts and another encoding inter-post timing patterns. 
 In addition to the known efficacy of content DNA, our experiments demonstrate that CNNs applied to temporal-DNA-generated images effectively uncover nuanced behavioral patterns overlooked by conventional methods. As most of the frontier literature 
 overlooks temporal bevahiour, this result signifies that it could be worth further investigation.
 
@@ -72,7 +72,9 @@ robustness of multimodal approaches and illustrates the potential of MOE archite
 \section{Dataset and Experimental Setup}
 
 Our experiments were conducted within the "Bot Or Not" (B.O.N.) competitive infrastructure, designed specifically for assessing bot detection strategies in realistic social media scenarios. 
-The competition environment described below will become publicly accessible later this year. This environment featured interactions between bot and detector teams, simulating genuine activities on the X platform. The primary goal was to evaluate the effectiveness of detection methodologies under conditions closely resembling actual social media dynamics.
+As it is currently in the development phase, the conditions outlined in this report are subject to change in future versions.
+This environment featured interactions between bot and detector teams, simulating genuine activities on the X platform. 
+The primary goal was to evaluate the effectiveness of detection methodologies under conditions closely resembling live social media dynamics.
 
 \subsection{Data Collection and Characteristics}
 
@@ -81,10 +83,8 @@ each lasting the same duration but occurring on different days. For each session
 initially collected based on predefined sets of topical keywords relevant to that session. 
 After gathering initial posts, users flagged as obvious bots were removed, and the dataset was 
 expanded by including all additional posts from the remaining users within the session period. 
-% This approach is subject to change in future versions, as we are considering leaving the obvious bots
-% to further test the detectors' robustness and generalizability.
 
-There were several restrictions limiting the scope of our research:
+The preliminary data collection process can summarized as follows:
 \begin{itemize}
     \item Text-only Posts: Posts containing images, videos, or memes were excluded.
 
@@ -93,9 +93,8 @@ There were several restrictions limiting the scope of our research:
     \item Anonymized Links and Mentions: Hyperlinks were standardized to ``https://t.co/twitter\_link'', and user mentions were anonymized to ``@mention'' to prevent easy verification of authenticity.
     
     \item Activity Thresholds: Each included user produced between 10 and 100 posts during the session period, ensuring active participation.
-    
 \end{itemize}
-
+% Instruction: comment on how the above limits the scope of our research, e.g., no graph data to work with like following/follwed by, likes, etc
 Datasets were structured into two main JSON formats:
 \begin{itemize}
     \item Posts Dataset: Included text content, timestamp, unique post ID, author ID, and language.
@@ -113,8 +112,11 @@ Participant submissions (bot and detector code) were managed via public GitHub r
 
 
 \section{Methodology}
-Our approach involved a systematic progression from classical machine learning methods to advanced multimodal architectures, aimed at overcoming limitations observed at each stage.
-
+Our approach involved a systematic progression from classical machine learning methods to advanced multimodal architectures, 
+aimed at overcoming limitations observed at each stage. Our primary goal was to model user behaviour
+from a variety of perspectives since nontrival bots manipulate features in at least one modality 
+(e.g., tweet content, posting times, and interactions such as retweets, likes, and follower and following relationships).
+%  Instruction: in the below sub/subsub-sections, make the language a bit more formal; e.g, 'statistics' instead of 'stats', etc and find titles more formal than 'what went right' and 'what went wrong'
 \subsection{Baseline - Random Forest}
 Our baseline method involved training a Random Forest classifier using various 
 handcrafted and learned features from user posts. We organized our experiments across 
@@ -122,11 +124,10 @@ multiple data collection sessions to assess how well feature-based models genera
 across batches of social media activity. The sub-approaches below correspond to progressively 
 enriched feature sets tested on different sessions. The primary motivation
 for employing a random forest is that it enables rapid feature exporation due to its
-flexibility (allowing multiple types in its feature set), and its proven efficacy in bot detection,
-most notably in Botometer.
+flexibility (allows multiple data types in its feature set), and its proven efficacy in bot detection,
+most notably in Botometer (maybe cite this?).
 
 \subsubsection{Session 11 – Embeddings + LDA}
-Overview:
 We began with a straightforward approach combining sentence-level embeddings with LDA (Latent Dirichlet Allocation)-based topic distributions. 
 Each user’s posts were aggregated into a single document, from which features were extracted.
 
@@ -289,8 +290,11 @@ To assess the discriminative power of static temporal features,
 we computed inter-post interval distributions for each user and 
 performed Kolmogorov--Smirnov (KS) tests against four theoretical 
 models: exponential, normal, lognormal, and Weibull. Figures~\ref{fig:ks_exponential}-\ref{fig:ks_weibull} 
-display the resulting KS statistic distributions for bots versus humans. The significant overlap indicates 
-that these time-based summaries alone are insufficient, motivating the temporal-DNA in our multimodal architectures.
+display the resulting KS statistic distributions for bots versus humans.
+A lower KS value indicates a better fit to 
+the assumed distribution, while a higher value 
+implies greater deviation from the theoretical model. 
+% The significant overlap indicates that these time-based summaries alone are insufficient, motivating the temporal-DNA in our multimodal architectures.
 
 % To motivate our use of temporal-DNA in the multimodal architecture, we provide statistical 
 % goodness-of-fit tests using the Kolmogorov–Smirnov (KS) statistic, showing little difference between humans and bots, 
@@ -298,9 +302,9 @@ that these time-based summaries alone are insufficient, motivating the temporal-
 % For each user, we fit four different distributions---Exponential, Lognormal, Normal, 
 % and Weibull—--to their inter-post gaps and computed the KS statistic between the 
 % empirical and fitted distributions.
-A lower KS value indicates a better fit to 
-the assumed distribution, while a higher value 
-implies greater deviation from the theoretical model. 
+% A lower KS value indicates a better fit to 
+% the assumed distribution, while a higher value 
+% implies greater deviation from the theoretical model. 
 
 \begin{figure}[htbp]
     \centering
@@ -335,93 +339,180 @@ implies greater deviation from the theoretical model.
     \label{fig:ks_all_models}
 \end{figure}
 
-The KS-based analysis confirms that simple temporal 
-descriptors--—modeled via exponential, normal, lognormal, or Weibull fits--—fail to 
-distinguish bots from humans with sufficient clarity. The substantial overlap in 
-KS statistics across all four models indicates that these static summaries cannot 
-capture the complex timing behaviors exhibited by sophisticated bots.
+While a formal ablation study would be needed to 
+confirm the hypothesis, the KS-based analysis supports our intuition that static temporal 
+features are not reliable indicators of bot-like activity.
+While the majority of bots fit the theoretical distributions more closely, 
+the substantial overlap in KS statistics across all four models suggests
+that these static summaries cannot capture the complex timing behaviors exhibited by sophisticated bots.
 
-This finding motivates our shift toward deep multimodal architectures, 
-where temporal information is represented and learned jointly with other 
+This finding, in part, motivates our shift toward deep multimodal architectures, 
+where temporal information is represented in a more dynamic manner and learned jointly with other 
 behavioral signals, enabling the model to uncover subtle, context-dependent 
 patterns that handcrafted temporal features miss.
 
 
-\subsection{Final - Multimodal Architecture}
+\subsection{Multimodal Architectures}
 
-% To address the shortcomings of the Random Forest model, 
-% we explored advanced multimodal methods, integrating 
-% text embeddings, temporal dynamics, and metadata.
-Despite the incremental improvements from updating features with Random Forest classifiers, 
-we found their performance to be bounded by feature engineering upkeep and a lack of deep interaction between behavioral, 
-textual, and temporal signals. While we designed increasingly rich user-level features, these features
-mised fine-grained cues that emerge only when considering raw sequences, local dependencies, 
-and cross-modal interactions. 
+Recognizing the constraints of feature engineering, we
+explored multimodal neural architectures directly modeling
+sequences and cross-modal interactions inspired by recent
+literature \textit{``Multimodal Detection of Bots on X (Twitter) using
+Transformers''} (Ilias et al., 2023), and \textit{``BotMoE: Twitter Bot Detection with Community-Aware
+Mixtures of Modal-Specific Experts''} (Liu et al., 2023). Our modalities include transformer-based
+description and tweet embeddings alongside digital DNA representations (content and
+temporal).
 
-To overcome these limitations, we turn to multimodal neural architectures 
-that ingest different sources of information in their rawer or less-compressed 
-forms, elimitating much of the feature engineering and allowing the model to learn features closer to the source. 
-While this approach significantly departs from the random forest, 
-the underlying intuition remains the same; to model user behaviour from multiple perspectives
-in order to improve robustness against sophisticated bots that have manipulated features in any one modality.
+% This architectural shift draws inspiration from modern methods such as \textit{``Multimodal Detection of Bots on X (Twitter) using
+% Transformers''} (Ilias et al., 2023), and \textit{``BotMoE: Twitter Bot Detection with Community-Aware
+% Mixtures of Modal-Specific Experts''} (Liu et al., 2023). 
 
-Our primary modalities include:
+Evaluated architectures include:
 \begin{itemize}
-    \item User description, modeled via transformer embeddings.
-    \item DNA:
-    \begin{itemize}
-        \item Content: A symbolic abstraction of the sequence of post types (e.g., punctuation, emojis, keywords).
-        
-        \item Temporal: A sequence encoding of inter-post time gaps, modeled as time-series data.
-    \end{itemize}
+    \item \textbf{Gated Multimodal Unit (GMU)}: Dynamically weighting modalities.
     
+    \item \textbf{Cross-Attention Fusion}: Learns cross-modal interactions through multihead attention.
+    
+    \item \textbf{Mixture-of-Experts (MOE)}: Subsets of the models specialize in different user types, with attention-based fusion and a learned convolution over attention weights.
 \end{itemize}
 
-This architectural shift draws inspiration from modern methods such as \textit{``Multimodal Detection of Bots on X (Twitter) using
-Transformers''} (Ilias et al., 2023), and \textit{``BotMoE: Twitter Bot Detection with Community-Aware
-Mixtures of Modal-Specific Experts''} (Liu et al., 2023). Utilizing DNA representations allows us to 
-model user behaviour in novel way given the restriced features available to us, while multimodal interactions
-help offset hard-to-identify bots with respect to any one of the modalities.
+These architectures not only provide greater modeling capacity, but also offer more robustness against feature manipulation, 
+as they do not rely on manually crafted statistics. Instead, they operate directly over sequences of observed user behavior 
+and learn to extract structure. 
 
-We also hypothesize that no single fusion strategy is optimal across all bot types. Some bots may exhibit obvious semantic repetition, while others may mimic natural text but fall short on timing regularity. As such, we design and evaluate three complementary architectures:
 
-Gated Multimodal Unit (GMU): Learns how to weight each modality dynamically using learned gates.
+\subsubsection{DNA Embedding Extraction}
 
-Cross-Attention Fusion: Enables one modality to attend over the sequence of another, allowing richer cross-modal alignment.
+To model user behavior beyond text embeddings, 
+we construct symbolic sequences known as digital DNA, 
+across the user's timeline chronologically
+representing posting content, timing, and emoji usage. 
+These sequences are then converted into images and embedded 
+via a CNN encoder. In all cases, the resulting character sequence 
+is transformed into an image as follows:
+\begin{enumerate}
+    \item Each symbol is mapped to an 8-bit grayscale intensity value (e.g., \texttt{N} $\mapsto$ 0, \texttt{U} $\mapsto$ 64, ..., \texttt{X} $\mapsto$ 255).
+    \item The sequence of grayscale values is reshaped into a square matrix: if the sequence has length $L$, the smallest $n \in \mathbb{N}$ such that $n^2 \geq L$ is selected. The sequence is zero-padded to length $n^2$ and reshaped to $(n \times n)$.
+    \item This grayscale image is resized depending on the CNN encoder, using nearest-neighbor interpolation.
+    \item The image is then converted to RGB format by replicating the grayscale channel, and the resulting
+    tensor has shape: $3 \times \texttt{image\_width} \times \texttt{image\_height}$.
+    \item The tensor is normalized using ImageNet statistics and passed through a pretrained CNN encoder. 
+    % In our cross-attention
+    % fusion methods, we used the MobileNetV2 encoder. We later found that MobileViT (small) yielded better performance and used it in the MOE appraoch. 
+    \item The output features are either (1) average pooled and projected into a fixed embedding space, or (2) directly extracted from the last hidden layer of the CNN encoder.
+\end{enumerate}
 
-Sparse Mixture-of-Experts (MOE): Allows subsets of the model to specialize in different user types, with attention-based fusion and a learned convolution over attention weights.
+\textbf{Content DNA.} Each tweet is mapped to a symbol based on the type of entities it contains:
+\begin{itemize}
+    \item \texttt{N} --- No entities (plain text)
+    \item \texttt{U} --- Contains a URL
+    \item \texttt{H} --- Contains one or more hashtags
+    \item \texttt{M} --- Contains one or more mentions
+    \item \texttt{X} --- Contains a combination of multiple entity types
+\end{itemize}
 
-These architectures not only provide greater modeling capacity, but also offer more robustness against feature manipulation, as they do not rely on manually crafted statistics. Instead, they operate directly over sequences of observed user behavior and learn to extract structure.
+\textbf{Time DNA.}  
+Time DNA encodes inter-post intervals by assigning symbols based on the time elapsed between consecutive tweets:
+\begin{itemize}
+    \item \texttt{n} --- First post (no delta)
+    \item \texttt{o} --- $<$ 1 second
+    \item \texttt{s} --- $\geq$ 1 second and $<$ 1 minute
+    \item \texttt{m} --- $\geq$ 1 minute and $<$ 1 hour
+    \item \texttt{h} --- $\geq$ 1 hour and $<$ 6 hours
+    \item \texttt{u} --- $\geq$ 6 hours and $<$ 12 hours
+    \item \texttt{x} --- $\geq$ 12 hours
+\end{itemize}
 
-In the following sections, we describe each architecture in detail, including:
+\textbf{Emoji DNA.}  
+We categorize emojis in tweets using a precompiled lookup table. Each tweet is assigned a category based on its emojis:
+\begin{itemize}
+    \item \texttt{S} — Smileys \& Emotion
+    \item \texttt{P} — People \& Body
+    \item \texttt{A} — Animals \& Nature
+    \item \texttt{F} — Food \& Drink
+    \item \texttt{T} — Travel \& Places
+    \item \texttt{R} — Activities
+    \item \texttt{O} — Objects
+    \item \texttt{Y} — Symbols
+    \item \texttt{L} — Flags
+    \item \texttt{N} — No emoji present
+    \item \texttt{X} — Multiple emoji categories
+\end{itemize}
 
-The input representation for each modality
+In all cases, these DNA images serve as structured behavioral fingerprints, allowing CNNs to learn latent patterns over the visualized behavior sequences. Depending on the architecture, the extracted embeddings are used individually or fused with other modalities.
 
-How the architecture fuses modalities
 
-The training setup and results
+\subsubsection{Gated Multimodal Unit (GMU)}
 
-Intuition behind each design choice and what we learned
+The GMU allows the network to dynamically control how much each modality contributes to the final hidden representation.
 
-\subsubsection{Procedure}
+In the bimodal setting, where we consider two input modalities \( \mathbf{x}_v \) and \( \mathbf{x}_t \), 
+the equations governing the GMU are as follows:
+% the GMU computes separate intermediate representations \( \mathbf{h}_v \) and \( \mathbf{h}_t \) for each 
+% modality using independent linear transformations followed by a nonlinearity. A sigmoid-based gating vector \( \mathbf{z} \) is then computed from the concatenated input and is used to weight the contribution of each modality to the final fused representation \( \mathbf{h} \).
 
-Embedding user descriptions with transformer models (e.g., Twhin-BERT)
+\begin{align}
+\mathbf{h}_v &= \tanh(\mathbf{W}_v \cdot \mathbf{x}_v) \\
+\mathbf{h}_t &= \tanh(\mathbf{W}_t \cdot \mathbf{x}_t) \\
+\mathbf{z} &= \sigma(\mathbf{W}_z \cdot [\mathbf{x}_v, \mathbf{x}_t]) \\
+\mathbf{h} &= \mathbf{z} * \mathbf{h}_v + (1 - \mathbf{z}) * \mathbf{h}_t \\
+\mathbf{\Theta} &= \{ \mathbf{W}_v, \mathbf{W}_t, \mathbf{W}_z \} 
+\end{align}
 
-Modeling posting behavior through digital DNA techniques (content DNA and temporal DNA)
+Here, \( \mathbf{h}_v \) and \( \mathbf{h}_t \) are hidden states learned on modalities \( \mathbf{x}_v \) and \( \mathbf{x}_t \),
+\([\mathbf{.} , \mathbf{.}] \) denotes concatenation, and \(\mathbf{\Theta} \) denotes learnable parameters.
+The main takeaway is that \(\mathbf{z} \) is a weighting mechanism 
+that, through a softmax \(\sigma \) on the projected modalities, 
+learns how much each one contributes to our final fused representation and 
+downstream classification. 
+This example is for the reader's intuition; 
+in many implementations, these equations are loosly followed.
+The original author's implementation does not learn seperate projections
+\( \mathbf{W}_v \) and \( \mathbf{W}_t \) for each modality, 
+and instead the nonlinear activation is applied directly. In our implementation, 
+\( \mathbf{W}_z \) projects to two dimensions to
+impose a bottleneck and speed up training. 
 
-Experimenting with multiple multimodal fusion methods:
+In our intial efforts with the GMU, the modalities were:
+\begin{itemize}
+    \item User description embedding from TwHIN-BERT
+    \item Content-DNA embedding from MobileNetV2.
+\end{itemize}
 
-Gated Multimodal Unit (GMU)
+% \( \sigma(\cdot) \) is the sigmoid activation function, and \( [\mathbf{x}_v, \mathbf{x}_t] \) denotes vector concatenation. The learnable parameters of the GMU are the weight matrices \( \mathbf{W}_v, \mathbf{W}_t, \mathbf{W}_z \). All operations are differentiable, allowing the GMU to be trained end-to-end within a larger architecture via backpropagation.
 
-Cross-attention mechanisms
+% The core strength of the GMU lies in its ability to adaptively modulate modality contributions on a per-sample basis, making it particularly well-suited for heterogeneous data environments like X, where different user accounts may exhibit stronger signals in different behavioral dimensions (e.g., textual content versus temporal patterns).
 
-Sparsely gated Mixture-of-Experts (MOE) with self-attention fusion
 
-Training, tuning, and validation of models
+% In the following sections, we describe each architecture in detail, including:
 
-Result
+% The input representation for each modality
 
-Detailed performance analysis indicated that the multimodal approach substantially improved detection robustness, with MOE architectures demonstrating the strongest performance due to their effective handling of diverse community behaviors and resilience against sophisticated bot manipulation.
+% How the architecture fuses modalities
+
+% The training setup and results
+
+% Intuition behind each design choice and what we learned
+
+% \subsubsection{Procedure}
+
+% Embedding user descriptions with transformer models (e.g., TwHIN-BERT)
+
+% Modeling posting behavior through digital DNA techniques (content DNA and temporal DNA)
+
+% Experimenting with multiple multimodal fusion methods:
+
+% Gated Multimodal Unit (GMU)
+
+% Cross-attention mechanisms
+
+% Sparsely gated Mixture-of-Experts (MOE) with self-attention fusion
+
+% Training, tuning, and validation of models
+
+% Result
+
+% Detailed performance analysis indicated that the multimodal approach substantially improved detection robustness, with MOE architectures demonstrating the strongest performance due to their effective handling of diverse community behaviors and resilience against sophisticated bot manipulation.
 % Our dataset consists of Twitter posts in JSON format, containing tweet text, timestamps, user metadata, and other features. Our pipeline includes data preprocessing, feature extraction, unsupervised topic categorization, and classification model training.
 
 % Given the small datasets and unbalanced classes (majority non-bots), initial methods struggled with low bot recall. Combining TF-IDF with LDA improved recall on a single batch but struggled with noisy bots.

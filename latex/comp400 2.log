@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.9.18)  21 APR 2025 19:51
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.9.18)  21 APR 2025 18:41
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -360,7 +360,8 @@ Package caption Info: New subtype `subtable' on input line 238.
 File: l3backend-pdftex.def 2024-05-08 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count307
 \l__pdf_internal_box=\box56
-) (./comp400.aux)
+)
+No file comp400.aux.
 \openout1 = `comp400.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 14.
@@ -381,7 +382,6 @@ LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 14.
 LaTeX Font Info:    ... okay on input line 14.
 LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 14.
 LaTeX Font Info:    ... okay on input line 14.
-
 -- Lines per column: 56 (exact).
 (/usr/local/texlive/2024/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
@@ -403,7 +403,6 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 48
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
 ))
 Package hyperref Info: Link coloring OFF on input line 14.
- (./comp400.out) (./comp400.out)
 \@outlinefile=\write3
 \openout3 = `comp400.out'.
 
@@ -450,29 +449,191 @@ Underfull \hbox (badness 6236) in paragraph at lines 272--274
  []
 
 
+LaTeX Warning: Reference `fig:ks_exponential' on page 3 undefined on input line 292.
+
+
+LaTeX Warning: Reference `fig:ks_weibull' on page 3 undefined on input line 292.
+
+
 
 [3]
-<../figures/ks_exponential.pdf, id=98, 425.95259pt x 280.7978pt>
+<../figures/ks_exponential.pdf, id=36, 425.95259pt x 280.7978pt>
 File: ../figures/ks_exponential.pdf Graphic file (type pdf)
 <use ../figures/ks_exponential.pdf>
 Package pdftex.def Info: ../figures/ks_exponential.pdf  used on input line 313.
 (pdftex.def)             Requested size: 120.95892pt x 79.73685pt.
-<../figures/ks_lognormal.pdf, id=99, 425.95259pt x 280.7978pt>
+<../figures/ks_lognormal.pdf, id=37, 425.95259pt x 280.7978pt>
 File: ../figures/ks_lognormal.pdf Graphic file (type pdf)
 <use ../figures/ks_lognormal.pdf>
 Package pdftex.def Info: ../figures/ks_lognormal.pdf  used on input line 319.
 (pdftex.def)             Requested size: 120.95892pt x 79.73685pt.
-<../figures/ks_normal.pdf, id=100, 425.95259pt x 280.7978pt>
+<../figures/ks_normal.pdf, id=38, 425.95259pt x 280.7978pt>
 File: ../figures/ks_normal.pdf Graphic file (type pdf)
 <use ../figures/ks_normal.pdf>
 Package pdftex.def Info: ../figures/ks_normal.pdf  used on input line 327.
 (pdftex.def)             Requested size: 120.95892pt x 79.73685pt.
-<../figures/ks_weibull.pdf, id=101, 425.95259pt x 280.7978pt>
+<../figures/ks_weibull.pdf, id=39, 425.95259pt x 280.7978pt>
 File: ../figures/ks_weibull.pdf Graphic file (type pdf)
 <use ../figures/ks_weibull.pdf>
 Package pdftex.def Info: ../figures/ks_weibull.pdf  used on input line 333.
 (pdftex.def)             Requested size: 120.95892pt x 79.73685pt.
 
+
+/Users/hamzarashid/Desktop/comp400/latex/comp400.tex:394: Missing $ inserted.
+<inserted text> 
+                $
+l.394 ...ting in a $3 \times$ \texttt{image_width}
+                                                   $\times$ \texttt{image_he...
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+/Users/hamzarashid/Desktop/comp400/latex/comp400.tex:394: Extra }, or forgotten $.
+<recently read> \egroup 
+                        
+l.394 ...ting in a $3 \times$ \texttt{image_width}
+                                                   $\times$ \texttt{image_he...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+/Users/hamzarashid/Desktop/comp400/latex/comp400.tex:394: Missing $ inserted.
+<inserted text> 
+                $
+l.394 ...a $3 \times$ \texttt{image_width} $\times
+                                                  $ \texttt{image_height} te...
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+/Users/hamzarashid/Desktop/comp400/latex/comp400.tex:394: Missing $ inserted.
+<inserted text> 
+                $
+l.394 ...age_width} $\times$ \texttt{image_height}
+                                                   tensor.
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+/Users/hamzarashid/Desktop/comp400/latex/comp400.tex:394: Extra }, or forgotten $.
+<recently read> \egroup 
+                        
+l.394 ...age_width} $\times$ \texttt{image_height}
+                                                   tensor.
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+
+/Users/hamzarashid/Desktop/comp400/latex/comp400.tex:395: LaTeX Error: Command \item invalid in math mode.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.395     \item
+                Finally, the tensor is normalized using ImageNet statistics ...
+Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+/Users/hamzarashid/Desktop/comp400/latex/comp400.tex:395: LaTeX Error: Something's wrong--perhaps a missing \item.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.395     \item F
+                 inally, the tensor is normalized using ImageNet statistics ...
+Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+/Users/hamzarashid/Desktop/comp400/latex/comp400.tex:395: LaTeX Error: Something's wrong--perhaps a missing \item.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.395     \item F
+                 inally, the tensor is normalized using ImageNet statistics ...
+Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+/Users/hamzarashid/Desktop/comp400/latex/comp400.tex:396: LaTeX Error: Command \end{enumerate} invalid in math mode.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.396 \end{enumerate}
+                     
+Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+/Users/hamzarashid/Desktop/comp400/latex/comp400.tex:396: LaTeX Error: Something's wrong--perhaps a missing \item.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.396 \end{enumerate}
+                     
+Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+/Users/hamzarashid/Desktop/comp400/latex/comp400.tex:396: LaTeX Error: Something's wrong--perhaps a missing \item.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.396 \end{enumerate}
+                     
+Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+/Users/hamzarashid/Desktop/comp400/latex/comp400.tex:396: Missing $ inserted.
+<inserted text> 
+                $
+l.396 \end{enumerate}
+                     
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+/Users/hamzarashid/Desktop/comp400/latex/comp400.tex:396: Missing } inserted.
+<inserted text> 
+                }
+l.396 \end{enumerate}
+                     
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+/Users/hamzarashid/Desktop/comp400/latex/comp400.tex:396: Missing } inserted.
+<inserted text> 
+                }
+l.396 \end{enumerate}
+                     
+I've inserted something that you may have forgotten.
+(See the <inserted text> above.)
+With luck, this will get me unwedged. But if you
+really didn't forget anything, try typing `2' now; then
+my insertion and my current dilemma will both disappear.
+
+
+Overfull \hbox (615.22522pt too wide) in paragraph at lines 394--397
+\OT1/pcr/m/n/10 image$[]\OML/cmm/m/it/10 eighttensor:[][]Finally; thetensorisnormalizedusingImageNetstatisticsandpassedthroughapretrainedMobileNetV\OT1/cmr/m/n/10 2\OML/cmm/m/it/10 encoder:Theoutputfeaturesareaveragepooledandprojectedintoafixed\OT1/cmr/m/n/10 384 \OMS/cmsy/m/n/10 ^^@
+ []
 
 
 
@@ -500,22 +661,35 @@ Before submitting the final camera ready copy, remember to:
 LaTeX2e <2024-06-01> patch level 2
 L3 programming layer <2024-08-30>
  ***********
-Package rerunfilecheck Info: File `comp400.out' has not changed.
-(rerunfilecheck)             Checksum: AFCC8CBB910B02E18DC05787531C738C;3956.
+
+
+LaTeX Warning: There were undefined references.
+
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
+
+Package rerunfilecheck Warning: File `comp400.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+Package rerunfilecheck Info: Checksums for `comp400.out':
+(rerunfilecheck)             Before: <no file>
+(rerunfilecheck)             After:  AFCC8CBB910B02E18DC05787531C738C;3956.
  ) 
 Here is how much of TeX's memory you used:
- 12202 strings out of 473579
- 196333 string characters out of 5728234
- 603832 words of memory out of 5000000
- 34931 multiletter control sequences out of 15000+600000
- 593194 words of font info for 101 fonts, out of 8000000 for 9000
+ 12172 strings out of 473579
+ 195886 string characters out of 5728234
+ 603282 words of memory out of 5000000
+ 34908 multiletter control sequences out of 15000+600000
+ 592762 words of font info for 99 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  75i,8n,79p,630b,525s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on comp400.pdf (5 pages, 206992 bytes).
+Output written on comp400.pdf (5 pages, 211349 bytes).
 PDF statistics:
- 339 PDF objects out of 1000 (max. 8388607)
- 174 compressed objects within 2 object streams
- 36 named destinations out of 1000 (max. 500000)
- 165 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 281 PDF objects out of 1000 (max. 8388607)
+ 116 compressed objects within 2 object streams
+ 35 named destinations out of 1000 (max. 500000)
+ 21 words of extra memory for PDF output out of 10000 (max. 10000000)
 
