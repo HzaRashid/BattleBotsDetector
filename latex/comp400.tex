@@ -1,13 +1,19 @@
 \documentclass[conference]{IEEEtran}
+
+% use natbib for author-year citations
+\usepackage[round]{natbib}
+% \usepackage{subcaption}
+
 \usepackage{graphicx}
-\usepackage{hyperref}
+% \usepackage{hyperref}
+\usepackage[hidelinks]{hyperref}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
-\usepackage{cite}
+% \usepackage{cite}
 \usepackage{subcaption}
 
-\title{Multimodal Bot Detection on X}
+\title{(Blind) Multimodal Bot Detection on X}
 \author{Hamza Rashid \\ McGill University \\ COMP 400}
 \date{\today}
 
@@ -38,7 +44,7 @@ We find that CNN embeddings of inter-post time DNA may capture deep
 patterns in time series data that conventional methods miss.
 We investigate three methods for processing the modalities 
 and final fusion; a GMU (gated multimodal unit), 
-a cross-attention mechanism, and a sparsely gated MOE (mixture-of-experts) 
+a cross-attention mechanism, and a sparsely gated MOE (mixture-of-experts)
 with a self-attention fusion layer and a convolution learned on attention weights
 that addresses manipulated features. 
 We find that the MOE performs best, and gather counter-intuitive results along the way. 
@@ -64,7 +70,7 @@ Building on these insights, we introduce deep multimodal architectures designed 
 In addition to the known efficacy of content DNA, our experiments demonstrate that CNNs applied to temporal-DNA-generated images effectively uncover nuanced behavioral patterns overlooked by conventional methods. As most of the frontier literature 
 overlooks temporal bevahiour, this result signifies that it could be worth further investigation.
 
-We further explore several fusion techniques to integrate multimodal signals, including gated multimodal units (GMUs), cross-attention mechanisms, and a novel application of a sparsely gated mixture-of-experts (MOE) architecture. 
+We further explore several fusion techniques to integrate multimodal signals, including gated multimodal units (GMUs), cross-attention mechanisms, and a novel application of a sparsely gated mixture-of-experts (MOE) \citep{shazeer2017outrageously} architecture. 
 Our results highlight the MOE model's superior performance and efficiency, notably without necessitating explicit strategies to address class imbalance. Overall, our research emphasizes the 
 robustness of multimodal approaches and illustrates the potential of MOE architectures to adapt effectively to the diverse user communities found on X.
 
@@ -124,8 +130,8 @@ multiple data collection sessions to assess how well feature-based models genera
 across batches of social media activity. The sub-approaches below correspond to progressively 
 enriched feature sets tested on different sessions. The primary motivation
 for employing a random forest is that it enables rapid feature exporation due to its
-flexibility (allows multiple data types in its feature set), and its proven efficacy in bot detection,
-most notably in Botometer (maybe cite this?).
+flexibility (allows multiple data types in its feature set), and its proven efficacy in bot detection \citep{ilias2023multimodal},
+most notably in Botometer \citep{davis2016botornot}.
 
 \subsubsection{Session 11 – Embeddings + LDA}
 We began with a straightforward approach combining sentence-level embeddings with LDA (Latent Dirichlet Allocation)-based topic distributions. 
@@ -358,8 +364,8 @@ Recognizing the constraints of feature engineering, we
 explored multimodal neural architectures directly modeling
 sequences and cross-modal interactions inspired by recent
 literature \textit{``Multimodal Detection of Bots on X (Twitter) using
-Transformers''} (Ilias et al., 2023), and \textit{``BotMoE: Twitter Bot Detection with Community-Aware
-Mixtures of Modal-Specific Experts''} (Liu et al., 2023). Our modalities include transformer-based
+Transformers''} \citep{ilias2023multimodal}, and \textit{``BotMoE: Twitter Bot Detection with Community-Aware
+Mixtures of Modal-Specific Experts''} \citep{liu2023botmoe}. Our modalities include transformer-based
 description and tweet embeddings alongside digital DNA representations (content and
 temporal).
 
@@ -385,7 +391,7 @@ and learn to extract structure.
 
 To model user behavior beyond text embeddings, 
 we construct symbolic sequences known as digital DNA, 
-across the user's timeline chronologically
+across the user's timeline chronologically,
 representing posting content, timing, and emoji usage. 
 These sequences are then converted into images and embedded 
 via a CNN encoder. In all cases, the resulting character sequence 
@@ -462,16 +468,23 @@ the equations governing the GMU are as follows:
 Here, \( \mathbf{h}_v \) and \( \mathbf{h}_t \) are hidden states learned on modalities \( \mathbf{x}_v \) and \( \mathbf{x}_t \),
 \([\mathbf{.} , \mathbf{.}] \) denotes concatenation, and \(\mathbf{\Theta} \) denotes learnable parameters.
 The main takeaway is that \(\mathbf{z} \) is a weighting mechanism 
-that, through a softmax \(\sigma \) on the projected modalities, 
-learns how much each one contributes to our final fused representation and 
-downstream classification. 
-This example is for the reader's intuition; 
-in many implementations, these equations are loosly followed.
-The original author's implementation does not learn seperate projections
-\( \mathbf{W}_v \) and \( \mathbf{W}_t \) for each modality, 
-and instead the nonlinear activation is applied directly. In our implementation, 
-\( \mathbf{W}_z \) projects to two dimensions to
-impose a bottleneck and speed up training. 
+that, through a sigmoid activation \(\sigma \) on the projected modalities, 
+learns how much each one contributes to the final fused representation for downstream classification.
+This example is for the reader’s intuition; in practice many codebases depart from these equations.  
+Arevalo \emph{et al.}’s own demo\footnote{\url{https://github.com/johnarevalo/gmu-mmimdb/blob/master/model.py}}  
+omits separate projections for each modality and applies the nonlinearity directly to the inputs.  
+In our implementation, the hidden states are concatenated for weighting 
+for improved training stability, and \( \mathbf{W}_z \) projects 
+onto two dimensions to impose a bottleneck and speed up training. 
+
+% This example is for the reader's intuition; 
+% in many implementations, these equations are loosly followed.
+% The original author's implementation does not learn seperate projections
+% \( \mathbf{W}_v \) and \( \mathbf{W}_t \) for each modality, 
+% and instead the nonlinear activation is applied directly. In our implementation, 
+% the hidden states are concatenated for weighting, which improved training stability,
+% and \( \mathbf{W}_z \) projected onto two dimensions to
+% impose a bottleneck and speed up training. 
 
 In our intial efforts with the GMU, the modalities were:
 \begin{itemize}
@@ -527,7 +540,8 @@ blah blah....
 \section{Conclusion and Future Work}
 blah blah...
 
-\bibliographystyle{IEEEtran}
+% \bibliographystyle{IEEEtran}
+\bibliographystyle{plainnat}
 \bibliography{references}
 
 \end{document}
