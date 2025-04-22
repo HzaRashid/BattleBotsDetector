@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.9.18)  22 APR 2025 01:18
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.9.18)  22 APR 2025 18:16
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -454,22 +454,22 @@ Underfull \hbox (badness 6236) in paragraph at lines 278--280
 
 
 [3]
-<../figures/ks_exponential.pdf, id=108, 425.95259pt x 280.7978pt>
+<../figures/ks_exponential.pdf, id=111, 425.95259pt x 280.7978pt>
 File: ../figures/ks_exponential.pdf Graphic file (type pdf)
 <use ../figures/ks_exponential.pdf>
 Package pdftex.def Info: ../figures/ks_exponential.pdf  used on input line 319.
 (pdftex.def)             Requested size: 120.95892pt x 79.73685pt.
-<../figures/ks_lognormal.pdf, id=109, 425.95259pt x 280.7978pt>
+<../figures/ks_lognormal.pdf, id=112, 425.95259pt x 280.7978pt>
 File: ../figures/ks_lognormal.pdf Graphic file (type pdf)
 <use ../figures/ks_lognormal.pdf>
 Package pdftex.def Info: ../figures/ks_lognormal.pdf  used on input line 325.
 (pdftex.def)             Requested size: 120.95892pt x 79.73685pt.
-<../figures/ks_normal.pdf, id=110, 425.95259pt x 280.7978pt>
+<../figures/ks_normal.pdf, id=113, 425.95259pt x 280.7978pt>
 File: ../figures/ks_normal.pdf Graphic file (type pdf)
 <use ../figures/ks_normal.pdf>
 Package pdftex.def Info: ../figures/ks_normal.pdf  used on input line 333.
 (pdftex.def)             Requested size: 120.95892pt x 79.73685pt.
-<../figures/ks_weibull.pdf, id=111, 425.95259pt x 280.7978pt>
+<../figures/ks_weibull.pdf, id=114, 425.95259pt x 280.7978pt>
 File: ../figures/ks_weibull.pdf Graphic file (type pdf)
 <use ../figures/ks_weibull.pdf>
 Package pdftex.def Info: ../figures/ks_weibull.pdf  used on input line 339.
@@ -478,7 +478,41 @@ Package pdftex.def Info: ../figures/ks_weibull.pdf  used on input line 339.
 
 
 
-[4 <../figures/ks_exponential.pdf> <../figures/ks_lognormal.pdf> <../figures/ks_normal.pdf> <../figures/ks_weibull.pdf>] (./comp400.bbl
+[4 <../figures/ks_exponential.pdf> <../figures/ks_lognormal.pdf> <../figures/ks_normal.pdf> <../figures/ks_weibull.pdf>]
+
+
+Underfull \hbox (badness 2689) in paragraph at lines 501--504
+[]\OT1/ptm/b/n/10 GMUFusionWithNorm: \OT1/ptm/m/n/10 In-tro-duced modality-specific
+ []
+
+
+Underfull \hbox (badness 6204) in paragraph at lines 543--545
+[]\OT1/ptm/m/n/10 To per-form cross-modal at-ten-tion, we em-ploy two
+ []
+
+
+
+[5]
+
+(./comp400.bbl
+Underfull \hbox (badness 6893) in paragraph at lines 32--36
+[]\OT1/ptm/m/n/10 Ashish Vaswani, Noam Shazeer, Niki Par-mar, Jakob
+ []
+
+
+Underfull \hbox (badness 8075) in paragraph at lines 32--36
+\OT1/ptm/m/n/10 Uszko-r-eit, Llion Jones, Aidan N. Gomez, []ukasz
+ []
+
+
+Underfull \hbox (badness 2556) in paragraph at lines 32--36
+\OT1/ptm/m/n/10 Kaiser, and Il-lia Polo-sukhin.  At-ten-tion is all you
+ []
+
+
+Underfull \hbox (badness 2134) in paragraph at lines 32--36
+\OT1/ptm/m/n/10 need.  In \OT1/ptm/m/it/10 Ad-vances in Neu-ral In-for-ma-tion Pro-cess-
+ []
 
 )
 
@@ -494,27 +528,27 @@ Before submitting the final camera ready copy, remember to:
 
 
 
-[5] (./comp400.aux)
+[6] (./comp400.aux)
  ***********
 LaTeX2e <2024-06-01> patch level 2
 L3 programming layer <2024-08-30>
  ***********
 Package rerunfilecheck Info: File `comp400.out' has not changed.
-(rerunfilecheck)             Checksum: AFCC8CBB910B02E18DC05787531C738C;3956.
+(rerunfilecheck)             Checksum: CC7BF3CB155562F4E152674EE205CAD7;4099.
  ) 
 Here is how much of TeX's memory you used:
- 12492 strings out of 473579
- 199874 string characters out of 5728234
- 609931 words of memory out of 5000000
- 35200 multiletter control sequences out of 15000+600000
- 599578 words of font info for 118 fonts, out of 8000000 for 9000
+ 12508 strings out of 473579
+ 200184 string characters out of 5728234
+ 609130 words of memory out of 5000000
+ 35207 multiletter control sequences out of 15000+600000
+ 600714 words of font info for 119 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,8n,79p,630b,525s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,10n,79p,630b,525s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on comp400.pdf (5 pages, 210635 bytes).
+Output written on comp400.pdf (6 pages, 221258 bytes).
 PDF statistics:
- 363 PDF objects out of 1000 (max. 8388607)
- 198 compressed objects within 2 object streams
- 42 named destinations out of 1000 (max. 500000)
- 165 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 387 PDF objects out of 1000 (max. 8388607)
+ 220 compressed objects within 3 object streams
+ 50 named destinations out of 1000 (max. 500000)
+ 173 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -67,7 +67,7 @@ Traditional approaches to bot detection typically rely on supervised classificat
 In this report, we address this challenge by evaluating a range of bot detection strategies, beginning with classical machine-learning techniques enhanced by extensive feature engineering. We initially employ a random forest classifier incorporating textual features, temporal posting patterns, and inferred topic distributions, achieving moderate baseline performance. Our analysis reveals that traditional temporal features often fail to effectively distinguish sophisticated bots from genuine users, underscoring the limitations of classical approaches.
 
 Building on these insights, we introduce deep multimodal architectures designed to exploit richer behavioral patterns. Inspired by the concept of digital DNA, our method integrates user descriptions embedded via TwHIN-BERT and models posting behavior through two distinct DNA formulations: one capturing the content across posts and another encoding inter-post timing patterns. 
-In addition to the known efficacy of content DNA, our experiments demonstrate that CNNs applied to temporal-DNA-generated images effectively uncover nuanced behavioral patterns overlooked by conventional methods. As most of the frontier literature 
+In addition to the known efficacy of content DNA \citep{ilias2023multimodal}, our experiments demonstrate that CNNs applied to temporal-DNA-generated images effectively uncover nuanced behavioral patterns overlooked by conventional methods. As most of the frontier literature 
 overlooks temporal bevahiour, this result signifies that it could be worth further investigation.
 
 We further explore several fusion techniques to integrate multimodal signals, including gated multimodal units (GMUs), cross-attention mechanisms, and a novel application of a sparsely gated mixture-of-experts (MOE) \citep{shazeer2017outrageously} architecture. 
@@ -118,10 +118,10 @@ Participant submissions (bot and detector code) were managed via public GitHub r
 
 
 \section{Methodology}
-Our approach involved a systematic progression from classical machine learning methods to advanced multimodal architectures, 
+Our approach involved a systematic progression from classical machine learning methods to multimodal neural-based architectures, 
 aimed at overcoming limitations observed at each stage. Our primary goal was to model user behaviour
 from a variety of perspectives since nontrival bots manipulate features in at least one modality 
-(e.g., tweet content, posting times, and interactions such as retweets, likes, and follower and following relationships).
+(e.g., tweet content, posting times, or interactions such as retweets, likes, and follower and following relationships).
 %  Instruction: in the below sub/subsub-sections, make the language a bit more formal; e.g, 'statistics' instead of 'stats', etc and find titles more formal than 'what went right' and 'what went wrong'
 \subsection{Baseline - Random Forest}
 Our baseline method involved training a Random Forest classifier using various 
@@ -130,7 +130,7 @@ multiple data collection sessions to assess how well feature-based models genera
 across batches of social media activity. The sub-approaches below correspond to progressively 
 enriched feature sets tested on different sessions. The primary motivation
 for employing a random forest is that it enables rapid feature exporation due to its
-flexibility (allows multiple data types in its feature set), and its proven efficacy in bot detection \citep{ilias2023multimodal},
+flexibility (allows multiple data types in its feature set), and its proven efficacy in bot detection,
 most notably in Botometer \citep{davis2016botornot}.
 
 \subsubsection{Session 11 – Embeddings + LDA}
@@ -450,7 +450,10 @@ In all cases, these DNA images serve as structured behavioral fingerprints, allo
 
 \subsubsection{Gated Multimodal Unit (GMU)}
 
-The GMU allows the network to dynamically control how much each modality contributes to the final hidden representation.
+The GMU allows the network to dynamically control how much 
+each modality contributes to the final hidden representation.
+The output is used (with possibly further transformations)
+downstream for classification.
 
 In the bimodal setting, where we consider two input modalities \( \mathbf{x}_v \) and \( \mathbf{x}_t \), 
 the equations governing the GMU are as follows:
@@ -467,30 +470,142 @@ the equations governing the GMU are as follows:
 
 Here, \( \mathbf{h}_v \) and \( \mathbf{h}_t \) are hidden states learned on modalities \( \mathbf{x}_v \) and \( \mathbf{x}_t \),
 \([\mathbf{.} , \mathbf{.}] \) denotes concatenation, and \(\mathbf{\Theta} \) denotes learnable parameters.
-The main takeaway is that \(\mathbf{z} \) is a weighting mechanism 
-that, through a sigmoid activation \(\sigma \) on the projected modalities, 
-learns how much each one contributes to the final fused representation for downstream classification.
-This example is for the reader’s intuition; in practice many codebases depart from these equations.  
-Arevalo \emph{et al.}’s own demo\footnote{\url{https://github.com/johnarevalo/gmu-mmimdb/blob/master/model.py}}  
-omits separate projections for each modality and applies the nonlinearity directly to the inputs.  
-In our implementation, the hidden states are concatenated for weighting 
-for improved training stability, and \( \mathbf{W}_z \) projects 
-onto two dimensions to impose a bottleneck and speed up training. 
+Cross-modal interactions are learned in the parameters \( \mathbf{W}_z\), 
+the weighting mechanism \(\mathbf{z} \)
+then applies a sigmoid activation \(\sigma \) on the projected modalities
+to determine how much each one contributes to the final fused representation.
+In practice, implementations tend to depart\footnote{Arevalo \emph{et al.}’s own demo \url{https://github.com/johnarevalo/gmu-mmimdb/blob/master/model.py}; omits separate projections for each modality and applies the nonlinearity directly to the inputs.}
+from some of the original equations,
+including ours.
 
-% This example is for the reader's intuition; 
-% in many implementations, these equations are loosly followed.
-% The original author's implementation does not learn seperate projections
-% \( \mathbf{W}_v \) and \( \mathbf{W}_t \) for each modality, 
-% and instead the nonlinear activation is applied directly. In our implementation, 
-% the hidden states are concatenated for weighting, which improved training stability,
-% and \( \mathbf{W}_z \) projected onto two dimensions to
-% impose a bottleneck and speed up training. 
+% \footnote{The hidden states were concatenated for weighting, 
+% which improved training stability.}.
 
-In our intial efforts with the GMU, the modalities were:
+
+
+Resembling the work of \emph{Ilias et al.}, our intial efforts with the GMU used the following modalities:
 \begin{itemize}
-    \item User description embedding from TwHIN-BERT
+    \item User description embedding from TwHIN-BERT.
     \item Content-DNA embedding from MobileNetV2.
 \end{itemize}
+The first iteration consisted of a two layer classification head applied
+to the GMU's output. This model marked all samples as negatives,
+and several adjustments were needed. Working backwards from 
+our final iteration, we reason that the first attempt 
+was ineffective because it did not use normalization to deal with input variation and was unable to learn cross-modal interactions effectly due to its simple linear gating mechanism.
+
+\paragraph{Architectural Progression Toward the Final GMU.}
+To improve the initial GMU, we developed two refined variants:
+
+\begin{itemize}
+    \item \textbf{GMUFusionWithNorm:}  
+    Introduced modality-specific projections and \textit{LayerNorm} to balance their scales. 
+    Normalization was applied after fusion to stabilize the representation.
+
+    \item \textbf{GMUFusionWithGlobalSkip:}  
+    Added a global residual connection that projected raw modality embeddings directly to the hidden space, and applied modality-specific dropout.
+\end{itemize}
+
+\paragraph{Incorporating Time-DNA and Its Impact.}
+While refining our GMUs, time-DNA embeddings were introduced as a third modality.
+This addition improved performance, supporting our intuition 
+that a dynamic temporal feature can help capture richer distinctions 
+between bots and humans.
+
+While our GMU iterations demonstrated nontrivial improvements, 
+development required numerous adjustments to stabilize training 
+and optimize performance. 
+This raised concerns about generalizability;
+would such a carefully balanced architecture transfer 
+effectively to different modalities and datasets?
+
+Given these concerns, we transitioned to cross-modal attention mechanisms, 
+hypothesizing that they could acheive nontrivial performance with fewer architectural tweaks.
+
+
+\subsubsection{Cross-Attention}
+Equipped with three modalities (user description, content-DNA, and time-DNA), it 
+would have been computationally expensive to generalize the work of \emph{Ilias et al.}, 
+which would require six multihead-attention layers to consider 
+each cross-modal interaction in both directions.
+A natural alternative is to employ a single self-attention 
+block where each token corresponds to one of the modalities. 
+We found little success with this approach, but given that it plays
+a crucial role in our final MOE model, it is certainly worth further exploration.
+
+As a workaround, we fuse modalities in two stages:
+\begin{itemize}
+    \item Apply a simple GMU to the DNA modalities to create an intermediate representation 
+    of fused-DNA.
+    \item Apply cross-attention layers to the description and fused-DNA in both directions.
+\end{itemize}
+
+To perform cross-modal attention, we employ two multihead-attention layers,
+essentially computing scaled dot-product attention \citep{vaswani2017attention}
+\begin{align}
+    \text{Attention}(Q, K, V) &= \text{softmax}(\frac{QK^{T}}{\sqrt{d_k}})V
+\end{align}
+in one direction where the description modality is the query (Q) and fused-DNA 
+provides the key (K) and value (V), and another direction in which the modalities swap 
+roles. Here, $d_k$ denotes the dimensionality of the query and key. 
+A mean pooling is applied to both attention layers' outputs to form 
+a final fused representation.
+
+With the fused representation, we began with a 
+two layer classification head and iteratively improved our architecture.
+This required less refinements than our GMU approach. 
+
+\paragraph{Session 16 - Description, Content, Time}
+For session 16, we employed the cross-attention approach
+ on user description embeddings and CNN-encoded content 
+ and time DNA sequences.
+
+\textbf{Architecture:} Along with the previously outlined steps, 
+The design follows a structured flow employing conventional 
+methods such as residual connections and layer normalization:
+\begin{itemize}
+    \item \textbf{Modality Preparation:}
+    \begin{itemize}
+        \item The user description embedding is projected into a hidden space.
+        \item Content and time DNA sequences are fused via the GMU as stated before.
+    \end{itemize}
+    
+    \item \textbf{Cross-Modal Fusion:}
+    \begin{itemize}
+        \item \textbf{Pre-Layer normalization} \citep{xiong2020layer} and \textbf{residual connections} are applied at each attention stage to stabilize training and preserve modality-specific signals.
+    \end{itemize}
+    
+    \item \textbf{Feature Refinement:}
+    \begin{itemize}
+        \item The two cross‑attention outputs are concatenated into a tiny sequence and fed through a single position‑wise FFN, enabling direct interaction between modalities while sharing parameters for better regularization.
+        \item A residual connection around the FFN plus a preceding LayerNorm ensure stable feature propagation and consistent scaling.
+    \end{itemize}
+    
+    \item \textbf{Aggregation and Prediction:}
+    \begin{itemize}
+        \item \textbf{Global average pooling} condenses the multi-token output into a single fused vector.
+        \item A \textbf{two-layer classification head} generates the final logits for bot detection.
+    \end{itemize}
+\end{itemize}
+
+\textbf{Strengths:}
+\begin{itemize}
+  \item \textit{Hierarchical fusion}: In addition to the bidirectional cross‑attention steps, GMU’s gated combination of content and time embeddings produces richer joint representations than simple concatenation alone.
+  \item \textit{High expressiveness}: Beyond the cross‑attention fusion, treating each modality as its own token and then merging them enables the model to capture subtle behavioral cues (e.g., burst patterns or nuanced profile signals) that flatter architectures miss.
+\end{itemize}
+
+\textbf{Weaknesses:}
+\begin{itemize}
+  \item \textit{Overparameterization risk}: Multiple attention layers plus gating mechanisms add significant complexity, making the model prone to overfitting without sufficient data or strong regularization.
+  \item \textit{Hyperparameter sensitivity}: Stable training depends on careful tuning of learning rate, dropout rate, number of heads, gating biases, etc.; suboptimal settings can lead to slow convergence or degraded performance.
+\end{itemize}
+
+\textbf{Performance:} The model underperformed relative to some of our random forest attempts. However, the bots had improved significantly by session 16, 
+and a drop in performance was expected given the model's complexity and the limited fine-tuning conducted at this stage.
+
+\textbf{Conclusion:} While the session 16 model introduced a promising fusion paradigm combining gated mechanisms and cross-modal attention, 
+it fell short in performance due to its tuning demands. 
+Nonetheless, this model performed well given its complexity and lack of tuning, and it set the stage for our future attempts.
 
 % \( \sigma(\cdot) \) is the sigmoid activation function, and \( [\mathbf{x}_v, \mathbf{x}_t] \) denotes vector concatenation. The learnable parameters of the GMU are the weight matrices \( \mathbf{W}_v, \mathbf{W}_t, \mathbf{W}_z \). All operations are differentiable, allowing the GMU to be trained end-to-end within a larger architecture via backpropagation.
 
