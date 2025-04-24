@@ -100,6 +100,7 @@ The preliminary data collection process can summarized as follows:
     
     \item Activity Thresholds: Each included user produced between 10 and 100 posts during the session period, ensuring active participation.
 \end{itemize}
+
 % Instruction: comment on how the above limits the scope of our research, e.g., no graph data to work with like following/follwed by, likes, etc
 Datasets were structured into two main JSON formats:
 \begin{itemize}
@@ -118,9 +119,14 @@ Participant submissions (bot and detector code) were managed via public GitHub r
 
 
 \section{Methodology}
+
 Our approach involved a systematic progression from classical machine learning methods to multimodal neural-based architectures, 
-aimed at overcoming limitations observed at each stage. Our primary goal was to model user behaviour
-from a variety of perspectives since nontrival bots manipulate features in at least one modality 
+aimed at overcoming limitations observed at each stage. 
+The lack of graph and user meta data limited the scope of our research.
+We nonetheless explored methods that are capable of utilizing such features 
+with minimal adjustments.
+Our primary goal was to model user behaviour
+from a variety of perspectives since nontrival bots manipulate features in at least one aspect 
 (e.g., tweet content, posting times, or interactions such as retweets, likes, and follower and following relationships).
 %  Instruction: in the below sub/subsub-sections, make the language a bit more formal; e.g, 'statistics' instead of 'stats', etc and find titles more formal than 'what went right' and 'what went wrong'
 \subsection{Baseline - Random Forest}
@@ -203,7 +209,7 @@ Implementation Summary:
     
     \item Inter-post Interval Statistics: Mean and standard deviation of time gaps between posts.
     
-    \item Bucketed Duplicate Counts: Time was split into 10 buckets, and duplicate post counts were computed per bucket.
+    \item Bucketed Duplicate Counts: Timestamps were partitioned into 10 intra- and inter-chronologically-ordered buckets, and duplicate post counts were computed per bucket.
     
     \item Features Used: Combined embeddings, topic distributions, post frequency, inter-post intervals, and bucketed duplicates.
 \end{itemize}
@@ -215,7 +221,7 @@ Limitations:
 \begin{itemize}
     \item Still relied heavily on session-specific BERTopic clusters.
     
-    \item Lacked modeling of inter-feature dependencies (e.g., topic-time correlations).
+    \item Lacked explicit modeling of inter-feature dependencies (e.g., topic-time correlations).
 \end{itemize}
 
 \subsubsection{Session 14 – Topic Statistics + Temporal Entropy + Intra-Topic Similarity}
@@ -247,9 +253,9 @@ Implementation Summary:
 \end{itemize}
 
 Result:
-In session 14, the bots became particularly hard to distinguish upon 
-manual inspection. Although this model outperformed our previous attempt under the same training conditions
-when applied to the previous session, its performance was worse on the latest.
+In session 14, the bots became more difficult to distinguish. That is,
+this model outperformed its predecessor under the same training conditions 
+when applied to the previous session, but performed worse on the latest.
 % Insert final accuracy, precision, recall, F1 scores here.
 % Note if performance improved significantly over earlier sessions.
 % Mention if any new features proved particularly important (e.g., topic entropy, similarity mean).
@@ -284,11 +290,16 @@ What Went Wrong:
     
     \item Feature Brittleness: Despite capturing many dimensions, these features are often brittle against slight changes in bot strategies (e.g., using synonyms or reworded hashtags).
     
-    \item Scalability Concerns: Computing transformer embeddings, pairwise similarities, multiple topic stats, and padded histograms scales poorly for large user datasets.
+    \item Scalability Concerns: Computing transformer embeddings, pairwise similarities, multiple topic statistics, and padded histograms scales poorly for large user datasets.
 \end{itemize}
 While the Random Forest baseline allowed us to test many ideas rapidly, 
 its limitations became evident in detecting sophisticated or adaptive bots (increasing complexity of feature engineering was needed to keep up with the bots), 
-motivating the shift to multimodal neural architectures whose underlying features can adapt to evolving behaviours on X.
+motivating the shift to multimodal methods whose underlying features and architecture 
+can adapt to evolving behaviours on X. 
+
+Before proceeding to our multimodal methods, we demonstrate the need
+for more dynamic representations.
+
 
 
 \subsection{Temporal Feature Analysis via KS Tests}
@@ -392,7 +403,7 @@ and learn to extract structure.
 To model user behavior beyond text embeddings, 
 we construct symbolic sequences known as digital DNA, 
 across the user's timeline chronologically,
-representing posting content, timing, and emoji usage. 
+representing content, timing, and emoji usage across tweets. 
 These sequences are then converted into images and embedded 
 via a CNN encoder. In all cases, the resulting character sequence 
 is transformed into an image as follows:
@@ -445,14 +456,15 @@ We categorize emojis in tweets using a precompiled lookup table. Each tweet is a
     \item \texttt{X} — Multiple emoji categories
 \end{itemize}
 
-In all cases, these DNA images serve as structured behavioral fingerprints, allowing CNNs to learn latent patterns over the visualized behavior sequences. Depending on the architecture, the extracted embeddings are used individually or fused with other modalities.
+In all cases, these DNA images serve as behavioral \emph{fingerprints}, 
+allowing CNNs to learn latent signals over them.
+
 
 
 \subsubsection{Gated Multimodal Unit (GMU)}
-
 The GMU allows the network to dynamically control how much 
 each modality contributes to the final hidden representation.
-The output is used (with possibly further transformations)
+The output is used (with possibly further transformation)
 downstream for classification.
 
 In the bimodal setting, where we consider two input modalities \( \mathbf{x}_v \) and \( \mathbf{x}_t \), 
@@ -474,7 +486,7 @@ Cross-modal interactions are learned in the parameters \( \mathbf{W}_z\),
 the weighting mechanism \(\mathbf{z} \)
 then applies a sigmoid activation \(\sigma \) on the projected modalities
 to determine how much each one contributes to the final fused representation.
-In practice, implementations tend to depart\footnote{Arevalo \emph{et al.}’s own demo \url{https://github.com/johnarevalo/gmu-mmimdb/blob/master/model.py}; omits separate projections for each modality and applies the nonlinearity directly to the inputs.}
+In practice, implementations tend to depart\footnote{ \citet{arevalo2017gated}’s own demo \url{https://github.com/johnarevalo/gmu-mmimdb/blob/master/model.py}; omits separate projections for each modality and applies the nonlinearity directly to the inputs.}
 from some of the original equations,
 including ours.
 
@@ -483,7 +495,7 @@ including ours.
 
 
 
-Resembling the work of \emph{Ilias et al.}, our intial efforts with the GMU used the following modalities:
+Resembling the work of \citet{ilias2023multimodal}, our intial efforts with the GMU used the following modalities:
 \begin{itemize}
     \item User description embedding from TwHIN-BERT.
     \item Content-DNA embedding from MobileNetV2.
@@ -495,21 +507,19 @@ our final iteration, we reason that the first attempt
 was ineffective because it did not use normalization to deal with input variation and was unable to learn cross-modal interactions effectly due to its simple linear gating mechanism.
 
 \paragraph{Architectural Progression Toward the Final GMU.}
-To improve the initial GMU, we developed two refined variants:
+To improve the initial GMU, we developed refined variants with the following changes:
 
 \begin{itemize}
-    \item \textbf{GMUFusionWithNorm:}  
-    Introduced modality-specific projections and \textit{LayerNorm} to balance their scales. 
+    \item Introduced modality-specific projections and \textit{LayerNorm} to balance their scales. 
     Normalization was applied after fusion to stabilize the representation.
 
-    \item \textbf{GMUFusionWithGlobalSkip:}  
-    Added a global residual connection that projected raw modality embeddings directly to the hidden space, and applied modality-specific dropout.
+    \item Added a global residual connection that projected modality embeddings directly to the hidden space, and applied modality-specific dropout.
 \end{itemize}
 
 \paragraph{Incorporating Time-DNA and Its Impact.}
 While refining our GMUs, time-DNA embeddings were introduced as a third modality.
-This addition improved performance, supporting our intuition 
-that a dynamic temporal feature can help capture richer distinctions 
+Despite content- and time-DNA representing the same modality, this addition improved performance, 
+supporting our intuition that a dynamic temporal feature can help capture richer distinctions 
 between bots and humans.
 
 While our GMU iterations demonstrated nontrivial improvements, 
@@ -519,57 +529,47 @@ This raised concerns about generalizability;
 would such a carefully balanced architecture transfer 
 effectively to different modalities and datasets?
 
-Given these concerns, we transitioned to cross-modal attention mechanisms, 
-hypothesizing that they could acheive nontrivial performance with fewer architectural tweaks.
+Given these concerns, we transitioned to a cross-modal attention approach, 
+expecting that it could acheive nontrivial performance with fewer 
+architectural tweaks.
 
 
 \subsubsection{Cross-Attention}
-Equipped with three modalities (user description, content-DNA, and time-DNA), it 
-would have been computationally expensive to generalize the work of \emph{Ilias et al.}, 
-which would require six multihead-attention layers to consider 
-each cross-modal interaction in both directions.
-A natural alternative is to employ a single self-attention 
-block where each token corresponds to one of the modalities. 
-We found little success with this approach, but given that it plays
-a crucial role in our final MOE model, it is certainly worth further exploration.
+We first learn an intermediate representation of the DNA embeddings (content and time)
+to later apply cross-attention with the user description. We found that employing
+a GMU to learn a fused DNA representation was effective, despite its intended multimodal use.
 
-As a workaround, we fuse modalities in two stages:
+Our cross-attention method fuses text (user description) and DNA in the following way:
 \begin{itemize}
-    \item Apply a simple GMU to the DNA modalities to create an intermediate representation 
+    \item Apply a simple GMU to the DNA embeddings to create an intermediate representation 
     of fused-DNA.
     \item Apply cross-attention layers to the description and fused-DNA in both directions.
 \end{itemize}
 
 To perform cross-modal attention, we employ two multihead-attention layers,
-essentially computing scaled dot-product attention \citep{vaswani2017attention}
+computing scaled dot-product attention \citep{vaswani2017attention}
 \begin{align}
     \text{Attention}(Q, K, V) &= \text{softmax}(\frac{QK^{T}}{\sqrt{d_k}})V
 \end{align}
 in one direction where the description modality is the query (Q) and fused-DNA 
 provides the key (K) and value (V), and another direction in which the modalities swap 
 roles. Here, $d_k$ denotes the dimensionality of the query and key. 
-A mean pooling is applied to both attention layers' outputs to form 
+A mean pooling is then applied to attention outputs to form 
 a final fused representation.
 
 With the fused representation, we began with a 
 two layer classification head and iteratively improved our architecture.
 This required less refinements than our GMU approach. 
 
-\paragraph{Session 16 - Description, Content, Time}
+\paragraph{Sessions 16-17 - Description, Content, Time}
 For session 16, we employed the cross-attention approach
- on user description embeddings and CNN-encoded content 
- and time DNA sequences.
+on user description embeddings and CNN-encoded content 
+and time DNA sequences.
 
 \textbf{Architecture:} Along with the previously outlined steps, 
 The design follows a structured flow employing conventional 
 methods such as residual connections and layer normalization:
 \begin{itemize}
-    \item \textbf{Modality Preparation:}
-    \begin{itemize}
-        \item The user description embedding is projected into a hidden space.
-        \item Content and time DNA sequences are fused via the GMU as stated before.
-    \end{itemize}
-    
     \item \textbf{Cross-Modal Fusion:}
     \begin{itemize}
         \item \textbf{Pre-Layer normalization} \citep{xiong2020layer} and \textbf{residual connections} are applied at each attention stage to stabilize training and preserve modality-specific signals.
@@ -577,7 +577,8 @@ methods such as residual connections and layer normalization:
     
     \item \textbf{Feature Refinement:}
     \begin{itemize}
-        \item The two cross‑attention outputs are concatenated into a tiny sequence and fed through a single position‑wise FFN, enabling direct interaction between modalities while sharing parameters for better regularization.
+        \item The two cross‑attention outputs are concatenated into a tiny sequence and fed through a single position‑wise FFN, 
+        enabling direct interaction between modalities while sharing parameters for better regularization.
         \item A residual connection around the FFN plus a preceding LayerNorm ensure stable feature propagation and consistent scaling.
     \end{itemize}
     
@@ -591,7 +592,7 @@ methods such as residual connections and layer normalization:
 \textbf{Strengths:}
 \begin{itemize}
   \item \textit{Hierarchical fusion}: In addition to the bidirectional cross‑attention steps, GMU’s gated combination of content and time embeddings produces richer joint representations than simple concatenation alone.
-  \item \textit{High expressiveness}: Beyond the cross‑attention fusion, treating each modality as its own token and then merging them enables the model to capture subtle behavioral cues (e.g., burst patterns or nuanced profile signals) that flatter architectures miss.
+%   \item \textit{High expressiveness}: Beyond the cross‑attention fusion, treating each modality as its own token and then merging them enables the model to capture subtle behavioral cues (e.g., burst patterns or nuanced profile signals) that flatter architectures miss.
 \end{itemize}
 
 \textbf{Weaknesses:}
@@ -607,47 +608,128 @@ and a drop in performance was expected given the model's complexity and the limi
 it fell short in performance due to its tuning demands. 
 Nonetheless, this model performed well given its complexity and lack of tuning, and it set the stage for our future attempts.
 
-% \( \sigma(\cdot) \) is the sigmoid activation function, and \( [\mathbf{x}_v, \mathbf{x}_t] \) denotes vector concatenation. The learnable parameters of the GMU are the weight matrices \( \mathbf{W}_v, \mathbf{W}_t, \mathbf{W}_z \). All operations are differentiable, allowing the GMU to be trained end-to-end within a larger architecture via backpropagation.
 
-% The core strength of the GMU lies in its ability to adaptively modulate modality contributions on a per-sample basis, making it particularly well-suited for heterogeneous data environments like X, where different user accounts may exhibit stronger signals in different behavioral dimensions (e.g., textual content versus temporal patterns).
+\paragraph{Sessions 18-19 - Description, Content, Time, Emoji}
+For sessions 18 and 19, the model remained the same, 
+except that we extended the GMU to fuse 
+three DNA embeddings: content, time, and emoji. Our intuition was that
+LLM-powered bots exhibit obvious tells in their use of emojis across posts.
+
+\textbf{Weaknesses and Challenges}:
+\begin{itemize}
+    \item \textit{Marginal Utility of Emoji Features:} Despite their inclusion, the emoji embeddings did not noticeably improve performance. Their sparse and high-dimensional nature may have diluted their utility. 
+    Future work could explore reducing the emoji vocabulary and using lower-dimensional embeddings to better leverage these signals.
+    \item \textit{Training Instability:} Adding a third modality introduced some training instability, as the model exhibited greater sensitivity to hyperparameter configurations.
+    \item \textit{Overparameterization Risk:} As in previous sessions, the model remains sensitive to overfitting due to its multiple attention layers and gating mechanisms.
+\end{itemize}
+
+\textbf{Performance:} Overall, the inclusion of emoji DNA and the extended GMU yielded only marginal performance changes compared to previous attempts. 
+While feature expressiveness theoretically increased, training instability and limited emoji utility constrained practical improvements.
+
+\textbf{Conclusion:} Sessions 18 and 19 served to explore the feasibility of extending 
+our fusion mechanism to include emoji signals. The experiment revealed the challenges 
+of integrating sparse representations like emojis. Future refinements may involve dimensionality 
+reduction or selective filtering of emoji types to enhance their contribution.
+
+Although a cross-attention approach can be effective,
+it is computationally expensive to scale
+beyond two modalities. For example, three modalities would 
+require six multihead-attention layers to consider 
+each cross-modal interaction in both directions.
+
+A natural alternative is to employ a single self-attention 
+block where each token corresponds to a modality. 
+A key challenge in this approach is learning modality representations to provide to
+the self-attention layer. 
+We find that MOEs learn these representations effectively, and in particular, 
+are better at modelling the diverse user behaviours found on X.
 
 
-% In the following sections, we describe each architecture in detail, including:
+\subsubsection{Mixture-of-Experts (MoE)}
+To address the challenges of (1) model scalability and (2) diverse bot behaviors 
+across user communities, we closely follow the \textbf{Mixture-of-Experts (MoE)} 
+strategy employed by \citet{liu2023botmoe}. This approach leverages specialized 
+experts conditioned on user sub-communities, enabling community-aware representation learning.
 
-% The input representation for each modality
+% Noting that user descriptions can be easily manipulated, we also
+% sample five tweets from the user, uniformly across their timeline.
 
-% How the architecture fuses modalities
 
-% The training setup and results
+\paragraph{Expert Assignment and Gating}
+For each modality (text, DNA), user embeddings are fed into a \textbf{gating network}:
+\begin{align}
+G(\mathbf{x}) &= \text{softmax}(\text{KeepTopK}(W_g \mathbf{x}, k))
+\end{align}
+where \( W_g \) are learnable weights, \( \mathbf{x} \) is the input embedding, and \texttt{KeepTopK} retains the top \( k \) gating scores for sparse expert activation.
 
-% Intuition behind each design choice and what we learned
+\paragraph{Expert Aggregation}
+The final representation for modality \( m \in \{t=\text{text}, d=\text{DNA}\} \) is a weighted sum of expert outputs:
+\begin{align}
+\mathbf{z}_i^{(m)} &= \sum_{j=1}^{n} G(\mathbf{x}_i^{(m)})_j E_j(\mathbf{x}_i^{(m)})
+\end{align}
+where \( E_j(\cdot) \) denotes the \( j^\text{th} \) expert (a two-layer MLP), and \( G(\mathbf{x}_i^{(m)})_j \) is the gating score for expert \( j \).
 
-% \subsubsection{Procedure}
+\paragraph{Feature Fusion and Consistency}
+After expert aggregation, representations across modalities are fused using a \textbf{multi-head self-attention} mechanism:
+\begin{align}
+\{\tilde{\mathbf{z}}^{(t)}, \tilde{\mathbf{z}}^{(d)}\} &= \text{SelfAttn}(\{\mathbf{z}^{(t)}, \mathbf{z}^{(d)}\})
+\end{align}
+Additionally, we compute a \textbf{consistency matrix} between the modalities and downsample it:
+\begin{align}
+\mathbf{z}^{(con)} &= \text{flatten}(\text{Conv2D}(\text{sample}(\mathbf{M})))
+\end{align}
+where \( \mathbf{M} \) is the attention matrix across modalities, and the convolution extracts cross-modal consistency signals.
 
-% Embedding user descriptions with transformer models (e.g., TwHIN-BERT)
+\paragraph{Classification Head}
+The fused representations and consistency vector are concatenated and passed through a final classifier:
+\begin{align}
+y_i &= W_o \cdot [\tilde{\mathbf{z}}^{(t)}, \tilde{\mathbf{z}}^{(d)}, \mathbf{z}^{(con)}] + b_o
+\end{align}
+where \( W_o \) and \( b_o \) are learnable parameters.
 
-% Modeling posting behavior through digital DNA techniques (content DNA and temporal DNA)
+\paragraph{Loss Function:}
+We optimize a \textbf{cross-entropy loss} with two regularization terms:
+\begin{align}
+\mathcal{L} &= -\sum_{i \in \mathcal{Y}} t_i \log y_i + \lambda_1 \sum_{\theta} \|\theta\|_2^2 + \lambda_2 \sum_{i \in \mathcal{Y}} \sum_{m \in \{t, d\}} BL(\mathbf{x}_i^{(m)})
+\end{align}
+where \(\theta \) denotes model parameters (that is, we use L2-regularization) and \( BL(\cdot) \) is the \textbf{balancing loss} from \citet{shazeer2017outrageously}:
+\begin{align}
+BL(\mathbf{x}) &= w_{imp} \cdot CV(G(\mathbf{x}))^2 + w_{ld} \cdot CV(P(\mathbf{x}, i))^2
+\end{align}
+Here, \( CV \) is the coefficient of variation, encouraging balanced expert usage.
 
-% Experimenting with multiple multimodal fusion methods:
+\paragraph{Sessions 20-21 - Text, DNA}
+For sessions 20 and 21, we incorporated the MoE architecture to replace earlier cross-attention mechanisms. Each modality (text and DNA) is processed by its respective \textbf{community-aware MoE} layer.
 
-% Gated Multimodal Unit (GMU)
+\textbf{Architecture:}
+\begin{itemize}
+    \item \textbf{Modality-specific Experts:} Each modality employs two to three experts, activated via sparse gating to promote community-aware specialization.
+    \item \textbf{Fusion and Consistency:} Outputs from experts are fused via multi-head self-attention, with cross-modal consistency extracted via convolutional filters over attention matrices.
+    \item \textbf{Prediction:} The fused and consistent representations are passed through a two-layer classification head.
+\end{itemize}
 
-% Cross-attention mechanisms
+\textbf{Strengths:}
+\begin{itemize}
+    \item \textit{Efficiency}: It is the smallest of our multimodal models, requiring less time to train and perform inference.
+    \item \textit{Community-aware specialization}: Each expert learns patterns within specific user sub-communities, improving generalization across diverse bot behaviors.
+    \item \textit{Balanced expert utilization}: The balancing loss encourages fair expert usage, preventing mode collapse and overfitting.
+\end{itemize}
 
-% Sparsely gated Mixture-of-Experts (MOE) with self-attention fusion
+\textbf{Challenges:}
+\begin{itemize}
+    % \item \textit{Computational overhead:} The gating mechanism and expert selection introduce extra computation, especially when scaling to more modalities or larger datasets.
+    \item \textit{Hyperparameter tuning:} Similar to our cross-attention models, MoE layers exhibit sensitivity to hyperparameters like expert count and gating sparsity.
+\end{itemize}
 
-% Training, tuning, and validation of models
+\textbf{Performance:} Despite the increased model complexity, MoE-based models exhibited better generalization across communities but did not significantly outperform simpler baselines due to limited training time.
 
-% Result
+\textbf{Conclusion:} The MoE framework effectively captured community-specific bot behaviors and offered a scalable alternative to cross-attention fusion, though further tuning and expert design could improve stability and performance.
 
-% Detailed performance analysis indicated that the multimodal approach substantially improved detection robustness, with MOE architectures demonstrating the strongest performance due to their effective handling of diverse community behaviors and resilience against sophisticated bot manipulation.
-% Our dataset consists of Twitter posts in JSON format, containing tweet text, timestamps, user metadata, and other features. Our pipeline includes data preprocessing, feature extraction, unsupervised topic categorization, and classification model training.
 
-% Given the small datasets and unbalanced classes (majority non-bots), initial methods struggled with low bot recall. Combining TF-IDF with LDA improved recall on a single batch but struggled with noisy bots.
 
-% When we expanded our dataset to four sessions, the accuracy of TF-IDF+LDA (treating all tweets from a user as a single document) dropped from the mid-90s to the mid-70s. Adding embeddings from all-MiniLM-v6 (on the concatenated tweets) improved accuracy to 89.4%. Dropping TF-IDF and using only LDA+embeddings maintained the performance, indicating embeddings provided more meaningful information.
 
-% To generalize better, we used individual tweets per user, extracting mean embeddings, topic distributions with BERTopic+HDBSCAN, and temporal features (mean time of posts and standard deviation). This latest approach achieved 97\% accuracy on the expanded dataset.
+
+
 
 \section{Discussion}
 blah blah....
@@ -658,5 +740,10 @@ blah blah...
 % \bibliographystyle{IEEEtran}
 \bibliographystyle{plainnat}
 \bibliography{references}
+
+
+
+
+
 
 \end{document}
