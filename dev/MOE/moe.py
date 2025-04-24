@@ -4,6 +4,15 @@ import torch.nn.functional as F
 import numpy as np
 from torch.distributions.normal import Normal
 
+# Sparsely-Gated Mixture-of-Experts Layers.
+# See "Outrageously Large Neural Networks"
+# https://arxiv.org/abs/1701.06538
+#
+# Author: David Rau
+#
+# The code is based on the TensorFlow implementation:
+# https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/utils/expert_utils.py
+
 class SparseDispatcher(object):
     """
     Helper for implementing a mixture of experts.
@@ -63,14 +72,57 @@ class MOEExpert(nn.Module):
         super(MOEExpert, self).__init__()
         self.expert = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Dropout(p=0.1),
+            nn.LeakyReLU(),
+            nn.Dropout(0.1),
             nn.Linear(hidden_dim, output_dim)
         )
     
     def forward(self, x):
         return self.expert(x)
+    
 
+class MLPclassifier(nn.Module):
+    def __init__(self,
+                 input_dim=728,
+                 output_size=2,
+                 hidden_dim=128,
+                 dropout=0.1,
+                 all_mode=True):
+        super(MLPclassifier, self).__init__()
+        self.dropout = dropout
+        
+        
+        self.all_mode=all_mode
+        if(all_mode):
+            self.linear_relu_tweet = nn.Sequential(
+            nn.Linear(input_dim*2, hidden_dim),
+            nn.LeakyReLU()
+        )
+        else:
+            self.pre_model1 = nn.Linear(input_dim, input_dim // 2)
+            self.pre_model2 = nn.Linear(input_dim, input_dim // 2)
+            self.linear_relu_tweet = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.LeakyReLU()
+        )
+
+        self.dropout = nn.Dropout(p=dropout)
+        self.classifier = nn.Linear(hidden_dim, output_size)
+    
+    def forward(self,tweet_feature, des_feature):
+        if(not self.all_mode):
+            pre1 = self.pre_model1(tweet_feature)
+            pre2 = self.pre_model2(des_feature)
+        else:
+            pre1 = tweet_feature
+            pre2 = des_feature
+        x = torch.cat((pre1,pre2), dim=1)
+        x = self.linear_relu_tweet(x)
+        # x = self.linear_relu(x)
+        x = self.dropout(x)
+        x = self.classifier(x)
+        return x
+    
 class MixtureOfExperts(nn.Module):
     """
     A mixture of experts module that implements noisy top-k gating and 
@@ -84,7 +136,8 @@ class MixtureOfExperts(nn.Module):
                  expert_hidden_dim, 
                  expert_output_dim,
                  top_k=1,
-                 noisy_gating=True):
+                 noisy_gating=True,
+                 tweet_desc=False):
         super(MixtureOfExperts, self).__init__()
         self.num_experts = num_experts
         self.top_k = top_k
@@ -92,9 +145,11 @@ class MixtureOfExperts(nn.Module):
         
         # Parameters for gating: use Xavier uniform initialization instead of zeros.
         self.w_gate = nn.Parameter(torch.empty(input_dim, num_experts), requires_grad=False)
-        nn.init.xavier_uniform_(self.w_gate)
-        self.w_noise = nn.Parameter(torch.empty(input_dim, num_experts) , requires_grad=False)
-        nn.init.xavier_uniform_(self.w_noise)
+        # nn.init.xavier_uniform_(self.w_gate)
+        nn.init.constant_(self.w_gate, 0.1)
+        self.w_noise = nn.Parameter(torch.empty(input_dim, num_experts), requires_grad=False)
+        # nn.init.xavier_uniform_(self.w_noise)
+        nn.init.constant_(self.w_noise, 0.1)
         
         self.softplus = nn.Softplus()
         self.softmax = nn.Softmax(dim=1)
@@ -103,12 +158,30 @@ class MixtureOfExperts(nn.Module):
         self.register_buffer("mean", torch.tensor([0.1]))
         self.register_buffer("std", torch.tensor([1.0]))
         
-        # Instantiate experts.
-        self.experts = nn.ModuleList([
-            MOEExpert(input_dim, expert_hidden_dim, expert_output_dim)
-            for _ in range(num_experts)
-        ])
+        if not tweet_desc:
+            # Instantiate experts.
+            self.experts = nn.ModuleList([
+                MOEExpert(input_dim, expert_hidden_dim, expert_output_dim)
+                for _ in range(num_experts)
+            ])
+        else:
+            # Instantiate experts.
+            self.experts = nn.ModuleList([
+                MLPclassifier(input_dim=input_dim, output_size=expert_output_dim, hidden_dim=expert_hidden_dim)
+                for _ in range(num_experts)
+            ])
 
+
+    def _gates_to_load(self, gates):
+        """Compute the true load per expert, given the gates.
+        The load is the number of examples for which the corresponding gate is >0.
+        Args:
+        gates: a `Tensor` of shape [batch_size, n]
+        Returns:
+        a float32 `Tensor` of shape [n]
+        """
+        return (gates > 0).sum(0)
+    
     def _cv_squared(self, x):
         """
         Compute the squared coefficient of variation: var(x) / (mean(x)**2 + eps).
@@ -137,53 +210,86 @@ class MixtureOfExperts(nn.Module):
         prob_if_out = normal.cdf((clean_values - threshold_if_out) / noise_stddev)
         prob = torch.where(is_in, prob_if_in, prob_if_out)
         return prob
+    
 
-    def forward(self, x, loss_coef=1e-2):
+    def noisy_top_k_gating(self, x, train, noise_epsilon=1e-2):
+        """Noisy top-k gating.
+          See paper: https://arxiv.org/abs/1701.06538.
+          Args:
+            x: input Tensor with shape [batch_size, input_size]
+            train: a boolean - we only add noise at training time.
+            noise_epsilon: a float
+          Returns:
+            gates: a Tensor with shape [batch_size, num_experts]
+            load: a Tensor with shape [num_experts]
         """
-        Args:
-          x: input tensor of shape (batch_size, input_dim)
-          loss_coef: scalar multiplier for the auxiliary loss
-        Returns:
-          output: combined expert outputs of shape (batch_size, expert_output_dim)
-          loss: auxiliary load-balancing loss
-        """
-        # Compute clean logits.
-        clean_logits = x @ self.w_gate  # (batch_size, num_experts)
-        
-        # Add noise if noisy gating is enabled and in training mode.
-        if self.noisy_gating and self.training:
+        clean_logits = x @ self.w_gate
+        if self.noisy_gating and train:
             raw_noise_stddev = x @ self.w_noise
-            noise_stddev = self.softplus(raw_noise_stddev) + 1e-2  # add epsilon for stability
+            noise_stddev = ((self.softplus(raw_noise_stddev) + noise_epsilon))
             noisy_logits = clean_logits + (torch.randn_like(clean_logits) * noise_stddev)
             logits = noisy_logits
         else:
             logits = clean_logits
-        
-        # Select top-k experts.
+
+        # calculate topk + 1 that will be needed for the noisy gates
         top_logits, top_indices = logits.topk(min(self.top_k + 1, self.num_experts), dim=1)
         top_k_logits = top_logits[:, :self.top_k]
         top_k_indices = top_indices[:, :self.top_k]
         top_k_gates = self.softmax(top_k_logits)
-        
-        # Build the full gates tensor.
-        gates = torch.zeros_like(logits)
-        gates = gates.scatter(1, top_k_indices, top_k_gates)
-        
-        # Compute load and importance for the auxiliary loss.
-        if self.noisy_gating and self.top_k < self.num_experts and self.training:
-            load = self._prob_in_top_k(clean_logits, logits, noise_stddev, top_logits).sum(0)
+
+        zeros = torch.zeros_like(logits, requires_grad=True)
+        gates = zeros.scatter(1, top_k_indices, top_k_gates)
+
+        if self.noisy_gating and self.top_k < self.num_experts and train:
+            load = (self._prob_in_top_k(clean_logits, noisy_logits, noise_stddev, top_logits)).sum(0)
         else:
-            load = (gates > 0).sum(0)
+            load = self._gates_to_load(gates)
+        return gates, load
+
+    def forward(self, x, loss_coef=1e-2):
+        """Args:
+        x: tensor shape [batch_size, input_size]
+        train: a boolean scalar.
+        loss_coef: a scalar - multiplier on load-balancing losses
+        Returns:
+        y: a tensor with shape [batch_size, output_size].
+        extra_training_loss: a scalar.  This should be added into the overall
+        training loss of the model.  The backpropagation of this loss
+        encourages all experts to be approximately equally used across a batch.
+        """
+        gates, load = self.noisy_top_k_gating(x, self.training)
+        # calculate importance loss
         importance = gates.sum(0)
-        loss = loss_coef * (self._cv_squared(importance) + self._cv_squared(load))
-        
-        # Use SparseDispatcher to route inputs to experts.
+        #
+        loss = self._cv_squared(importance) + self._cv_squared(load)
+        loss *= loss_coef
+
         dispatcher = SparseDispatcher(self.num_experts, gates)
         expert_inputs = dispatcher.dispatch(x)
+        gates = dispatcher.expert_to_gates()
         expert_outputs = [self.experts[i](expert_inputs[i]) for i in range(self.num_experts)]
-        output = dispatcher.combine(expert_outputs)
-        
-        return output, loss
+        y = dispatcher.combine(expert_outputs)
+        return y, loss
+    
+
+    def forward_roberta(self,tweets_tensor,des_tensor,loss_coef=1e-2):
+        #not sure
+        x=des_tensor
+        gates, load = self.noisy_top_k_gating(x, self.training)
+        # calculate importance loss
+        importance = gates.sum(0)
+
+        loss = self._cv_squared(importance) + self._cv_squared(load)
+        loss *= loss_coef
+        x=torch.cat([tweets_tensor,des_tensor],dim=-1)
+        dispatcher = SparseDispatcher(self.num_experts, gates)
+        expert_inputs = dispatcher.dispatch(x)
+        gates = dispatcher.expert_to_gates()
+        expert_outputs = [self.experts[i](expert_inputs[i][:,:tweets_tensor.shape[1]],expert_inputs[i][:,tweets_tensor.shape[1]:]) for i in range(self.num_experts)]
+        y = dispatcher.combine(expert_outputs)
+        return y, loss
+
 
 # Example usage:
 if __name__ == "__main__":

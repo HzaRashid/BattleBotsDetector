@@ -10,22 +10,26 @@ class FeatureAlign(nn.Module):
         self.linear_relu_des=nn.Sequential(
             nn.Linear(768,int(align_size)),
             nn.LeakyReLU(),
-            # nn.Linear(int(align_size),int(align_size)),
+            # nn.Dropout(0.1),
+            nn.Linear(int(align_size),int(align_size)),
         )
         self.linear_relu_tweet=nn.Sequential(
             nn.Linear(768,int(align_size)),
             nn.LeakyReLU(),
-            # nn.Linear(int(align_size),int(align_size)),
+            # nn.Dropout(0.1),
+            nn.Linear(int(align_size),int(align_size)),
         )
         self.linear_content_dna=nn.Sequential(
             nn.Linear(640,int(align_size)),
             nn.LeakyReLU(),
-            # nn.Linear(int(align_size),int(align_size)),
+            # nn.Dropout(0.1),
+            nn.Linear(int(align_size),int(align_size)),
         )
         self.linear_time_dna=nn.Sequential(
             nn.Linear(640,int(align_size)),
             nn.LeakyReLU(),
-            # nn.Linear(int(align_size),int(align_size)),
+            # nn.Dropout(0.1),
+            nn.Linear(int(align_size),int(align_size)),
         )
 
     def forward(self, des_tensor,tweets_tensor,content_dna_tensor,time_dna_tensor):
@@ -61,6 +65,7 @@ class LModel(nn.Module):
 
         self.norm_first = norm_first
         self.norm1 = nn.LayerNorm(embed_dim)
+        self.dropout1 = nn.Dropout(p=0.1)
 
     def forward(self, text_src):
         if self.norm_first:
@@ -72,6 +77,7 @@ class LModel(nn.Module):
 
     def _sa_block(self, text):
         text, attention_weight = self.multihead_attention(text, text, text)
+        text = self.dropout1(text)
         return text, attention_weight
     
 
@@ -80,7 +86,6 @@ class MOEAttention(nn.Module):
     def __init__(self, 
                  num_classes=2,
                  expert_hidden_dim=128,
-                 router_hidden_dim=128,
                  top_k=1):
         super(MOEAttention, self).__init__()
         # text.size(dim=1) to get text size, same for others
@@ -90,11 +95,12 @@ class MOEAttention(nn.Module):
 
         # MOE for fusing text and tweet embeddings.
         self.desc_tweet_moe = MixtureOfExperts(
-            input_dim=2*self.align_size, 
+            input_dim=self.align_size, 
             num_experts=2,
             expert_hidden_dim=expert_hidden_dim,
             expert_output_dim=self.expert_out_dim,
-            top_k=top_k
+            top_k=top_k,
+            tweet_desc=True
         )
         # MOE for fusing content and time embeddings.
         self.dna_moe = MixtureOfExperts(
@@ -102,7 +108,8 @@ class MOEAttention(nn.Module):
             num_experts=2,
             expert_hidden_dim=expert_hidden_dim,
             expert_output_dim=self.expert_out_dim,
-            top_k=top_k
+            top_k=top_k,
+            # tweet_desc=True
         )
         
         # Fusion module to combine MOE outputs.
@@ -121,7 +128,7 @@ class MOEAttention(nn.Module):
         # - Pooled attention: fixed pooling produces a (4 x 4) map → 16 features.
         final_feature_dim = self.expert_out_dim * 2 + 16
         self.bn2 = nn.BatchNorm1d(final_feature_dim)
-        # self.dropout2 = nn.Dropout(p=0.1)
+        # self.dropout2 = nn.Dropout(p=0.3)
         self.mlp_classifier = nn.Linear(final_feature_dim, num_classes)
 
         self.apply(init_weights)
@@ -129,8 +136,10 @@ class MOEAttention(nn.Module):
     def forward(self, desc, tweet, content, time):
 
         desc, tweet, content, time = self.align(desc, tweet, content, time)
-        text_out, aux_loss_text = self.desc_tweet_moe(torch.cat((desc, tweet), dim=1))
+        # text_out, aux_loss_text = self.desc_tweet_moe(torch.cat((desc, tweet), dim=1))
+        text_out, aux_loss_text = self.desc_tweet_moe.forward_roberta(tweets_tensor=tweet, des_tensor=desc)
         dna_out, aux_loss_dna = self.dna_moe(torch.cat((content, time), dim=1))
+        # dna_out, aux_loss_dna = self.dna_moe.forward_roberta(tweets_tensor=time, des_tensor=content)
         aux_loss = aux_loss_text + aux_loss_dna
         
         # Stack the outputs along a new token dimension.
@@ -184,7 +193,6 @@ if __name__ == "__main__":
     model = MOEAttention(
         num_classes=2,
         expert_hidden_dim=256,
-        router_hidden_dim=128,
         top_k=1
     )
     

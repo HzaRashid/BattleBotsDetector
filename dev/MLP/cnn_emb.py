@@ -1,39 +1,3 @@
-# import torch
-# import torch.nn as nn
-# import torchvision.models as models
-
-# # Load a pre-trained MobileNetV2 model
-# model = models.mobilenet_v2(pretrained=True)
-
-# # Replace the classifier with an identity layer to extract the embedding directly
-# model.classifier = nn.Identity()
-
-# # Create a dummy input tensor with shape [batch_size, channels, height, width]
-# # MobileNetV2 expects images of size 224x224 with 3 color channels
-# dummy_input = torch.randn(1, 3, 224, 224)
-
-# # Get the embedding by forwarding the dummy input through the modified model
-# embedding = model(dummy_input)
-
-# print("Embedding shape:", embedding.shape)
-
-# print(embedding)
-# from transformers import AutoFeatureExtractor, MobileViTForImageClassification
-# import torch.nn as nn
-
-# # Load the feature extractor and model from Hugging Face
-# feature_extractor = AutoFeatureExtractor.from_pretrained("apple/mobilevit-small")
-# model = MobileViTForImageClassification.from_pretrained("apple/mobilevit-small")
-
-# # Inspect the model to find the classification head
-# print(model)
-
-# # Depending on the model's architecture, you might remove or replace the classification head.
-# # For example, if the model has an attribute named `classifier`, you could do:
-# if hasattr(model, "classifier"):
-#     model.classifier = nn.Identity()
-
-# model.eval()
 import torch
 import torch.nn as nn
 import numpy as np

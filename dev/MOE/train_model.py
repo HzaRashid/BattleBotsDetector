@@ -92,14 +92,14 @@ def train_model(model, train_loader, val_loader,
         train_loss = total_train_loss / total_samples
         val_loss, val_acc, best_loss, best_acc = evaluate_model(model, val_loader, device, criterion, torch=torch, moe=moe)
         # Step the scheduler
-        scheduler.step(val_loss)
+        scheduler.step()
         
         # Check if we should unfreeze the router parameters.
         if moe and (not unfrozen) and (best_acc > unfreeze_threshold):
             model.dna_moe.w_gate.requires_grad = True
             model.dna_moe.w_noise.requires_grad = True
-            model.desc_moe.w_gate.requires_grad = True
-            model.desc_moe.w_noise.requires_grad = True
+            model.desc_tweet_moe.w_gate.requires_grad = True
+            model.desc_tweet_moe.w_noise.requires_grad = True
 
             # model.desc_tweet_moe.w_gate.requires_grad = True
             # model.desc_tweet_moe.w_noise.requires_grad = True

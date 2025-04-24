@@ -26,15 +26,33 @@ def evaluate_model(model, data_loader, device, criterion, torch, moe=False):
 
     with torch.no_grad():
         for batch in data_loader:
-            inputs = [x.to(device) for x in batch[:-1]]
-            labels = batch[-1].to(device)
+            # Unpack the batch based on the order:
+            #  0: desc_embs, 1: dna_embs, 2: time_embs,
+            #  3: desc_input_ids, 4: desc_attention_mask,
+            #  5: dna_input_ids, 6: dna_attention_mask,
+            #  7: labels
+            desc_embs = batch[0].to(device)
+            dna_embs = batch[1].to(device)
+            time_embs = batch[2].to(device)
+            desc_input_ids = batch[3].to(device)
+            desc_attention_mask = batch[4].to(device)
+            dna_input_ids = batch[5].to(device)
+            dna_attention_mask = batch[6].to(device)
+            labels = batch[7].to(device)
+
+            # Create tokenized dictionaries for description and DNA branches.
+            desc_tokenized = {"input_ids": desc_input_ids, "attention_mask": desc_attention_mask}
+            dna_tokenized = {"input_ids": dna_input_ids, "attention_mask": dna_attention_mask}
+
+            # Forward pass
             if moe:
-                outputs, aux_loss = model(*inputs)
+                outputs, aux_loss = model(desc_embs, dna_embs, time_embs, desc_tokenized, dna_tokenized)
             else:
-                outputs, aux_loss = model(*inputs), 0
+                outputs, aux_loss = model(desc_embs, dna_embs, time_embs, desc_tokenized, dna_tokenized), 0
+
             loss = criterion(outputs, labels) + aux_loss
-            total_loss += loss.item() * inputs[0].size(0)
-            total_samples += inputs[0].size(0)
+            total_loss += loss.item() * desc_embs.size(0)
+            total_samples += desc_embs.size(0)
             preds = outputs.argmax(dim=1).cpu().numpy()
             all_preds.extend(preds)
             all_labels.extend(labels.cpu().numpy())
@@ -42,13 +60,13 @@ def evaluate_model(model, data_loader, device, criterion, torch, moe=False):
     avg_loss = total_loss / total_samples
     acc = accuracy_score(all_labels, all_preds)
 
-    # Initialize best values as attributes if they don't exist
+    # Initialize best values if not already present.
     if not hasattr(evaluate_model, "best_val_acc"):
         evaluate_model.best_val_acc = 0.0
     if not hasattr(evaluate_model, "best_val_loss"):
         evaluate_model.best_val_loss = float('inf')
 
-    # Update best values if current metrics are improved
+    # Update best values if improved.
     if acc > evaluate_model.best_val_acc:
         evaluate_model.best_val_acc = acc
     if avg_loss < evaluate_model.best_val_loss:
@@ -65,7 +83,7 @@ def train_model(model, train_loader, val_loader,
                 num_epochs, verbose=False, trial=None, 
                 optuna=None, torch=None, moe=False, 
                 unfreeze_threshold=0.85):
-    # Flag to track if some moe parameters have been unfrozen
+    # Flag to track if some MOE parameters have been unfrozen.
     unfrozen = False
 
     for epoch in range(num_epochs):
@@ -74,43 +92,47 @@ def train_model(model, train_loader, val_loader,
         total_samples = 0
         
         for batch in train_loader:
-            inputs = [x.to(device) for x in batch[:-1]]
-            labels = batch[-1].to(device)
+            # Unpack the batch based on the order:
+            #  0: desc_embs, 1: dna_embs, 2: time_embs,
+            #  3: desc_input_ids, 4: desc_attention_mask,
+            #  5: dna_input_ids, 6: dna_attention_mask,
+            #  7: labels
+            desc_embs = batch[0].to(device)
+            dna_embs = batch[1].to(device)
+            time_embs = batch[2].to(device)
+            desc_input_ids = batch[3].to(device)
+            desc_attention_mask = batch[4].to(device)
+            dna_input_ids = batch[5].to(device)
+            dna_attention_mask = batch[6].to(device)
+            # print(batch)
+            labels = batch[7].to(device)
+            
+            # Create tokenized dictionaries for the model.
+            desc_tokenized = {"input_ids": desc_input_ids, "attention_mask": desc_attention_mask}
+            dna_tokenized = {"input_ids": dna_input_ids, "attention_mask": dna_attention_mask}
+
             optimizer.zero_grad()
             if moe:
-                outputs, aux_loss = model(*inputs)
+                outputs, aux_loss = model(desc_embs, dna_embs, time_embs, desc_tokenized, dna_tokenized)
             else:
-                outputs, aux_loss = model(*inputs), 0
+                outputs, aux_loss = model(desc_embs, dna_embs, time_embs, desc_tokenized, dna_tokenized), 0
             loss = criterion(outputs, labels) + aux_loss
             loss.backward()
             torch.nn.utils.clip_grad_value_(model.parameters(), 1000)
             optimizer.step()
-            total_train_loss += loss.item() * inputs[0].size(0)
-            total_samples += inputs[0].size(0)
-        
+            total_train_loss += loss.item() * desc_embs.size(0)
+            total_samples += desc_embs.size(0)
         
         train_loss = total_train_loss / total_samples
         val_loss, val_acc, best_loss, best_acc = evaluate_model(model, val_loader, device, criterion, torch=torch, moe=moe)
-        # Step the scheduler
         scheduler.step(val_loss)
         
-        # Check if we should unfreeze the router parameters.
+        # Optionally unfreeze router parameters if validation accuracy is high enough.
         if moe and (not unfrozen) and (best_acc > unfreeze_threshold):
             model.dna_moe.w_gate.requires_grad = True
             model.dna_moe.w_noise.requires_grad = True
             model.desc_moe.w_gate.requires_grad = True
             model.desc_moe.w_noise.requires_grad = True
-
-            # model.desc_tweet_moe.w_gate.requires_grad = True
-            # model.desc_tweet_moe.w_noise.requires_grad = True
-            
-            # model.naive_moe.w_gate.requires_grad = True
-            # model.naive_moe.w_noise.requires_grad = True
-
-            # for param in model.dna_moe.router.parameters(): 
-            #     param.requires_grad = True
-            # for param in model.text_tweet_moe.router.parameters():
-            #     param.requires_grad = True
             unfrozen = True
             print("Router params unfrozen!")
         
