@@ -1,18 +1,18 @@
 # Fdb version 4
-["bibtex comp400"] 1745451191.42995 "comp400.aux" "comp400.bbl" "comp400" 1745452648.20536 0
+["bibtex comp400"] 1745536095.59794 "comp400.aux" "comp400.bbl" "comp400" 1745540689.78189 0
   "./references.bib" 1745358924.13904 3085 7d658611fbb55112a008ac92e16a2b32 ""
   "/usr/local/texlive/2024/texmf-dist/bibtex/bst/natbib/plainnat.bst" 1233624470 26816 ffe5423d2019860bad9f54bc402fac15 ""
-  "comp400.aux" 1745452647.76366 6764 2cc7280205a1476a60eb81cd75f97ea9 "pdflatex"
+  "comp400.aux" 1745540689.53084 6599 d880f87b084b14760547a81d12df68c8 "pdflatex"
   (generated)
   "comp400.bbl"
   "comp400.blg"
   (rewritten before read)
-["pdflatex"] 1745452646.74293 "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" "comp400.pdf" "comp400" 1745452648.20555 0
+["pdflatex"] 1745540688.96814 "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" "comp400.pdf" "comp400" 1745540689.78202 0
   "../figures/ks_exponential.pdf" 1745190391.70922 13776 4bb0dfeb9b436f6523b1153f3d86f3c3 ""
   "../figures/ks_lognormal.pdf" 1745190396.84376 14371 35ea9f4a7909ce60306976713595202d ""
   "../figures/ks_normal.pdf" 1745190401.3511 13909 5401c604576fcaea0192d237b3160d86 ""
   "../figures/ks_weibull.pdf" 1745190405.22455 14264 359d3dc05da30636a690272d80308ee8 ""
-  "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" 1745452646.11329 42482 de1463797e9ce21665653071caf3b371 ""
+  "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" 1745540688.77335 44001 3b6ee9d611a5d753d2671da3c25017d5 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/base/8r.enc" 1165713224 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/local/texlive/2024/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/tfm/adobe/courier/pcrr7t.tfm" 1136768653 960 379cc0019370a9e0208a0a3f949f847a ""
@@ -124,10 +124,10 @@
   "/usr/local/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1726687478 5498206 6c0f03cb370063b7ddbd563e5f9ce23a ""
   "/usr/local/texlive/2024/texmf-var/web2c/pdftex/pdflatex.fmt" 1726687597 3326097 67d158ddf1124cb5acae0cccb2750d58 ""
   "/usr/local/texlive/2024/texmf.cnf" 1726687468.2814 577 e590dabc9e28c5b61546e15f63eebcdf ""
-  "comp400.aux" 1745452647.76366 6764 2cc7280205a1476a60eb81cd75f97ea9 "pdflatex"
-  "comp400.bbl" 1745451191.52849 3161 b75411ae3c178f1d3cb210dfd663f7ce "bibtex comp400"
-  "comp400.out" 1745452647.76442 4296 c275c8c3667951467fbdb8654094fa1e "pdflatex"
-  "comp400.tex" 1745452646.11329 42482 de1463797e9ce21665653071caf3b371 ""
+  "comp400.aux" 1745540689.53084 6599 d880f87b084b14760547a81d12df68c8 "pdflatex"
+  "comp400.bbl" 1745536095.76095 3161 b75411ae3c178f1d3cb210dfd663f7ce "bibtex comp400"
+  "comp400.out" 1745540689.53157 4321 376fac5cfdfafe16407695cb40fc2705 "pdflatex"
+  "comp400.tex" 1745540688.77335 44001 3b6ee9d611a5d753d2671da3c25017d5 ""
   (generated)
   "comp400.aux"
   "comp400.log"
