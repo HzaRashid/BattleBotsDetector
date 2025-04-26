@@ -186,7 +186,7 @@ In this session, we shifted to using per-tweet embeddings and adopted
 BERTopic \citep{grootendorst2022bertopic} for more dynamic topic modeling. 
 Additional temporal statistics were introduced to capture behavioral rhythms.
 As an extra measure for addressing the low confidence scores, 
-we perform min-max scaling of the confidences after inference.
+we performed min-max scaling of the confidences after inference.
 
 Implementation Summary:
 \begin{itemize}
@@ -201,7 +201,7 @@ Implementation Summary:
     
     \item (Naive) Temporal features: Mean and standard deviation of raw timestamps.
     
-    \item Static features: Post count
+    \item Static features: Post count.
 \end{itemize}
 
 
@@ -232,7 +232,7 @@ Implementation Summary:
     
     \item Inter-post Interval Statistics: Mean and standard deviation of time gaps between posts.
     
-    \item Bucketed Duplicate Counts: Timestamps were partitioned into 10 intra- and inter-chronologically-ordered buckets, and duplicate post counts were computed per bucket.
+    \item Bucketed Duplicate Counts: Timestamps were partitioned into 10 intra- and inter-chronologically-ordered buckets, and duplicate timestamps were computed per bucket.
     
     \item Features Used: Mean-pooled tweet embeddings, topic distributions, post frequency, inter-post intervals, and bucketed duplicates.
 \end{itemize}
@@ -297,10 +297,12 @@ What Went Right:
 What Went Wrong:
 \begin{itemize}
     \item Sensitivity to Session Artifacts: A non-pretrained BERTopic model was applied to each session, 
-    which likely created inconsistencies in how topic-features were interpreted by the classifier.
+    which might have created inconsistencies in how topic-features were interpreted by the classifier.
 
     \item Appropriateness of features: Despite being a universal approximator, Random Forest's are typically geared towards categorical features; introducing several 
-    related continuous features like embeddings can introduce noise. In addition, the increased feature dimensionality likely contributed to further noise.
+    related continuous features like embeddings can introduce noise. To utilize such features effectively, it would be more
+    approriate to employ an MLP (multi-layered perceptron).
+    % In addition, the increased feature dimensionality likely contributed to further noise.
     
     % \item Limited Generalization: Although high accuracy may have been achieved on per-session splits, the performance likely degraded when faced with unseen session distributions or bot styles.
     
@@ -314,9 +316,10 @@ its limitations became evident in detecting sophisticated or adaptive bots
 (increasing complexity of feature engineering was needed to keep up).
 We also found that many bots copied tweets and user descriptions
 from genuine users, thereby reducing informative signals in our features.
-Further, while we were able to model user behaviour from various perspectives,
-our model utilized many static features (e.g., mean and standard deviation of time between posts).
-The diminishing returns on feature engineering, observed feature manipulation, and lack of dynamic features
+Further, while we were able to encode user behaviour from various perspectives,
+our model relied on many static features (e.g., mean and standard deviation of time between posts), which
+are also prone manipulation.
+Thus, the observed manipulation and diminishing returns on feature engineering
 motivated the shift to multimodal methods whose underlying features and architecture 
 can adapt to evolving behaviours on X. 
 
