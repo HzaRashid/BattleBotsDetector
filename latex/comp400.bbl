@@ -1,4 +1,4 @@
-\begin{thebibliography}{7}
+\begin{thebibliography}{12}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -11,10 +11,21 @@ John~Edison Arevalo, Thamar Solorio, Manuel Montes-y G{'o}mez, and Fabio~A. Gonz
 \newblock \emph{CoRR}, abs/1702.01992, 2017.
 \newblock URL \url{https://arxiv.org/abs/1702.01992}.
 
+\bibitem[Blei et~al.(2003)Blei, Ng, and Jordan]{blei2003latent}
+David~M. Blei, Andrew~Y. Ng, and Michael~I. Jordan.
+\newblock Latent dirichlet allocation.
+\newblock \emph{Journal of Machine Learning Research}, 3:\penalty0 993--1022, 2003.
+
 \bibitem[Davis et~al.(2016)Davis, Varol, Ferrara, Flammini, and Menczer]{davis2016botornot}
 Clayton~A. Davis, Onur Varol, Emilio Ferrara, Alessandro Flammini, and Filippo Menczer.
 \newblock Botornot: A system to evaluate social bots.
 \newblock In \emph{Proceedings of the 25th International Conference Companion on World Wide Web}, pages 273--274. ACM, 2016.
+
+\bibitem[Grootendorst(2022)]{grootendorst2022bertopic}
+Maarten Grootendorst.
+\newblock Bertopic: Neural topic modeling with a class-based tf-idf procedure.
+\newblock \emph{arXiv preprint arXiv:2203.05794}, 2022.
+\newblock URL \url{https://arxiv.org/abs/2203.05794}.
 
 \bibitem[Ilias et~al.(2023)Ilias, Kazelidis, and Askounis]{ilias2023multimodal}
 Loukas Ilias, Ioannis~Michail Kazelidis, and Dimitris~Th. Askounis.
@@ -22,11 +33,30 @@ Loukas Ilias, Ioannis~Michail Kazelidis, and Dimitris~Th. Askounis.
 \newblock \emph{arXiv preprint arXiv:2308.14484}, 2023.
 \newblock URL \url{https://arxiv.org/abs/2308.14484}.
 
+\bibitem[Lin et~al.(2017)Lin, Goyal, Girshick, He, and Doll{\'a}r]{lin2017focal}
+Tsung-Yi Lin, Priya Goyal, Ross Girshick, Kaiming He, and Piotr Doll{\'a}r.
+\newblock Focal loss for dense object detection.
+\newblock In \emph{Proceedings of the IEEE International Conference on Computer Vision (ICCV)}, pages 2980--2988. IEEE, 2017.
+\newblock \doi{10.1109/ICCV.2017.324}.
+\newblock URL \url{https://arxiv.org/abs/1708.02002}.
+
 \bibitem[Liu et~al.(2023)Liu, Tan, Wang, Feng, Zheng, and Luo]{liu2023botmoe}
 Yuhan Liu, Zhaoxuan Tan, Heng Wang, Shangbin Feng, Qinghua Zheng, and Minnan Luo.
 \newblock Botmoe: Twitter bot detection with community-aware mixtures of modal-specific experts.
 \newblock In \emph{Proceedings of the 46th International ACM SIGIR Conference on Research and Development in Information Retrieval}, SIGIR '23, pages 485--495, Taipei, Taiwan, July 2023. ACM.
 \newblock \doi{10.1145/3539618.3591646}.
+
+\bibitem[McInnes et~al.(2017)McInnes, Healy, and Astels]{mcinnes2017hdbscan}
+Leland McInnes, John Healy, and Steve Astels.
+\newblock hdbscan: Hierarchical density based clustering.
+\newblock \emph{The Journal of Open Source Software}, 2\penalty0 (11):\penalty0 205, 2017.
+\newblock \doi{10.21105/joss.00205}.
+
+\bibitem[Reimers and Gurevych(2021)]{reimers2021sentence}
+Nils Reimers and Iryna Gurevych.
+\newblock Making monolingual sentence embeddings multilingual using knowledge distillation.
+\newblock \url{https://www.sbert.net}, 2021.
+\newblock Accessed: 2025-04-25.
 
 \bibitem[Shazeer et~al.(2017)Shazeer, Mirhoseini, Maziarz, Davis, Le, Hinton, and Dean]{shazeer2017outrageously}
 Noam Shazeer, Azalia Mirhoseini, Krzysztof Maziarz, Andy Davis, Quoc~V. Le, Geoffrey~E. Hinton, and Jeff Dean.
