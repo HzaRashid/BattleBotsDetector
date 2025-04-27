@@ -1,16 +1,16 @@
 # Fdb version 4
-["bibtex comp400"] 1745637054.53386 "comp400.aux" "comp400.bbl" "comp400" 1745637723.36134 0
-  "./references.bib" 1745625402.61332 4557 b9fe9cb684e2b6e12e11016345012e01 ""
+["bibtex comp400"] 1745721629.63978 "comp400.aux" "comp400.bbl" "comp400" 1745721630.72934 0
+  "./references.bib" 1745707872.13445 5764 bfaf4fd3f3369276732b4950cbfb168b ""
   "/usr/local/texlive/2024/texmf-dist/bibtex/bst/natbib/plainnat.bst" 1233624470 26816 ffe5423d2019860bad9f54bc402fac15 ""
-  "comp400.aux" 1745637723.08493 7226 c6fb2929afb57d7f0e3cd2c1a4a340ad "pdflatex"
+  "comp400.aux" 1745721630.48338 8698 b5d55423e8ce55ef069a7b50df571015 "pdflatex"
   (generated)
   "comp400.bbl"
   "comp400.blg"
   (rewritten before read)
-["pdflatex"] 1745637722.42549 "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" "comp400.pdf" "comp400" 1745637723.36149 0
+["pdflatex"] 1745721629.76145 "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" "comp400.pdf" "comp400" 1745721630.72947 0
   "../figures/ca_model.pdf" 1745612224.57245 31973 ab0d7496f2240a0bcafbc94584a1e77f ""
-  "../figures/moe_model.pdf" 1745614120.30018 35363 4dcfd5a288a93cc236f6d85c0807da0e ""
-  "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" 1745637722.22402 44746 085d0e21d80189701337eae89e01c2de ""
+  "../figures/moe_model.pdf" 1745695903.31897 35507 161950f4f5ae94a43f5d6879a2e28dff ""
+  "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" 1745721628.46212 43434 bae70907134b8fa2af43a7c73d29be6c ""
   "/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/base/8r.enc" 1165713224 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/local/texlive/2024/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/tfm/adobe/courier/pcrr7t.tfm" 1136768653 960 379cc0019370a9e0208a0a3f949f847a ""
@@ -111,6 +111,7 @@
   "/usr/local/texlive/2024/texmf-dist/tex/latex/graphics-cfg/color.cfg" 1459978653 1213 620bba36b25224fa9b7e1ccb4ecb76fd ""
   "/usr/local/texlive/2024/texmf-dist/tex/latex/graphics-cfg/graphics.cfg" 1465944070 1224 978390e9c2234eab29404bc21b268d1e ""
   "/usr/local/texlive/2024/texmf-dist/tex/latex/graphics-def/pdftex.def" 1713382759 19440 9da9dcbb27470349a580fca7372d454b ""
+  "/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/color.sty" 1717359999 7233 b3e7845a2bdbf185cb9b9798e7df4dc4 ""
   "/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/graphics.sty" 1717359999 18363 b79c83eab17bf475b508f05e9807e605 ""
   "/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/graphicx.sty" 1717359999 8010 6f2ad8c2b2ffbd607af6475441c7b5e4 ""
   "/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/keyval.sty" 1717359999 2671 70891d50dac933918b827d326687c6e8 ""
@@ -138,8 +139,12 @@
   "/usr/local/texlive/2024/texmf-dist/tex/latex/psnfss/ot1ptm.fd" 1137110629 961 15056f4a61917ceed3a44e4ac11fcc52 ""
   "/usr/local/texlive/2024/texmf-dist/tex/latex/refcount/refcount.sty" 1576624809 9878 9e94e8fa600d95f9c7731bb21dfb67a4 ""
   "/usr/local/texlive/2024/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty" 1657483315 9714 ba3194bd52c8499b3f1e3eb91d409670 ""
+  "/usr/local/texlive/2024/texmf-dist/tex/latex/siunitx/siunitx.sty" 1724277250 333374 1193f642f21984b8bf9ce10004374614 ""
   "/usr/local/texlive/2024/texmf-dist/tex/latex/svg/svg.sty" 1606428179 43468 671ae75b3a15019004495eff4c0911e8 ""
+  "/usr/local/texlive/2024/texmf-dist/tex/latex/tools/array.sty" 1718401325 14067 1383bd6ee23ab18ae0e796155404deb7 ""
   "/usr/local/texlive/2024/texmf-dist/tex/latex/tools/shellesc.sty" 1717359999 4121 6039ae6d0916154d7ba5f20a77b9ab2c ""
+  "/usr/local/texlive/2024/texmf-dist/tex/latex/translations/translations-basic-dictionary-english.trsl" 1644096163 5588 0c1628daf15f4411ff1f463114c634a3 ""
+  "/usr/local/texlive/2024/texmf-dist/tex/latex/translations/translations.sty" 1644096163 44247 2188b95d0ee74e31eca4d316263c58a7 ""
   "/usr/local/texlive/2024/texmf-dist/tex/latex/transparent/transparent-nometadata.sty" 1667073146 4212 8da4873548cbd3f1cdb053c708e8aa7e ""
   "/usr/local/texlive/2024/texmf-dist/tex/latex/transparent/transparent.sty" 1667073146 1918 c8d1ecb3722721d6f624992cbc042b70 ""
   "/usr/local/texlive/2024/texmf-dist/tex/latex/trimspaces/trimspaces.sty" 1253232110 1380 971a51b00a14503ddf754cab24c3f209 ""
@@ -149,10 +154,10 @@
   "/usr/local/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1726687478 5498206 6c0f03cb370063b7ddbd563e5f9ce23a ""
   "/usr/local/texlive/2024/texmf-var/web2c/pdftex/pdflatex.fmt" 1726687597 3326097 67d158ddf1124cb5acae0cccb2750d58 ""
   "/usr/local/texlive/2024/texmf.cnf" 1726687468.2814 577 e590dabc9e28c5b61546e15f63eebcdf ""
-  "comp400.aux" 1745637723.08493 7226 c6fb2929afb57d7f0e3cd2c1a4a340ad "pdflatex"
-  "comp400.bbl" 1745637054.64185 4666 a33e270da99c5c45a1cb4ff843e91fd9 "bibtex comp400"
-  "comp400.out" 1745637723.08574 4050 5c7253408c5170df5a78ce66c8ef78d4 "pdflatex"
-  "comp400.tex" 1745637722.22402 44746 085d0e21d80189701337eae89e01c2de ""
+  "comp400.aux" 1745721630.48338 8698 b5d55423e8ce55ef069a7b50df571015 "pdflatex"
+  "comp400.bbl" 1745721629.759 5949 3c1f6f88e45d1a4a4128f348bfe5dfa4 "bibtex comp400"
+  "comp400.out" 1745721630.48435 5263 0de5e5c158f46bacbba126ad09b14bbe "pdflatex"
+  "comp400.tex" 1745721628.46212 43434 bae70907134b8fa2af43a7c73d29be6c ""
   (generated)
   "comp400.aux"
   "comp400.log"

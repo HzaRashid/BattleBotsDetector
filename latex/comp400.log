@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.9.18)  25 APR 2025 23:22
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.9.18)  26 APR 2025 22:40
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -452,172 +452,244 @@ File: pgfsyssoftpath.code.tex 2023-01-15 v3.1.10 (3.1.10)
 \pgfsyssoftpath@bigbuffer@items=\count316
 ) (/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/systemlayer/pgfsysprotocol.code.tex
 File: pgfsysprotocol.code.tex 2023-01-15 v3.1.10 (3.1.10)
-)) (/usr/local/texlive/2024/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
+)) (/usr/local/texlive/2024/texmf-dist/tex/latex/siunitx/siunitx.sty
+Package: siunitx 2024-08-20 v3.3.21 A comprehensive (SI) units package
+\l__siunitx_number_uncert_offset_int=\count317
+\l__siunitx_number_exponent_fixed_int=\count318
+\l__siunitx_number_min_decimal_int=\count319
+\l__siunitx_number_min_integer_int=\count320
+\l__siunitx_number_round_precision_int=\count321
+\l__siunitx_number_lower_threshold_int=\count322
+\l__siunitx_number_upper_threshold_int=\count323
+\l__siunitx_number_group_first_int=\count324
+\l__siunitx_number_group_size_int=\count325
+\l__siunitx_number_group_minimum_int=\count326
+\l__siunitx_angle_tmp_dim=\dimen269
+\l__siunitx_angle_marker_box=\box58
+\l__siunitx_angle_unit_box=\box59
+\l__siunitx_compound_count_int=\count327
+ (/usr/local/texlive/2024/texmf-dist/tex/latex/translations/translations.sty
+Package: translations 2022/02/05 v1.12 internationalization of LaTeX2e packages (CN)
+)
+\l__siunitx_table_tmp_box=\box60
+\l__siunitx_table_tmp_dim=\dimen270
+\l__siunitx_table_column_width_dim=\dimen271
+\l__siunitx_table_integer_box=\box61
+\l__siunitx_table_decimal_box=\box62
+\l__siunitx_table_uncert_box=\box63
+\l__siunitx_table_before_box=\box64
+\l__siunitx_table_after_box=\box65
+\l__siunitx_table_before_dim=\dimen272
+\l__siunitx_table_carry_dim=\dimen273
+\l__siunitx_unit_tmp_int=\count328
+\l__siunitx_unit_position_int=\count329
+\l__siunitx_unit_total_int=\count330
+ (/usr/local/texlive/2024/texmf-dist/tex/latex/tools/array.sty
+Package: array 2024/06/14 v2.6d Tabular extension package (FMi)
+\col@sep=\dimen274
+\ar@mcellbox=\box66
+\extrarowheight=\dimen275
+\NC@list=\toks31
+\extratabsurround=\skip58
+\backup@length=\skip59
+\ar@cellbox=\box67
+))
+Package translations Info: No language package found. I am going to use `english' as default language. on input line 19.
+ (/usr/local/texlive/2024/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2024-05-08 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count317
-\l__pdf_internal_box=\box58
+\l__color_backend_stack_int=\count331
+\l__pdf_internal_box=\box68
 ) (./comp400.aux)
 \openout1 = `comp400.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 22.
-LaTeX Font Info:    ... okay on input line 22.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 22.
-LaTeX Font Info:    ... okay on input line 22.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 22.
-LaTeX Font Info:    ... okay on input line 22.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 22.
-LaTeX Font Info:    ... okay on input line 22.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 22.
-LaTeX Font Info:    ... okay on input line 22.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 22.
-LaTeX Font Info:    ... okay on input line 22.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 22.
-LaTeX Font Info:    ... okay on input line 22.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 22.
-LaTeX Font Info:    ... okay on input line 22.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 22.
-LaTeX Font Info:    ... okay on input line 22.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
 
 -- Lines per column: 56 (exact).
 (/usr/local/texlive/2024/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count318
-\scratchdimen=\dimen269
-\scratchbox=\box59
-\nofMPsegments=\count319
-\nofMParguments=\count320
-\everyMPshowfont=\toks31
-\MPscratchCnt=\count321
-\MPscratchDim=\dimen270
-\MPnumerator=\count322
-\makeMPintoPDFobject=\count323
-\everyMPtoPDFconversion=\toks32
+\scratchcounter=\count332
+\scratchdimen=\dimen276
+\scratchbox=\box69
+\nofMPsegments=\count333
+\nofMParguments=\count334
+\everyMPshowfont=\toks32
+\MPscratchCnt=\count335
+\MPscratchDim=\dimen277
+\MPnumerator=\count336
+\makeMPintoPDFobject=\count337
+\everyMPtoPDFconversion=\toks33
 ) (/usr/local/texlive/2024/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 485.
  (/usr/local/texlive/2024/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
 ))
-Package hyperref Info: Link coloring OFF on input line 22.
+Package hyperref Info: Link coloring OFF on input line 19.
  (./comp400.out) (./comp400.out)
 \@outlinefile=\write4
 \openout4 = `comp400.out'.
 
 Package caption Info: Begin \AtBeginDocument code.
 Package caption Info: End \AtBeginDocument code.
+ (/usr/local/texlive/2024/texmf-dist/tex/latex/translations/translations-basic-dictionary-english.trsl
+File: translations-basic-dictionary-english.trsl (english translation file `translations-basic-dictionary')
+)
+Package translations Info: loading dictionary `translations-basic-dictionary' for `english'. on input line 19.
 
 
-LaTeX Font Info:    Trying to load font information for U+msa on input line 98.
-(/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsa.fd
-File: umsa.fd 2013/01/14 v3.01 AMS symbols A
-)
-LaTeX Font Info:    Trying to load font information for U+msb on input line 98.
- (/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsb.fd
-File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-)
+
 
 [1{/usr/local/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/base/8r.enc}
 
 
 ]
+LaTeX Font Info:    Trying to load font information for U+msa on input line 129.
+ (/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+LaTeX Font Info:    Trying to load font information for U+msb on input line 129.
+ (/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+)
 
-LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 152.
+LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 199.
 (/usr/local/texlive/2024/texmf-dist/tex/latex/psnfss/ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 )
 
 [2]
-Underfull \hbox (badness 1596) in paragraph at lines 256--257
-[]\OT1/ptm/m/n/10 Refined Pre-pro-cess-ing: Hash-tags were par-tially pre-
+Underfull \hbox (badness 10000) in paragraph at lines 283--284
+[]\OT1/ptm/m/n/10 Hashtags were par-tially pre-served (\OT1/pcr/m/n/10 #arena $\OMS/cmsy/m/n/10 !$
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 258--259
-[]\OT1/ptm/m/n/10 Normalized Em-bed-dings: Sen-tence em-bed-dings
- []
-
-
-
-
-Underfull \hbox (badness 6236) in paragraph at lines 299--301
-[]\OT1/ptm/m/n/10 Sensitivity to Ses-sion Ar-ti-facts: A non-pretrained
- []
 
 
 
 [3]
 
 
-Underfull \hbox (badness 5161) in paragraph at lines 511--511
+Underfull \hbox (badness 5161) in paragraph at lines 464--464
 [][][][][]\OT1/ptm/m/n/8 Arevalo et al.[] ([]2017[])'s own demo []$https : / / github . com / johnarevalo /
+ []
+
+
+Underfull \hbox (badness 2726) in paragraph at lines 479--480
+[]\OT1/ptm/m/n/10 DNA: Content-DNA em-bed-ding from Mo-bileNetV2
+ []
+
+
+Underfull \hbox (badness 1460) in paragraph at lines 489--495
+\OT1/ptm/m/n/10 we in-cor-po-rated time-DNA em-bed-dings as a third sub-
  []
 
 
 
 [4]
-Underfull \hbox (badness 1460) in paragraph at lines 546--552
-\OT1/ptm/m/n/10 we in-cor-po-rated time-DNA em-bed-dings as a third sub-
- []
-
-
-Underfull \hbox (badness 6204) in paragraph at lines 577--579
+Underfull \hbox (badness 6204) in paragraph at lines 520--522
 []\OT1/ptm/m/n/10 To per-form cross-modal at-ten-tion, we em-ploy two
  []
 
 
 
 
-Underfull \hbox (badness 1558) in paragraph at lines 690--691
+Underfull \hbox (badness 1558) in paragraph at lines 619--620
  \OT1/ptm/m/it/10 b) Ex-pert Ag-gre-ga-tion: [][] \OT1/ptm/m/n/10 The fi-nal rep-re-sen-ta-tion for
  []
 
 
 
 [5]
+Underfull \hbox (badness 2922) in paragraph at lines 670--671
+[]\OT1/ptm/m/n/10 Outputs from ex-perts in-ter-act via multi-head self-
+ []
+
+
 
 
 
 pdfTeX warning: pdflatex (file ../figures/ca_model.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
-<../figures/ca_model.pdf, id=190, 529.98pt x 115.3911pt>
+<../figures/ca_model.pdf, id=232, 529.98pt x 115.3911pt>
 File: ../figures/ca_model.pdf Graphic file (type pdf)
 <use ../figures/ca_model.pdf>
-Package pdftex.def Info: ../figures/ca_model.pdf  used on input line 773.
+Package pdftex.def Info: ../figures/ca_model.pdf  used on input line 699.
 (pdftex.def)             Requested size: 226.79846pt x 49.3795pt.
 
 
 pdfTeX warning: pdflatex (file ../figures/moe_model.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
-<../figures/moe_model.pdf, id=191, 543.95218pt x 115.3911pt>
+<../figures/moe_model.pdf, id=233, 543.95218pt x 115.3911pt>
 File: ../figures/moe_model.pdf Graphic file (type pdf)
 <use ../figures/moe_model.pdf>
-Package pdftex.def Info: ../figures/moe_model.pdf  used on input line 780.
+Package pdftex.def Info: ../figures/moe_model.pdf  used on input line 706.
 (pdftex.def)             Requested size: 226.79846pt x 48.11177pt.
-(./comp400.bbl
+
 
 [6 <../figures/ca_model.pdf> <../figures/moe_model.pdf>]
+Underfull \hbox (badness 10000) in paragraph at lines 772--773
+[]\OT1/ptm/b/n/10 Absence of graph sig-nals. \OT1/ptm/m/n/10 So-cial re-la-tion-ships
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 773--774
+[]\OT1/ptm/b/n/10 Emoji spar-sity. \OT1/ptm/m/n/10 The high[]dimensional, sparse
+ []
+
+
+Underfull \hbox (badness 4543) in paragraph at lines 773--774
+\OT1/ptm/m/n/10 emoji[]DNA in-tro-duced noise and proved hard to
+ []
+
+
+
+(./comp400.bbl
+
+[7]
 Underfull \hbox (badness 2197) in paragraph at lines 25--29
 \OT1/ptm/m/n/10 with a class-based tf-idf pro-ce-dure.  \OT1/ptm/m/it/10 arXiv preprint
  []
 
 
-
-
-Underfull \hbox (badness 6893) in paragraph at lines 68--72
+Underfull \hbox (badness 6893) in paragraph at lines 81--85
 []\OT1/ptm/m/n/10 Ashish Vaswani, Noam Shazeer, Niki Par-mar, Jakob
  []
 
 
-Underfull \hbox (badness 8075) in paragraph at lines 68--72
+Underfull \hbox (badness 8075) in paragraph at lines 81--85
 \OT1/ptm/m/n/10 Uszko-r-eit, Llion Jones, Aidan N. Gomez, []ukasz
  []
 
 
-Underfull \hbox (badness 2556) in paragraph at lines 68--72
+Underfull \hbox (badness 2556) in paragraph at lines 81--85
 \OT1/ptm/m/n/10 Kaiser, and Il-lia Polo-sukhin.  At-ten-tion is all you
  []
 
 
-Underfull \hbox (badness 2134) in paragraph at lines 68--72
+Underfull \hbox (badness 2134) in paragraph at lines 81--85
 \OT1/ptm/m/n/10 need.  In \OT1/ptm/m/it/10 Ad-vances in Neu-ral In-for-ma-tion Pro-cess-
+ []
+
+
+
+
+Underfull \hbox (badness 1365) in paragraph at lines 93--98
+[]\OT1/ptm/m/n/10 Haoyi Zhang, Yuhan Liu, Qinghua Zheng, and Min-nan
  []
 
 )
@@ -634,27 +706,27 @@ Before submitting the final camera ready copy, remember to:
 
 
 
-[7] (./comp400.aux)
+[8] (./comp400.aux)
  ***********
 LaTeX2e <2024-06-01> patch level 2
 L3 programming layer <2024-08-30>
  ***********
 Package rerunfilecheck Info: File `comp400.out' has not changed.
-(rerunfilecheck)             Checksum: 5C7253408C5170DF5A78CE66C8EF78D4;4050.
+(rerunfilecheck)             Checksum: 0DE5E5C158F46BACBBA126AD09B14BBE;5263.
  ) 
 Here is how much of TeX's memory you used:
- 15048 strings out of 473579
- 255143 string characters out of 5728234
- 695510 words of memory out of 5000000
- 37634 multiletter control sequences out of 15000+600000
+ 18859 strings out of 473579
+ 373893 string characters out of 5728234
+ 772479 words of memory out of 5000000
+ 41419 multiletter control sequences out of 15000+600000
  599596 words of font info for 118 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 94i,10n,93p,630b,544s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 94i,10n,93p,551b,1002s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on comp400.pdf (7 pages, 271077 bytes).
+Output written on comp400.pdf (8 pages, 280339 bytes).
 PDF statistics:
- 322 PDF objects out of 1000 (max. 8388607)
- 276 compressed objects within 3 object streams
- 72 named destinations out of 1000 (max. 500000)
- 175 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 377 PDF objects out of 1000 (max. 8388607)
+ 329 compressed objects within 4 object streams
+ 84 named destinations out of 1000 (max. 500000)
+ 223 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -27,26 +27,28 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}\textbf  {Multimodal Architectures}}{3}{subsection.3.3}\protected@file@percent }
 \citation{arevalo2017gated}
 \citation{ilias2023multimodal}
+\citation{zhang2022twhin}
+\citation{sandler2018mobilenetv2}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-C}1}\textbf  {DNA Embedding Extraction}}{4}{subsubsection.3.3.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-C}2}\textbf  {Gated Multimodal Unit (GMU)}}{4}{subsubsection.3.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{\numberline {\mbox  {III-C}2a}\textbf  {Incorporating Time-DNA}}{4}{paragraph.3.3.2.1}\protected@file@percent }
 \citation{vaswani2017attention}
 \citation{xiong2020layer}
 \citation{lin2017focal}
 \citation{shazeer2017outrageously}
 \citation{liu2023botmoe}
-\@writefile{toc}{\contentsline {paragraph}{\numberline {\mbox  {III-C}2a}\textbf  {Incorporating Time-DNA}}{5}{paragraph.3.3.2.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-C}3}\textbf  {Cross-Attention}}{5}{subsubsection.3.3.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{\numberline {\mbox  {III-C}3a}\textbf  {Sessions 16-17} - Description, Content, Time}{5}{paragraph.3.3.3.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{\numberline {\mbox  {III-C}3b}\textbf  {Sessions 18-19} - Description, Content, Time, Emoji}{5}{paragraph.3.3.3.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-C}4}\textbf  {Mixture-of-Experts (MoE)}}{5}{subsubsection.3.3.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{\numberline {\mbox  {III-C}4a}Expert Assignment and Gating}{5}{paragraph.3.3.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{\numberline {\mbox  {III-C}4b}Expert Aggregation}{5}{paragraph.3.3.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{\numberline {\mbox  {III-C}4c}Feature Fusion and Consistency}{5}{paragraph.3.3.4.3}\protected@file@percent }
 \citation{shazeer2017outrageously}
-\bibstyle{plainnat}
-\bibdata{references}
-\bibcite{arevalo2017gated}{{1}{2017}{{Arevalo et~al.}}{{Arevalo, Solorio, Montes-y G{'o}mez, and Gonz{'a}lez}}}
-\@writefile{toc}{\contentsline {paragraph}{\numberline {\mbox  {III-C}4b}Expert Aggregation}{6}{paragraph.3.3.4.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{\numberline {\mbox  {III-C}4c}Feature Fusion and Consistency}{6}{paragraph.3.3.4.3}\protected@file@percent }
+\citation{mehta2021mobilevit}
+\newlabel{eq:moe-conv}{{10}{6}{Feature Fusion and Consistency}{equation.3.10}{}}
 \@writefile{toc}{\contentsline {paragraph}{\numberline {\mbox  {III-C}4d}Classification Head}{6}{paragraph.3.3.4.4}\protected@file@percent }
+\newlabel{eq:moe-final-concat}{{11}{6}{Classification Head}{equation.3.11}{}}
 \@writefile{toc}{\contentsline {paragraph}{\numberline {\mbox  {III-C}4e}Loss Function}{6}{paragraph.3.3.4.5}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{\numberline {\mbox  {III-C}4f}\textbf  {Sessions 20-21} - Text, DNA}{6}{paragraph.3.3.4.6}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Text-DNA Cross-Attention bot detection framework.}}{6}{figure.caption.1}\protected@file@percent }
@@ -55,19 +57,33 @@
 \@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Text-DNA MoE bot detection framework.}}{6}{figure.caption.2}\protected@file@percent }
 \newlabel{fig:moe-diagram}{{2}{6}{Text-DNA MoE bot detection framework}{figure.caption.2}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {IV}Discussion}{6}{section.4}\protected@file@percent }
+\newlabel{sec:discussion}{{IV}{6}{Discussion}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-A}}Key empirical trends}{6}{subsection.4.1}\protected@file@percent }
+\citation{liu2023botmoe}
+\bibstyle{plainnat}
+\bibdata{references}
+\bibcite{arevalo2017gated}{{1}{2017}{{Arevalo et~al.}}{{Arevalo, Solorio, Montes-y G{'o}mez, and Gonz{'a}lez}}}
 \bibcite{blei2003latent}{{2}{2003}{{Blei et~al.}}{{Blei, Ng, and Jordan}}}
 \bibcite{davis2016botornot}{{3}{2016}{{Davis et~al.}}{{Davis, Varol, Ferrara, Flammini, and Menczer}}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-B}}Manipulated \emph  {vs.} dynamic features}{7}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}User diversity and community‑aware modelling}{7}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-D}}Scalability and computational trade‑offs}{7}{subsection.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-E}}Limitations}{7}{subsection.4.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-F}}Future directions}{7}{subsection.4.6}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Performance of our bot detectors across sessions. Precision, recall, and F1 are computed for the bot class.}}{7}{table.caption.3}\protected@file@percent }
+\newlabel{tab:hamzadetector1_results}{{I}{7}{Performance of our bot detectors across sessions. Precision, recall, and F1 are computed for the bot class}{table.caption.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {V}Conclusion and Future Work}{7}{section.5}\protected@file@percent }
 \bibcite{grootendorst2022bertopic}{{4}{2022}{{Grootendorst}}{{}}}
 \bibcite{ilias2023multimodal}{{5}{2023}{{Ilias et~al.}}{{Ilias, Kazelidis, and Askounis}}}
 \bibcite{lin2017focal}{{6}{2017}{{Lin et~al.}}{{Lin, Goyal, Girshick, He, and Doll{\'a}r}}}
 \bibcite{liu2023botmoe}{{7}{2023}{{Liu et~al.}}{{Liu, Tan, Wang, Feng, Zheng, and Luo}}}
 \bibcite{mcinnes2017hdbscan}{{8}{2017}{{McInnes et~al.}}{{McInnes, Healy, and Astels}}}
-\bibcite{reimers2021sentence}{{9}{2021}{{Reimers and Gurevych}}{{}}}
-\bibcite{shazeer2017outrageously}{{10}{2017}{{Shazeer et~al.}}{{Shazeer, Mirhoseini, Maziarz, Davis, Le, Hinton, and Dean}}}
-\bibcite{vaswani2017attention}{{11}{2017}{{Vaswani et~al.}}{{Vaswani, Shazeer, Parmar, Uszkoreit, Jones, Gomez, Kaiser, and Polosukhin}}}
-\bibcite{xiong2020layer}{{12}{2020}{{Xiong et~al.}}{{Xiong, Yang, He, Zheng, Zheng, Xing, Zhang, Lan, Wang, and Liu}}}
-\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Performance of our bot detectors across sessions. Precision, recall, and F1 are computed for the bot class.}}{7}{table.caption.3}\protected@file@percent }
-\newlabel{tab:hamzadetector1_results}{{I}{7}{Performance of our bot detectors across sessions. Precision, recall, and F1 are computed for the bot class}{table.caption.3}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {V}Conclusion and Future Work}{7}{section.5}\protected@file@percent }
+\bibcite{mehta2021mobilevit}{{9}{2021}{{Mehta and Rastegari}}{{}}}
+\bibcite{reimers2021sentence}{{10}{2021}{{Reimers and Gurevych}}{{}}}
+\bibcite{sandler2018mobilenetv2}{{11}{2018}{{Sandler et~al.}}{{Sandler, Howard, Zhu, Zhmoginov, and Chen}}}
+\bibcite{shazeer2017outrageously}{{12}{2017}{{Shazeer et~al.}}{{Shazeer, Mirhoseini, Maziarz, Davis, Le, Hinton, and Dean}}}
+\bibcite{vaswani2017attention}{{13}{2017}{{Vaswani et~al.}}{{Vaswani, Shazeer, Parmar, Uszkoreit, Jones, Gomez, Kaiser, and Polosukhin}}}
+\bibcite{xiong2020layer}{{14}{2020}{{Xiong et~al.}}{{Xiong, Yang, He, Zheng, Zheng, Xing, Zhang, Lan, Wang, and Liu}}}
+\bibcite{zhang2022twhin}{{15}{2022}{{Zhang et~al.}}{{Zhang, Liu, Zheng, and Luo}}}
 \gdef\svg@ink@ver@settings{{\m@ne }{inkscape}{\m@ne }}
-\gdef \@abspage@last{7}
+\gdef \@abspage@last{8}
