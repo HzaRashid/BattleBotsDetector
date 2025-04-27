@@ -9,7 +9,7 @@
 \usepackage{booktabs}
 \usepackage{subcaption}
 \usepackage{svg}
-\usepackage{siunitx}   % for \SI, \SIrange, \num, etc.
+% \usepackage{siunitx}   % for \SI, \SIrange, \num, etc.
 
 
 \title{(Blind) Multimodal Bot Detection on X}
@@ -27,8 +27,7 @@ labels are not known a priori, and graph data is not available.
 Our work begins with benchmarking conventional classifiers---a random forest 
 on text, temporal, and topic-distribution features, 
 yielding moderate baseline performance.
-Noticing that bots copy tweets and descriptions 
-from genuine users, we explore various multimodal approaches 
+We then explore various multimodal approaches
 to combat manipulated features,
 with an emphasis on DNA-inspired 
 behaviour modeling to encode user activity
@@ -38,11 +37,10 @@ TwHIN-BERT and model posting behavior with two DNA formulations,
 one that captures content across posts, and another capturing inter-post times.
 We find that CNN embeddings of inter-post time DNA may capture latent
 patterns in temporal behaviour that conventional methods miss.
-We investigate three methods for processing the modalities 
-and final fusion; a GMU (Gated Multimodal Unit), 
+We investigate three methods for modality interaction; 
+a GMU (Gated Multimodal Unit), 
 a cross-attention mechanism, and a sparsely gated MoE (mixture-of-experts)
-combining self-attention with a fixed-pooling on attention weights
-for modality fusion. 
+using self-attention to acheive modality interaction.
 We find that the MoE is not only our best method, but is
 also the smallest of our multimodal models, and does not require 
 any treatment of the class imbalance found in bot detection datasets. 
@@ -64,8 +62,8 @@ Detecting and mitigating such bot activities
 remains a challenging yet essential task for 
 preserving authentic online interactions.
 
-Current work in bot detection primarily focuses 
-on supervised methods. Yet, in real-world scenarios, labeled data are often
+Most current work in bot detection focuses
+on supervised methods. Yet, labeled data are often
 non-representative of the evolving behaviors exhibited by sophisticated bots.
 Consequently, there is a need for detection methods that generalize beyond 
 known bot patterns.
@@ -73,21 +71,22 @@ known bot patterns.
 We address this challenge by evaluating 
 a range of bot detection strategies on datasets whose
 labels are not known a priori. This is acheived through
-a competition infrastructure that combines real tweet data
-with synthetically crafted bot data in real-time.
-That is, the bot developers use real-time data to guide their content
-in an automated manner.
+a competition infrastructure where real tweet data
+guides privately generated bot data in an automated manner.
 
 To detect these bots, we begin with classical machine-learning 
 techniques relying on extensive feature engineering.
-We employ a random forest classifier incorporating 
+We employ a random forest incorporating 
 textual features, temporal posting patterns, and inferred 
-topic distributions, achieving moderate baseline performance. 
-Noting its weakness against bots 
-employing feature manipulation strategies, such as copying 
-tweets and descriptions from genuine users, 
-our baseline reveals the extensive feature engineering 
-that is required to keep up with evolving bots under classical approaches.
+topic distributions. 
+While it achieves moderate baseline performance,
+its reliance on static derived features
+makes it gullible to manipulation strategies 
+employed by nontrivial bots, such as copying 
+tweets and descriptions from genuine users. 
+This baseline reveals the extensive feature engineering 
+required to keep up with evolving bots under 
+classical approaches.
 
 We thus explore various multimodal architectures to
 combat manipulated features, with an emphasis on DNA-inspired
@@ -97,24 +96,27 @@ posting behavior encoded through two distinct DNA formulations: one
 capturing content across posts and another encoding inter-post 
 timing patterns. 
 In addition to the known efficacy of content DNA \citep{ilias2023multimodal}, 
-our experiments demonstrate that CNNs applied to temporal-DNA-generated 
+our experiments demonstrate that CNN encodings of temporal-DNA-generated 
 images uncover nuanced behavioral patterns that conventional methods miss.
 
-We explore several fusion techniques to integrate multimodal signals, 
+We explore several techniques to learn cross-modal interactions, 
 including GMUs (Gated Multimodal Unit), cross-attention mechanisms, 
 and a sparsely gated mixture-of-experts (MoE) \citep{shazeer2017outrageously} 
-combining self-attention with a fixed-pooling on attention weights
-for modality fusion. 
-Our results highlight the MoE model's superior performance and 
-efficiency, notably without necessitating explicit strategies to address class imbalance. 
-Overall, our research emphasizes the robustness of multimodal approaches in combating 
-manipulated features and illustrates 
-the potential of MoE architectures to adapt 
+using self-attention to acheive modality interaction. 
+Our results highlight the MoE's superior representational capacity and 
+efficiency, notably without requiring strategies to address class imbalance. 
+Our work highlights the robustness of multimodal approaches and
+dynamic representations against 
+feature manipulation, and illustrates 
+the potential of the MoE architecture to adapt 
 effectively to the diverse user communities found on X.
 
 \section{Dataset and Experimental Setup}
-Our experiments were conducted within the "Bot Or Not" (B.O.N.) competitive infrastructure, designed specifically for assessing bot detection strategies in realistic social media scenarios. 
-This environment featured interactions between bot and detector developers, simulating genuine activities on the X platform. 
+Our experiments were conducted within the "Bot Or Not" (B.O.N.) 
+competitive infrastructure, designed specifically for assessing 
+bot detection strategies in realistic social media scenarios. 
+This environment featured competing deployments between bot and detector 
+developers, simulating genuine activities on the X platform. 
 The primary goal was to evaluate the effectiveness of detection methodologies under conditions closely resembling live social media dynamics.
 
 \subsection{Data Collection and Characteristics}
@@ -124,7 +126,7 @@ initially collected based on predefined sets of topical keywords relevant to tha
 After gathering initial posts, users flagged as obvious bots were removed, and the dataset was 
 expanded by including all additional posts from the remaining users within the session period. 
 
-The preliminary data collection process can summarized as follows:
+Dataset curation included included the following:
 \begin{itemize}
     \item Text-only Posts: Posts containing images, videos, or memes were excluded.
 
@@ -162,18 +164,20 @@ classical machine learning methods to multimodal
 neural-based architectures, 
 overcoming limitations observed at each stage. 
 The absence of graph data and user metadata 
-limited the available strategies, though we explored methods capable of incorporating such features.
+limited the available strategies, though we explored methods capable of incorporating such features. 
 We aimed to model user behaviour
 from a variety of perspectives, since nontrival bots manipulate features in at least one aspect 
 (e.g., tweet content, posting times, or interactions such as retweets, likes, and follower and following relationships).
-%  Instruction: in the below sub/subsub-sections, make the language a bit more formal; e.g, 'statistics' instead of 'stats', etc and find titles more formal than 'what went right' and 'what went wrong'
+The results are shown in table~\ref{tab:hamzadetector1_results}.
+
 \subsection{\textbf{Baseline - Random Forest}}
 For our baseline study, we employ a random forest 
 for its flexibility with data types, allowing rapid feature exploration, 
 and proven efficacy in bot detection, most notably in Botometer \citep{davis2016botornot}.
 
 The average ratio of humans to bots
-across the sessions is roughly $14:1$.
+across the sessions is roughly $14:1$, 
+making the datasets moderately imbalanced.
 Our random forest used class weights inversely 
 proportional to class occurences 
 to improve bot recall.
@@ -188,16 +192,18 @@ across batches of social media activity.
 \subsubsection{\textbf{Session 11} – Embeddings + LDA}
 For session 11, we extracted tweet 
 embeddings 
-for each user with all-MiniLM-L6-v2 \citep{reimers2021sentence}, 
-and applied LDA \citep{blei2003latent} topic modeling under the 
-assumption that bots target specific topics, 
+for each user with all-MiniLM-L6-v2 \citep{reimers2021sentence}
+to capture textual behaviour.
+Further, we used LDA \citep{blei2003latent} topic modeling under the 
+assumption that bots target a few topics disproportionately, 
 resulting in vectors with unusually 
 large values in a few entries, while those of genuine users 
 may also be sparse, but less concetrated. 
 Aggregating posts into a single document simplified the problem but at the cost of granularity, 
-which we later addressed. We performed minor text preprocessing, such as stopword removal, and
-converting urls, mentions, and hashtags into special tokens (e.g., \texttt{<URL>}) in order to 
-remove noise from the topic modeling process. 
+which we later addressed. We performed minor text preprocessing by
+converting URLs, mentions, and hashtags into special tokens (\texttt{<URLURL>, <UsernameMention>, <HashtagMention>}) in order to 
+remove noise from LDA, which relies on term frequencies. LDA was performed with stopword exclusion performed internally,
+leaving the contextual tweet embeddings unaffected.
 
 Result:
 The model exbihibted low confidence and marked all samples as negatives. This likely owes
@@ -210,8 +216,6 @@ Limitations:
     \item Did not use individual tweets as independent samples, thereby lacking granulrity.
     
     \item Static topic modeling limited generalization to new sessions.
-    
-    \item Removing stopwords likely degraded the quality of the contextual text embeddings.
 \end{itemize}
 
 \subsubsection{\textbf{Session 12} – Mean Embedding + BERTopic + Temporal Statistics}
@@ -235,7 +239,7 @@ Implementation Summary:
 
 Result:
 The model acheieved moderate results in this session, 
-marking positives and having higher confidence scores overall.
+improving in both recall and precision.
 This result likely owes to (1) scaled confidence scores, 
 (2) time based features providing obvious signals 
 and (3) batch-agnostic topic modelling
@@ -257,7 +261,7 @@ Session 13's approach can be summarized as follows:
 \begin{itemize}
     \item Building on Session 12, we added:
     
-    \item Inter-post Interval Statistics: Mean and standard deviation of time gaps between posts.
+    \item Inter-post Interval Statistics: Mean and standard deviation of time gaps between consecutive posts.
     
     \item Bucketed Duplicate Counts: Timestamps were partitioned into 10 intra- and inter-chronologically-ordered buckets, and duplicate timestamps were computed per bucket.
     
@@ -276,8 +280,10 @@ in a larger mean and variance in the time-gaps.
 An area of improvement would be to explicitly
 model inter-feature dependencies (e.g., topic-time correlations).
 
-\subsubsection{\textbf{Session 14}– Topic Statistics + Temporal Entropy + Intra-Topic Similarity}
-This final Random Forest setup expanded feature engineering to include statistical, temporal, and semantic regularities observed in bot behavior. 
+\subsubsection{\textbf{Session 14}– Topic Statistics + Temporal Statistics + Intra-Topic Similarity}
+This final Random Forest setup expanded feature engineering to include statistical, temporal, 
+and semantic regularities observed in bot behavior. 
+
 Implementation Summary:
 \begin{itemize}
     \item Hashtags were partially preserved (\texttt{\#arena $\rightarrow$ <HashtagMention:arena>}), preserving topic cues often used by bots.
@@ -316,9 +322,9 @@ X through feature engineering alone.
 
 What Went Right:
 \begin{itemize}
-    \item Carefully designed user-level features (temporal, semantic, topical) 
-    yielded strong performance despite evolving bots, 
-    as reflected in sessions 13 and 14.
+    % \item Carefully designed user-level features (temporal, semantic, topical) 
+    % yielded strong performance despite evolving bots, 
+    % as reflected in sessions 13 and 14.
     
     \item Transitioning from static LDA to BERTopic
      enabled models to better adapt to new sessions.
@@ -330,8 +336,8 @@ What Went Right:
 
 What Went Wrong:
 \begin{itemize}
-    \item A non-fine-tuned BERTopic model was applied to each session, 
-    which might have created inconsistencies in how topic-features were interpreted by the classifier.
+    \item The changing topics across sessions might have 
+    created inconsistencies in how distributional topic-features (e.g., histogram) were interpreted by the classifier.
     
     \item Scalability Concerns: Computing transformer embeddings, pairwise similarities, multiple topic statistics, and padded histograms scales poorly for large user datasets.
 \end{itemize}
@@ -351,21 +357,23 @@ better adapt to evolving behaviours on X.
 
 \subsection{\textbf{Multimodal Architectures}}
 Recognizing the constraints of feature engineering, we
-explored multimodal neural architectures inspired by recent
+implement multimodal neural architectures inspired by recent
 literature \textit{``Multimodal Detection of Bots on X (Twitter) using
 Transformers''} \citep{ilias2023multimodal}, and \textit{``BotMoE: Twitter Bot Detection with Community-Aware
 Mixtures of Modal-Specific Experts''} \citep{liu2023botmoe}.
 We utilize user description and tweet embeddings alongside digital DNA representations (content and
 temporal).
 
-Evaluated architectures include:
+We explore the following designs for 
+capturing cross-modal interactions:
 \begin{itemize}
-    \item Gated Multimodal Unit (GMU): Dynamically weighting modalities.
+    \item Gated Multimodal Unit (GMU): Uses a gating mechanism to learn modality interactions.
     
-    \item Cross-Attention Fusion: Learns cross-modal interactions through multihead attention.
+    \item Cross-Attention: Uses multihead attention to learn modality interactions.
     
-    \item Mixture-of-Experts (MoE): Subsets of the models specialize in different user types, 
-    and self-attention is combined with a learned convolution over attention weights for final fusion.
+    \item Mixture-of-Experts (MoE): Dedicates a MoE model for each modality,
+    subsets of the MoE specialize in different user types, 
+    and self-attention is used to acheive cross-modal interactions.
 \end{itemize}
 
 These architectures not only provide greater modeling capacity, but also offer more robustness against feature manipulation, 
@@ -382,57 +390,63 @@ These sequences are then converted into images and embedded
 via a CNN encoder. In all cases, the resulting character sequence 
 is transformed into an image as follows:
 \begin{enumerate}
-    \item Each symbol is mapped to an 8-bit grayscale intensity value (e.g., \texttt{N} $\mapsto$ 0, \texttt{U} $\mapsto$ 64, ..., \texttt{X} $\mapsto$ 255).
+    \item Each symbol is mapped to an 8-bit grayscale intensity value 
+    (e.g., \texttt{N} $\mapsto$ 0, \texttt{U} $\mapsto$ 64, ..., \texttt{X} $\mapsto$ 255).
     
-    \item The sequence of grayscale values is reshaped into a square matrix: if the sequence has length $L$, 
-    the smallest $n \in \mathbb{N}$ such that $n^2 \geq L$ is selected. The sequence is zero-padded or repeated
+    \item The sequence of grayscale values is reshaped into a square matrix: 
+    if the sequence has length $L$, the smallest $n \in \mathbb{N}$ such that 
+    $n^2 \geq L$ is selected. The sequence is zero-padded
     to length $n^2$ and reshaped to $(n \times n)$.
 
-    \item This grayscale image is resized depending on the CNN encoder, using nearest-neighbor interpolation.
+    \item This grayscale image is resized depending on the CNN encoder, 
+    using nearest-neighbor interpolation.
     
     \item The image is then converted to RGB format by replicating the grayscale channel, and the resulting
     tensor has shape: $3 \times \texttt{image\_width} \times \texttt{image\_height}$.
 
     \item The tensor is normalized using ImageNet statistics and passed through a pretrained CNN encoder. 
 
-    \item The output features are either (1) average pooled and projected into a fixed embedding space, or (2) directly extracted from the last hidden layer of the CNN encoder.
+    \item The embedding is obtained by either (1) mean-pooling and projecting the last hidden layer, 
+    or (2) directly extracting the last hidden layer if it is 1-dimensional.
+
 \end{enumerate}
 
 \textbf{Content DNA.} Each tweet is mapped to a symbol based on the type of entities it contains:
 \begin{itemize}
-    \item \texttt{N} --- No entities (plain text)
-    \item \texttt{U} --- Contains a URL
-    \item \texttt{H} --- Contains one or more hashtags
-    \item \texttt{M} --- Contains one or more mentions
-    \item \texttt{X} --- Contains a combination of multiple entity types
+    \item \texttt{N} --- No entities (plain text).
+    \item \texttt{U} --- Contains a URL.
+    \item \texttt{H} --- Contains one or more hashtags.
+    \item \texttt{M} --- Contains one or more mentions.
+    \item \texttt{X} --- Contains a combination of multiple entity types.
 \end{itemize}
 
 \textbf{Time DNA.}  
-Time DNA encodes inter-post intervals by assigning symbols based on the time elapsed between consecutive tweets:
+% Each tweet is assigned a symbol based on the time elapsed since the previous tweet:
+Assigns symbols based on the time elapsed between consecutive tweets:
 \begin{itemize}
-    \item \texttt{n} --- First post (no delta)
-    \item \texttt{o} --- $<$ 1 second
-    \item \texttt{s} --- $\geq$ 1 second and $<$ 1 minute
-    \item \texttt{m} --- $\geq$ 1 minute and $<$ 1 hour
-    \item \texttt{h} --- $\geq$ 1 hour and $<$ 6 hours
-    \item \texttt{u} --- $\geq$ 6 hours and $<$ 12 hours
-    \item \texttt{x} --- $\geq$ 12 hours
+    \item \texttt{n} --- User's first post (no delta).
+    \item \texttt{o} --- $<$ 1 second since the user's previous post.
+    \item \texttt{s} --- $\geq$ 1 second and $<$ 1 minute.
+    \item \texttt{m} --- $\geq$ 1 minute and $<$ 1 hour.
+    \item \texttt{h} --- $\geq$ 1 hour and $<$ 6 hours.
+    \item \texttt{u} --- $\geq$ 6 hours and $<$ 12 hours.
+    \item \texttt{x} --- $\geq$ 12 hours.
 \end{itemize}
 
 \textbf{Emoji DNA.}  
 We categorize emojis in tweets using a precompiled lookup table. Each tweet is assigned a category based on its emojis:
 \begin{itemize}
-    \item \texttt{S} — Smileys \& Emotion
-    \item \texttt{P} — People \& Body
-    \item \texttt{A} — Animals \& Nature
-    \item \texttt{F} — Food \& Drink
-    \item \texttt{T} — Travel \& Places
-    \item \texttt{R} — Activities
-    \item \texttt{O} — Objects
-    \item \texttt{Y} — Symbols
-    \item \texttt{L} — Flags
-    \item \texttt{N} — No emoji present
-    \item \texttt{X} — Multiple emoji categories
+    \item \texttt{S} — Smileys \& Emotion.
+    \item \texttt{P} — People \& Body.
+    \item \texttt{A} — Animals \& Nature.
+    \item \texttt{F} — Food \& Drink.
+    \item \texttt{T} — Travel \& Places.
+    \item \texttt{R} — Activities.
+    \item \texttt{O} — Objects.
+    \item \texttt{Y} — Symbols.
+    \item \texttt{L} — Flags.
+    \item \texttt{N} — No emoji present.
+    \item \texttt{X} — Multiple emoji categories.
 \end{itemize}
 
 In all cases, these DNA images serve as behavioral \emph{fingerprints}, 
@@ -444,7 +458,9 @@ each modality contributes to the final hidden representation.
 The output is used (with possibly further transformation)
 downstream for classification.
 
-In the bimodal setting, where we consider two input modalities \( \mathbf{x}_v \) and \( \mathbf{x}_t \), 
+In the bimodal setting, where we consider two 
+input modalities \( \mathbf{x}_v \) 
+and \( \mathbf{x}_t \) (e.g., DNA and text), 
 the equations governing the GMU are as follows:
 
 \begin{align}
@@ -455,18 +471,20 @@ the equations governing the GMU are as follows:
 \mathbf{\Theta} &= \{ \mathbf{W}_v, \mathbf{W}_t, \mathbf{W}_z \} 
 \end{align}
 
-Here, \( \mathbf{h}_v \) and \( \mathbf{h}_t \) are hidden states learned on modalities \( \mathbf{x}_v \) and \( \mathbf{x}_t \),
-\([\mathbf{.} , \mathbf{.}] \) denotes concatenation, and \(\mathbf{\Theta} \) denotes learnable parameters.
+
+
+Here, \( \mathbf{h}_v \) and \( \mathbf{h}_t \) are hidden activations learned on modalities \( \mathbf{x}_v \) and \( \mathbf{x}_t \),
+\([\mathbf{\cdot} , \mathbf{\cdot}] \) denotes concatenation, and \(\mathbf{\Theta} \) denotes learnable parameters.
 Cross-modal interactions are learned in the parameters \( \mathbf{W}_z\), 
 the weighting mechanism \(\mathbf{z} \)
-then applies a sigmoid activation \(\sigma \) on the projected modalities
-to determine how much each one contributes to the final fused representation.
-In practice, implementations tend to depart\footnote{ \citet{arevalo2017gated}’s own demo \url{https://github.com/johnarevalo/gmu-mmimdb/blob/master/model.py}; omits separate projections for each modality and applies the nonlinearity directly to the inputs.}
+then determines how much each modality contributes to the fused representation \(\mathbf{h} \).
+In practice, implementations tend to depart\footnote{
+    Demonstration \url{https://github.com/johnarevalo/gmu-mmimdb/blob/master/model.py}
+    by \citet{arevalo2017gated} omits modality projections and applies nonlinearity directly to the inputs.}
 from some of the original equations,
 including ours\footnote{
     Our implementation concatenates
-    the hidden activations, which improved
-    training stability.}.
+    the hidden activations.}.
 
 % \footnote{The hidden states were concatenated for weighting, 
 % which improved training stability.}.
@@ -479,10 +497,10 @@ our intial efforts with the GMU used the following modalities:
     \item DNA: Content-DNA embedding from MobileNetV2 \citep{sandler2018mobilenetv2}.
 \end{itemize}
 
-The first iteration consisted of a two layer classification head applied
+The first iteration consisted of a two-layer classification head applied
 to the GMU's output. This model marked all samples as negatives,
-and several adjustments were needed. Subsequent iterations
-introduced refinements such as: modality-specific projections, 
+and several adjustments were needed. Subsequent attempts
+introduced refinements such as: two-layered modality-specific projections, 
 layer normalization, global residual connections, and modality-specific dropout.
 
 \paragraph{\textbf{Incorporating Time-DNA}}
@@ -500,8 +518,9 @@ This raised concerns about generalizability;
 can such a carefully balanced architecture handle 
 different modalities or scale to more modalities?
 
-Given these concerns, we transitioned to a cross-modal attention approach, 
-expecting that it could acheive nontrivial performance with fewer 
+We thus transitioned to using cross-attention 
+for learning modality interactions, 
+expecting that our model could acheive nontrivial performance with fewer 
 architectural tweaks.
 
 
@@ -529,7 +548,7 @@ A mean pooling is then applied to attention outputs to form
 a final fused representation.
 
 With the fused representation, we began with a 
-two layer classification head and iteratively improved our architecture.
+two-layer classification head and iteratively improved our architecture.
 This required less refinements than our GMU approach.
 
 
@@ -562,14 +581,14 @@ significantly by session 16, and a drop in performance was expected given
 the model's complexity and the limited fine-tuning conducted at this stage.
 However, the model showed strong cross-lingual transfer,
 acheiving the highest recall in french (session 17)
-despite training only on english data,
+despite training only on english data up to this point,
 demonstrating the importance of a multimodal approach.
 
 \paragraph{\textbf{Sessions 18-19} - Description, Content, Time, Emoji}
-For sessions 18 and 19, the model's GMU was extended to fuse 
-three DNA embeddings: content, time, and emoji. Our intuition was that
-LLM-powered bots exhibit obvious tells in their use of emojis across posts.
-Further, it was trained with focal loss \citep{lin2017focal}, which was
+Noticing that LLM-powered bots exhibited obvious tells in their emoji usage across posts 
+(e.g., repeatedly using a single category), the model's GMU was extended to fuse 
+three DNA embeddings for sessions 18 and 19: content, time, and emoji.
+The model was trained with focal loss \citep{lin2017focal}, which was
 more effective than weighted cross-entropy for dealing with the class imbalance.
 
 Bot recall did not improve, but since we had more
@@ -587,18 +606,24 @@ of integrating sparse representations like emojis.
 Future refinements may involve curating
 a more appropriate categorization system for emojis. 
 
+\paragraph{Conclusion}
+The cross-attention approach showed promising results,
+with the highest recall in session 17, but due to the
+tuning requirements and use of emoji-DNA,
+it underperformed in the other sessions. 
+
 Although a cross-attention approach can be effective,
 it is computationally expensive to scale
 beyond two modalities. For example, three modalities would 
 require six multihead-attention layers to consider 
-each cross-modal interaction in both directions.
+each bi-modal interaction in both directions.
 
 A natural alternative is to employ a single self-attention 
-block where each token corresponds to a modality. 
+layer where each token corresponds to a modality. 
 A key challenge in this approach is learning modality representations to provide to
 the self-attention layer. 
 We find that MoEs learn these representations effectively, and in particular, 
-might be better at modelling the diverse user behaviours found on X.
+might be better at modeling the diverse user behaviours found on X.
 
 
 \subsubsection{\textbf{Mixture-of-Experts (MoE)}}
@@ -609,8 +634,8 @@ strategy used by BotMoE \citep{liu2023botmoe}. This approach leverages specializ
 experts conditioned on (learned) user sub-communities, enabling community-aware representation learning.
 
 \paragraph{Expert Assignment and Gating}
-For each modality (text, DNA), user embeddings are fed into a \textbf{gating network}:
-\begin{align}
+For each modality, user embeddings are fed into a \textbf{gating network}:
+\begin{align} \label{eq:moe-gating}
 G(\mathbf{x}) &= \text{softmax}(\text{KeepTopK}(W_g \mathbf{x}, k))
 \end{align}
 where \( W_g \) are learnable weights, \( \mathbf{x} \) is the input embedding, and \texttt{KeepTopK} retains the top \( k \) gating scores for sparse expert activation.
@@ -634,8 +659,9 @@ Additionally, we evaluate the consistency between the modality representations.
 This is done by applying a 2D convolution\footnote{
     Our implementation (sessions 20-21), similar
     to BotMoE \url{https://github.com/lyh6560new/BotMoE},
-     only performed downsampling. Technically, the classification head
-     can extract consistency directly.}
+     only performed fixed-pooling. 
+     Technically, the classification head
+     can use the sample to evaluate consistency directly.}
 on a downsampling (via fixed pooling) of the attention matrix \( \mathbf{M} \).
 
 \paragraph{Classification Head}
@@ -646,7 +672,7 @@ y_i &= W_o \cdot [\tilde{\mathbf{z}}^{(t)}, \tilde{\mathbf{z}}^{(d)}, \mathbf{z}
 where \( W_o \) and \( b_o \) are learnable parameters.
 
 \paragraph{Loss Function}
-We optimize a \textbf{cross-entropy loss} with two regularization terms:
+We optimize a cross-entropy loss with two regularization terms:
 \begin{align}
 \mathcal{L} &= -\sum_{i \in \mathcal{Y}} t_i \log y_i + \lambda_1 \sum_{\theta} \|\theta\|_2^2 + \lambda_2 \sum_{i \in \mathcal{Y}} \sum_{m \in \{t, d\}} BL(\mathbf{x}_i^{(m)})
 \end{align}
@@ -660,15 +686,16 @@ Here, \( CV \) is the coefficient of variation, encouraging balanced expert usag
 For sessions 20 and 21, we employed the outlined 
 MoE approach with the following modalities:
 \begin{itemize}
-    \item Text: User description + five tweets sampled evenly across their timeline (partitioning their posts into equal chunks), both encoded with TwHIN-BERT.
-    \item DNA: content + time, encoded with MobileViT-small \citep{mehta2021mobilevit}.
+    \item Text: User description + Five tweets sampled evenly across their timeline (partitioning their posts into equal chunks), both encoded with TwHIN-BERT.
+    \item DNA: Content + Time, encoded with MobileViT-small \citep{mehta2021mobilevit}.
 \end{itemize}
-The architecture (illustrated in Figure~\ref{fig:moe-diagram}) can be summarized as follows:
+The architecture (broadly illustrated in Figure~\ref{fig:moe-diagram}) can be summarized as follows:
 \begin{itemize}
-    \item Each modality employs two to three experts, 
-    and the gating selects only the top expert.
+    \item Each modality employs two experts, 
+    and only the top expert is chosen (i.e., $k=1$ in (\ref{eq:moe-gating})).
     \item Outputs from experts interact via multi-head self-attention.
-    \item The concatenated representation outlined in (\ref{eq:moe-final-concat}) is passed through a two-layer classification head.
+    \item The concatenated representation outlined in (\ref{eq:moe-final-concat}) 
+    is passed through a one-layer classification head.
 \end{itemize}
 
 \textbf{Strengths:}
@@ -727,21 +754,29 @@ lifecycle: (i) the tension between bots’    \textbf{manipulated static feature
 
 The baseline Random Forests (RF) established in Sessions~11--14 offer an instructive point of comparison:
 although overall accuracies exceeded $95\%$ in three of four sessions, bot \emph{recall} was volatile, ranging from $0\%$ (Session~11) to $90.5\%$ (Session~13).
-This disparity highlights a well‑known pitfall of static, heavily engineered features in highly imbalanced settings: high accuracy can coexist with near‑zero sensitivity to the minority class.
+This disparity highlights a pitfall of static, heavily engineered features in highly imbalanced settings: high accuracy can coexist with near‑zero sensitivity to the minority class.
 
 Transitioning to the \textit{Cross‑Attention} (CA) model in Sessions~16--19 reverses this failure mode:
-recall stabilises between $52\%$ and $72\%$, but precision remains modest ($14$--$62\%$).
-The shift underscores the benefit of end‑to‑end representation learning but also reveals the difficulty of learning rich cross‑modal interactions with limited data and imbalanced labels.
+recall stabilises between $52\%$ and $72\%$, but precision remains modest ($14$--$62\%$), despite
+additional features (emoji-DNA).
+The shift underscores the benefit of end‑to‑end 
+multmodal representation learning, 
+but also reveals the difficulty 
+of learning rich cross‑modal interactions with evolving bots 
+and imbalanced labels.
 
 The \textit{Mixture‑of‑Experts} (MoE) architecture deployed in Sessions~20--21 marks a decisive improvement.
 Perfect precision ($100\%$) and a recall of $67.7\%$ in Session~20 demonstrate that community‑aware specialization can reconcile the precision‑recall trade‑off without explicit re‑balancing of the loss.
-The performance uplift is achieved with \emph{fewer} parameters than earlier multimodal models, supporting the hypothesis that a divide-and-conquer architecture 
+The performance uplift is achieved with \emph{fewer} parameters than the 
+cross-attention approach, showing that a divide-and-conquer architecture 
 can capture heterogeneous behaviours more effectively than monolithic models.
 
 %------------------------------------------------
-\subsection{Manipulated \emph{vs.} dynamic features}
-
-Early sessions revealed that bots actively manipulated static features such as profile descriptions or copied tweet content.
+\subsection{\textbf{Manipulated \emph{vs.} dynamic features}}
+Early sessions revealed that bots actively 
+engaged in feature manipulation stragies,
+such as copying profile descriptions 
+and tweet content from geniune users.
 Consequently, feature sets anchored to surface‑level statistics (mean embeddings, global topic histograms, etc.) suffered from feature dilution.
 Digital DNA representations address this weakness by implicitly encoding temporal dynamics
 that are harder to spoof (but still vulnerable
@@ -750,44 +785,58 @@ CNN embeddings of DNA images capture higher‑order patterns (e.g., repetitive b
 The progressive gain from Session~12 to 14 (RF models) already hinted at the importance of dynamic signals; the MoE results confirm that learning these patterns directly, rather than engineering them, yields more robust detectors.
 
 %------------------------------------------------
-\subsection{User diversity and community‑aware modelling}
-
-Bots on~X do not form a homogeneous cluster; they range from single‑issue spam accounts to multilingual LLM‑powered impersonators.
-Treating all users the same can therefore confound feature distributions and gate learning.
-The MoE’s sparsely gated experts act as implicit community detectors, allowing the model to attend to behaviourally coherent sub‑populations (e.g.\ language communities, topical niches).
-The cross‑lingual recall gains observed in French (Session~21) and the balanced expert utilisation encouraged by the balancing loss are practical evidence of this effect.
+\subsection{\textbf{User diversity and community‑aware modeling}}
+Bots on~X do not form a homogeneous cluster; 
+they range from single‑issue spam accounts to 
+multilingual LLM‑powered impersonators.
+Treating all users the same can therefore 
+confound feature distributions.
+% and gate learning.
+The MoE’s sparsely gated experts act as 
+implicit community detectors, allowing the model 
+to attend to behaviourally coherent sub‑populations 
+(e.g.,\ language communities, topical niches).
+The cross‑lingual recall gains observed in French 
+(Session~21) and the balanced expert utilisation 
+encouraged by the balancing loss are practical 
+evidence of this effect.
 
 %------------------------------------------------
-\subsection{Scalability and computational trade‑offs}
+\subsection{\textbf{Scalability and computational trade‑offs}}
 
 End‑to‑end multimodal learning is computationally demanding.
-While the CA model removed feature‑engineering overhead, its computational costs grow quickly with additional modalities.
-In contrast, the MoE approach keeps the core attention footprint small and delegates specialisation to lightweight MLP experts.
-This efficiency is crucial for real‑time or on‑device deployment scenarios, and perhaps even integrating
+While the CA model removed feature‑engineering overhead, 
+its computational costs grow quickly with additional modalities.
+In contrast, the MoE approach keeps the core attention footprint 
+small and delegates specialisation to lightweight MLP experts.
+This efficiency is crucial for real‑time or on‑device deployment 
+scenarios, and perhaps integrating
 into a broader clustering approach.
 
 %------------------------------------------------
-\subsection{Limitations}
-\begin{itemize}
-  \item \textbf{Absence of graph signals.}  Social relationships (follow‑followed, retweet cascades) are powerful bot indicators, yet unavailable in our dataset.
-  \item \textbf{Emoji sparsity.}  The high‑dimensional, sparse emoji‑DNA introduced noise and proved hard to tune.
-  \item \textbf{Evaluation granularity.}  Session‑level evaluation obscures real‑time adaptability; a streaming evaluation protocol would provide finer insight.
-\end{itemize}
+% \subsection{Limitations}
+% \begin{itemize}
+%   \item \textbf{Absence of graph signals.}  Social relationships (follow-followed, retweet cascades) are powerful bot indicators, yet unavailable in our dataset.
+%   \item \textbf{Emoji sparsity.}  The high-dimensional, sparse emoji-DNA introduced noise and proved hard to tune.
+% %   \item \textbf{Evaluation granularity.}  Session-level evaluation obscures real‑time adaptability; a streaming evaluation protocol would provide finer insight.
+% \end{itemize}
 
 %------------------------------------------------
-\subsection{Future directions}
-\begin{itemize}
-  \item \textbf{Graph‑augmented MoE.}  Integrate community graphs or interaction networks as an additional modality, as in BotMoE \citep{liu2023botmoe}.
-%   \item \textbf{Continual learning.}  Employ online fine‑tuning or parameter‑efficient adapters to combat distribution drift.
-  \item \textbf{Robust emoji representations.}  Investigate sub‑word or CLIP‑style embeddings to compress emoji semantics without sparsity.
-%   \item \textbf{Energy‑aware deployment.}  Quantisation and pruning of MoE experts could yield detectors suitable for edge devices or mobile deployment.
-\end{itemize}
-
-In summary, our findings indicate that dynamic, 
-behaviour-centric features---encoded and fused 
-via community-aware networks---effectively 
-counteract manipulated features.
-The sparsely gated MoE is efficient and has the flexibility required to track the evolving bot landscape on~X.
+% \subsection{Future directions}
+% \begin{itemize}
+%   \item \textbf{Graph‑augmented MoE.}  Integrate community graphs or interaction networks as an additional modality, as in BotMoE \citep{liu2023botmoe}.
+% %   \item \textbf{Continual learning.}  Employ online fine‑tuning or parameter‑efficient adapters to combat distribution drift.
+%   \item \textbf{Robust emoji representations.}  Investigate sub‑word or CLIP‑style embeddings to compress emoji semantics without sparsity.
+% %   \item \textbf{Energy‑aware deployment.}  Quantisation and pruning of MoE experts could yield detectors suitable for edge devices or mobile deployment.
+% \end{itemize}
+% \sub
+\subsection{\textbf{Summary}}
+Our findings indicate that multimodal 
+behaviour-centric signals effectively 
+counteract feature manipulation strategies. 
+The sparsely gated MoE is a lightweight solution 
+showing the ability to adapt to evolving bot 
+sub-communities on~X (e.g.,\ those of LLM-powered bots).
 
 
 
@@ -821,27 +870,7 @@ The sparsely gated MoE is efficient and has the flexibility required to track th
     \label{tab:hamzadetector1_results}
     \end{table}
 
-    Over the course of our study,
-    we have found that key challenges in bot detection 
-    on X include manipulated features and diverse
-    user behavior. The former necessitates
-    a model that captures user behavior from
-    a variety of perspectives to increase 
-    the likelihood of encountering obvious signals.
-    The latter introduces variance to the 
-    training data, and our MoE approach shows that
-    a large model can be successfully replaced with
-    a smaller divide-and-conquer architecture.
-    
-    An interesting aspect of the MoE is that
-    the expert specializations emerge in a black box fashion. 
-    We reason that the classification task
-    is broken down into two steps
-    more explicity than in other architectures:
-    \begin{itemize}
-        \item (Expert gating) What type of user is this instance?
-        \item (Expert) Among those types of users, what makes this one stand out?
-    \end{itemize}
+
 \section{Conclusion and Future Work}
 blah blah...
 
