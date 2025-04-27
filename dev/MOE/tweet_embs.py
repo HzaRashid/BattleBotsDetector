@@ -1,6 +1,6 @@
 import numpy as np
 
-def sample_evenly_tweets(tweets, n=5):
+def sample_evenly_tweets(tweets, n=8):
     """
     Samples n tweets evenly distributed across the timeline.
     

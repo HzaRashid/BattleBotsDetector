@@ -64,7 +64,7 @@ def train_model(model, train_loader, val_loader,
                 device, criterion, optimizer, scheduler,
                 num_epochs, verbose=False, trial=None, 
                 optuna=None, torch=None, moe=False, 
-                unfreeze_threshold=0.85):
+                unfreeze_threshold=0.86):
     # Flag to track if some moe parameters have been unfrozen
     unfrozen = False
 
@@ -95,24 +95,32 @@ def train_model(model, train_loader, val_loader,
         scheduler.step()
         
         # Check if we should unfreeze the router parameters.
-        if moe and (not unfrozen) and (best_acc > unfreeze_threshold):
-            model.dna_moe.w_gate.requires_grad = True
-            model.dna_moe.w_noise.requires_grad = True
-            model.desc_tweet_moe.w_gate.requires_grad = True
-            model.desc_tweet_moe.w_noise.requires_grad = True
+        # if moe and (not unfrozen) and (best_acc > unfreeze_threshold):
+        #     optimizer.param_groups[0]['lr']=1e-5
+        #     # model.dna_moe.w_gate.requires_grad = True
+        #     # model.dna_moe.w_noise.requires_grad = True
+        #     # model.desc_tweet_moe.w_gate.requires_grad = True
+        #     # model.desc_tweet_moe.w_noise.requires_grad = True
 
-            # model.desc_tweet_moe.w_gate.requires_grad = True
-            # model.desc_tweet_moe.w_noise.requires_grad = True
+        #     # 1) un‐freeze the gating parameters
+        #     for moe_module in [
+        #         # model.desc_tweet_moe, 
+        #                        model.dna_moe
+        #                        ]:
+        #         moe_module.w_gate.requires_grad  = True
+        #         moe_module.w_noise.requires_grad = True
+
             
-            # model.naive_moe.w_gate.requires_grad = True
-            # model.naive_moe.w_noise.requires_grad = True
+        #     # 2) freeze all of the experts
+        #     for moe_module in [model.desc_tweet_moe,
+        #                     #    model.dna_moe
+        #                        ]:
+        #         for expert in moe_module.experts:
+        #             for p in expert.parameters():
+        #                 p.requires_grad = False
 
-            # for param in model.dna_moe.router.parameters(): 
-            #     param.requires_grad = True
-            # for param in model.text_tweet_moe.router.parameters():
-            #     param.requires_grad = True
-            unfrozen = True
-            print("Router params unfrozen!")
+        #     unfrozen = True
+        #     print("Router params unfrozen!")
         
         if trial:
             trial.report(best_loss, epoch)

@@ -143,11 +143,12 @@ class MixtureOfExperts(nn.Module):
         self.top_k = top_k
         self.noisy_gating = noisy_gating
         
+        gate_grad = True
         # Parameters for gating: use Xavier uniform initialization instead of zeros.
-        self.w_gate = nn.Parameter(torch.empty(input_dim, num_experts), requires_grad=False)
+        self.w_gate = nn.Parameter(torch.empty(input_dim, num_experts), requires_grad=gate_grad)
         # nn.init.xavier_uniform_(self.w_gate)
         nn.init.constant_(self.w_gate, 0.1)
-        self.w_noise = nn.Parameter(torch.empty(input_dim, num_experts), requires_grad=False)
+        self.w_noise = nn.Parameter(torch.empty(input_dim, num_experts), requires_grad=gate_grad)
         # nn.init.xavier_uniform_(self.w_noise)
         nn.init.constant_(self.w_noise, 0.1)
         

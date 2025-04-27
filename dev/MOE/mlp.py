@@ -34,7 +34,7 @@ MOE=True
 #                     }
 
 scheduler_params = {"milestones": [10], 
-                    "gamma": 0.95
+                    "gamma": 0.8
                     }
 
 WEIGHT_DECAY = 1e-6
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     (train, test) = load_data(data_dir, 
                               session_numbers=[], 
                               st_model=st_model, 
-                              xnums=[0]
+                              xnums=[1]
                               )
     train_tensors = [torch.tensor(train[i], dtype=dtypes[i]) for i in range(len(train))]
     test_tensors = [torch.tensor(test[i], dtype=dtypes[i]) for i in range(len(test))]

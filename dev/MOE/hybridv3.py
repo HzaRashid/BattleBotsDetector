@@ -118,6 +118,12 @@ class MOEAttention(nn.Module):
         # Fixed pooling as used in AllInOne.
         self.fixed_pooling = FixedPooling(fixed_size=4)
         # self.adaptive_pooling = nn.AdaptiveMaxPool2d((4, 4))
+        self.consistency_conv = nn.Conv2d(
+            in_channels=1,      
+            out_channels=1,     
+            kernel_size=(3,3),  
+            padding=1           
+        )
         
         # Batch normalization applied to the stacked outputs.
         self.bn1 = nn.BatchNorm1d(self.expert_out_dim)
@@ -152,14 +158,20 @@ class MOEAttention(nn.Module):
         
         # Fuse tokens using LModel.
         fused, attn = self.fusion(out_tensor)  # fused: (batch, 2, hidden_dim), attn: (batch, num_heads, 2, 2)
-        # print("attention shape:", attn.shape)
+
         # Apply fixed pooling to the attention map.
         attn = self.fixed_pooling(attn)  # Expected output shape: (batch, 6, 6)
-        # attn = self.adaptive_pooling(attn)
+        # print("fused shape:", fused.shape)
+        # print("attention shape:", attn.shape)
+        # ------* consistency *------
+        attn = attn.unsqueeze(1)
+        attn = self.consistency_conv(attn)
+        # ------------------------
         # Flatten the fused tokens and attention map.
         fused_flat = fused.reshape(fused.size(0), -1)       # (batch, 2*hidden_dim)
-        attn_flat = attn.reshape(attn.size(0), -1)            # (batch, 16)
-        
+        # attn_flat = attn.reshape(attn.size(0), -1)            # (batch, 16)
+        # if consistency used:
+        attn_flat = attn.flatten(start_dim=1)
         # Concatenate and classify.
         final_features = torch.cat([fused_flat, attn_flat], dim=1)  # (batch, 2*hidden_dim + 16)
         final_features = self.bn2(final_features)
