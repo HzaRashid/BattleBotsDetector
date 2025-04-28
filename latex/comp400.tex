@@ -40,7 +40,7 @@ patterns that conventional methods miss.
 We investigate three methods for modality interaction; 
 a GMU (Gated Multimodal Unit), 
 a cross-attention mechanism, and a sparsely gated MoE (mixture-of-experts)
-using self-attention to acheive modality interaction.
+using self-attention to achieve modality interaction.
 We find that the MoE is not only our best method, but is
 also the smallest of our multimodal models, and does not require 
 any treatment of the class imbalance found in bot detection datasets. 
@@ -71,7 +71,7 @@ known bot patterns.
 We address this challenge by evaluating 
 a range of bot detection strategies in a \emph{blind} prediction setting, 
 where each account is observed exactly once at inference time. 
-This is acheived through
+This is achieved through
 a competition infrastructure where real tweet data
 guides privately generated bot data in an automated manner.
 
@@ -103,7 +103,7 @@ uncover latent behavioral patterns that conventional methods miss.
 We explore several techniques for learning cross-modal interactions, 
 including GMUs (Gated Multimodal Unit), cross-attention mechanisms, 
 and a sparsely gated mixture-of-experts (MoE) \citep{shazeer2017outrageously} 
-using self-attention to acheive modality interaction. 
+using self-attention to achieve modality interaction. 
 Our results highlight the MoE's superior representational capacity and 
 efficiency, notably without requiring strategies to address class imbalance. 
 Our work highlights the robustness of multimodal approaches and
@@ -312,7 +312,7 @@ Result:
 In session 14, the bots became more difficult to identify. That is,
 this model outperformed its predecessor under the same training conditions 
 when applied to the previous session, but performed worse on the latest.
-Despite the drop in performance, the model acheived nontrivial results, second only 
+Despite the drop in performance, the model achieved nontrivial results, second only 
 to the previous session. A core limitation was the increased feature dimensionality, introducing noise to the model and potentially stressing interpretability.
 
 \subsection{Summary and Reflection on Random Forest Baseline}
@@ -361,7 +361,7 @@ We utilize user description and tweet embeddings alongside digital DNA represent
 temporal).
 
 We explore the following designs for 
-capturing cross-modal interactions:
+achieving cross-modal interactions:
 \begin{itemize}
     \item Gated Multimodal Unit (GMU): Uses a gating mechanism to learn modality interactions.
     
@@ -369,7 +369,7 @@ capturing cross-modal interactions:
     
     \item Mixture-of-Experts (MoE): Dedicates a MoE model for each modality,
     subsets of the MoE specialize in different user types, 
-    and self-attention is used to acheive cross-modal interactions.
+    and self-attention is used to achieve cross-modal interactions.
 \end{itemize}
 
 These architectures not only provide greater modeling capacity, but also offer more robustness against feature manipulation, 
@@ -512,7 +512,7 @@ different modalities or scale to more modalities?
 
 We thus employed cross-attention 
 for learning modality interactions, 
-expecting that our model could acheive nontrivial performance with fewer 
+expecting that our model could achieve nontrivial performance with fewer 
 architectural tweaks.
 
 \subsubsection{\textbf{Cross-Attention}}
@@ -569,7 +569,7 @@ our random forest attempts. However, the bots had improved
 significantly by session 16, and a drop in performance was expected given 
 the model's complexity and the limited fine-tuning conducted at this stage.
 However, the model showed strong cross-lingual transfer,
-acheiving the highest recall in French (session 17)
+achieving the highest recall in French (session 17)
 despite training only on English data up to this point,
 demonstrating the importance of a multimodal approach.
 
@@ -705,7 +705,7 @@ The architecture (broadly illustrated in Figure~\ref{fig:moe-diagram}) can be su
 \end{itemize}
 
 The MoE was our strongest model, 
-acheiving perfect precision and the highest recall in session 20 (English), 
+achieving perfect precision and the highest recall in session 20 (English), 
 and the highest recall in all of the French sessions.
 We reason that the model did not require treatment 
 of class imbalance because the reduced per-expert user-diversity
