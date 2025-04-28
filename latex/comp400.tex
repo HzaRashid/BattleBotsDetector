@@ -21,8 +21,9 @@
 
 \begin{abstract}
 This research investigates multimodal bot
-detection on X, in a setting where
-labels are not known a priori, and graph data is not available.
+detection on X, in a \emph{blind} prediction setting, 
+where each account is observed exactly once at inference time,
+and graph information is not available.
 Our work begins with benchmarking conventional classifiers---a random forest 
 on text, temporal, and topic-distribution features, 
 yielding moderate baseline performance.
@@ -34,8 +35,8 @@ more dynamically.
 For this, we embed the user description with 
 TwHIN-BERT and model posting behavior with two DNA formulations, 
 one that captures content across posts, and another capturing inter-post times.
-We find that CNN embeddings of inter-post time DNA may capture latent
-patterns in temporal behaviour that conventional methods miss.
+We find that CNN embeddings of inter-post time DNA may capture latent temporal
+patterns that conventional methods miss.
 We investigate three methods for modality interaction; 
 a GMU (Gated Multimodal Unit), 
 a cross-attention mechanism, and a sparsely gated MoE (mixture-of-experts)
@@ -68,7 +69,7 @@ Consequently, there is a need for detection methods that generalize beyond
 known bot patterns.
 
 We address this challenge by evaluating 
-a range of bot detection strategies in a real-time, \emph{blind} prediction setting, 
+a range of bot detection strategies in a \emph{blind} prediction setting, 
 where each account is observed exactly once at inference time. 
 This is acheived through
 a competition infrastructure where real tweet data
@@ -96,8 +97,8 @@ posting behavior encoded through two distinct DNA formulations: one
 capturing content across posts and another encoding inter-post 
 timing patterns. 
 In addition to the known efficacy of content DNA \citep{ilias2023multimodal}, 
-our experiments demonstrate that CNN encodings of temporal-DNA-generated 
-images uncover nuanced behavioral patterns that conventional methods miss.
+our experiments demonstrate that CNN encodings of temporal-DNA 
+uncover latent behavioral patterns that conventional methods miss.
 
 We explore several techniques to learn cross-modal interactions, 
 including GMUs (Gated Multimodal Unit), cross-attention mechanisms, 
@@ -330,7 +331,7 @@ What Went Right:
 
 What Went Wrong:
 \begin{itemize}
-    \item The changing topics across sessions might have 
+    \item The varying topics across sessions might have 
     created inconsistencies in how distributional topic-features (e.g., histogram) were interpreted by the classifier.
     
     \item Scalability Concerns: Computing transformer embeddings, pairwise similarities, multiple topic statistics, and padded histograms scales poorly for large user datasets.
@@ -476,7 +477,7 @@ In practice, implementations tend to depart\footnote{
     by \citet{arevalo2017gated} omits modality projections and applies nonlinearity directly to the inputs.}
 from some of the original equations,
 including ours\footnote{
-    Our implementation concatenates
+    Concatenates
     the hidden activations.}.
 
 
@@ -508,15 +509,15 @@ This raised concerns about generalizability;
 can such a carefully balanced architecture handle 
 different modalities or scale to more modalities?
 
-We thus transitioned to using cross-attention 
+We thus employed cross-attention 
 for learning modality interactions, 
 expecting that our model could acheive nontrivial performance with fewer 
 architectural tweaks.
 
 \subsubsection{\textbf{Cross-Attention}}
 We first learn an intermediate representation of the DNA embeddings (content and time)
-to later apply cross-attention with the user description. We found that employing
-a GMU to learn a fused DNA representation was effective, despite its intended multimodal use.
+to later apply cross-attention with the user description. We found that the
+GMU learned fused-DNA representations effectively, despite its intended multimodal use.
 
 Our cross-attention method (illustrated in Figure~\ref{fig:ca-diagram}) fuses text (user description) and DNA in the following way:
 \begin{itemize}
@@ -567,8 +568,8 @@ our random forest attempts. However, the bots had improved
 significantly by session 16, and a drop in performance was expected given 
 the model's complexity and the limited fine-tuning conducted at this stage.
 However, the model showed strong cross-lingual transfer,
-acheiving the highest recall in french (session 17)
-despite training only on english data up to this point,
+acheiving the highest recall in French (session 17)
+despite training only on English data up to this point,
 demonstrating the importance of a multimodal approach.
 
 \paragraph{\textbf{Sessions 18-19} - Description, Content, Time, Emoji}
@@ -603,7 +604,7 @@ Although a cross-attention approach can be effective,
 it is computationally expensive to scale
 beyond two modalities. For example, three modalities would 
 require six multihead-attention layers to consider 
-each bi-modal interaction in both directions.
+each bimodal interaction in both directions.
 
 A natural alternative is to employ a single self-attention 
 layer where each token corresponds to a modality. 
@@ -679,9 +680,9 @@ MoE approach with the following modalities:
 \end{itemize}
 The architecture (broadly illustrated in Figure~\ref{fig:moe-diagram}) can be summarized as follows:
 \begin{itemize}
-    \item Each modality employs two experts, 
+    \item Each modality is given a 2-expert MoE, 
     and only the top expert is chosen (i.e., $k=1$ in (\ref{eq:moe-gating})).
-    \item Outputs from experts interact via multi-head self-attention.
+    \item The resulting outputs interact via multi-head self-attention.
     \item The concatenated representation outlined in (\ref{eq:moe-final-concat}) 
     is passed through a one-layer classification head.
 \end{itemize}
@@ -691,13 +692,14 @@ The architecture (broadly illustrated in Figure~\ref{fig:moe-diagram}) can be su
     \item \textit{Efficiency}: It is the smallest of our multimodal models, requiring less time to train and perform inference.
     \item \textit{Community-aware specialization}: Each expert learns patterns within specific user sub-communities, improving generalization across diverse bot behaviors,
      and potentially simplifying the learning process due to reduced per-expert user diversity.
-    \item \textit{Balanced expert utilization}: The balancing loss encourages fair expert usage, preventing mode collapse and overfitting.
+    % \item \textit{Balanced expert utilization}: The balancing loss encourages fair expert usage, preventing overfitting.
 \end{itemize}
 
 \textbf{Challenges:}
 \begin{itemize}
     \item \textit{Hyperparameter tuning:} Despite being a smaller model, 
-    the sparsely gated MoE architecture has several hyperparameters (e.g., number of experts, expert hidden dimension, weight initialization for the gates)
+    the sparsely gated MoE architecture has several
+     hyperparameters (e.g., expert hidden dimension, distribution for the gates)
     requiring careful tuning.
 \end{itemize}
 
@@ -737,8 +739,9 @@ lifecycle: (i) the tension between bots’    \textbf{manipulated static feature
 \subsection{Key empirical trends}
 
 The baseline Random Forests (RF) established in Sessions~11--14 offer an instructive point of comparison:
-although overall accuracies exceeded $95\%$ in three of four sessions, bot \emph{recall} was volatile, ranging from $0\%$ (Session~11) to $90.5\%$ (Session~13).
-This disparity highlights a pitfall of static, heavily engineered features in highly imbalanced settings: high accuracy can coexist with near‑zero sensitivity to the minority class.
+although overall accuracies exceeded $95\%$ across the four sessions, bot \emph{recall} was volatile, ranging from $0\%$ (Session~11) to $90.5\%$ (Session~13).
+This disparity highlights a pitfall of static, heavily engineered features in highly imbalanced settings, with 
+high accuracy coexisting with near‑zero sensitivity to the minority class.
 
 Transitioning to the \textit{Cross‑Attention} (CA) model in Sessions~16--19 reverses this failure mode:
 recall stabilises between $52\%$ and $72\%$, but precision remains modest ($14$--$62\%$), despite
@@ -766,7 +769,7 @@ Digital DNA representations address this weakness by implicitly encoding tempora
 that are harder to spoof (but still vulnerable
 to manipulation, hence the need for a multimodal approach).
 CNN embeddings of DNA images capture higher‑order patterns 
-(e.g., repetitive behaviour) beyond the reach of coarse summary statistics.
+(e.g., periodic behaviour) beyond the reach of coarse summary statistics.
 The progressive gain from Session~12 to 14 (RF models) already hinted at 
 the importance of dynamic signals; the multimodal results confirm that learning 
 these patterns directly, rather than engineering them, yields more robust detectors.
@@ -777,7 +780,7 @@ Bots on~X do not form a homogeneous cluster;
 they range from single‑issue spam accounts to 
 multilingual LLM‑powered impersonators.
 Treating all users the same can therefore 
-confound feature distributions.
+lead to weak detectors.
 % and gate learning.
 The MoE’s sparsely gated experts act as 
 implicit community detectors, allowing the model 
@@ -791,22 +794,15 @@ evidence of this effect.
 %------------------------------------------------
 \subsection{\textbf{Scalability and computational trade‑offs}}
 
-Multimodal learning is computationally expensive.
+Multimodal learning can be computationally expensive.
 While the CA model removed feature‑engineering overhead, 
 its computational costs grow quickly with additional modalities.
 In contrast, the MoE approach keeps the core attention footprint 
 small and delegates specialisation to lightweight MLP experts.
-This efficiency is crucial for real‑time or on‑device deployment 
-scenarios, and perhaps integrating
-into a broader clustering approach.
-
-% \subsection{\textbf{Summary}}
-% Our findings indicate that multimodal 
-% behaviour-centric signals effectively 
-% counteract feature manipulation strategies. 
-% The sparsely gated MoE is a lightweight solution 
-% showing the ability to adapt to evolving bot 
-% sub-communities on~X (e.g.,\ those of LLM-powered bots).
+This efficiency is crucial for practical applications.
+% real‑time or on‑device deployment 
+% scenarios, and perhaps integrating
+% into a broader clustering approach.
 
 
 \begin{table}[ht]
@@ -841,7 +837,9 @@ into a broader clustering approach.
 %------------------------------------------------ 
 \section{Conclusion} \label{sec:conclusion}
 
-This study set out to detect social bots on~X in a real-time, \emph{blind} prediction setting, where each account is observed exactly once at inference time and no graph information is available. 
+This study set out to detect social bots on~X in a \emph{blind} prediction setting, 
+where each account is observed exactly once at inference time 
+and no graph information is available. 
 We began with classical Random Forest baselines that relied on hand-engineered, largely static features. 
 While these models occasionally achieved impressive accuracy, their brittleness against feature manipulation became 
 clear when bots copied surface cues from genuine users, such as tweets, and when
@@ -863,7 +861,7 @@ precision and the highest cross-lingual recall, despite
 being the smallest of the neural models we evaluated.
 
 Taken together, these findings suggest two design strategies 
-for real‑time bot detection: (i)~Use dynamic, longitudinal signals. 
+for blind bot detection: (i)~Use dynamic, longitudinal signals. 
 (ii)~Allocate model capacity adaptively\textemdash{}specialised experts for heterogeneous user sub-populations.
 
 Overall, divide-and-conquer multimodal detectors that embrace behavioural dynamics 
