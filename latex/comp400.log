@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.9.18)  28 APR 2025 17:45
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.9.18)  28 APR 2025 17:50
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -521,13 +521,13 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 
 ]
 
-LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 203.
+LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 204.
 (/usr/local/texlive/2024/texmf-dist/tex/latex/psnfss/ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 )
 
 [2]
-Underfull \hbox (badness 10000) in paragraph at lines 288--289
+Underfull \hbox (badness 10000) in paragraph at lines 289--290
 []\OT1/ptm/m/n/10 Hashtags were par-tially pre-served (\OT1/pcr/m/n/10 #arena $\OMS/cmsy/m/n/10 !$
  []
 
@@ -538,33 +538,33 @@ Underfull \hbox (badness 10000) in paragraph at lines 288--289
 [3]
 
 
-Underfull \hbox (badness 2726) in paragraph at lines 488--489
+Underfull \hbox (badness 2726) in paragraph at lines 489--490
 []\OT1/ptm/m/n/10 DNA: Content-DNA em-bed-ding from Mo-bileNetV2
  []
 
 
-Underfull \hbox (badness 1460) in paragraph at lines 498--504
+Underfull \hbox (badness 1460) in paragraph at lines 499--505
 \OT1/ptm/m/n/10 we in-cor-po-rated time-DNA em-bed-dings as a third sub-
  []
 
 
 
 [4]
-Underfull \hbox (badness 6204) in paragraph at lines 529--531
+Underfull \hbox (badness 6204) in paragraph at lines 530--532
 []\OT1/ptm/m/n/10 To per-form cross-modal at-ten-tion, we em-ploy two
  []
 
 
 
 
-Underfull \hbox (badness 1558) in paragraph at lines 632--633
+Underfull \hbox (badness 1558) in paragraph at lines 633--634
  \OT1/ptm/m/it/10 b) Ex-pert Ag-gre-ga-tion: [][] \OT1/ptm/m/n/10 The fi-nal rep-re-sen-ta-tion for
  []
 
 
 
 [5]
-Underfull \hbox (badness 2875) in paragraph at lines 685--686
+Underfull \hbox (badness 2875) in paragraph at lines 686--687
 []\OT1/ptm/m/n/10 The re-sult-ing out-puts in-ter-act via multi-head self-
  []
 
@@ -576,7 +576,7 @@ pdfTeX warning: pdflatex (file ../figures/ca_model.pdf): PDF inclusion: found PD
 <../figures/ca_model.pdf, id=225, 529.98pt x 115.3911pt>
 File: ../figures/ca_model.pdf Graphic file (type pdf)
 <use ../figures/ca_model.pdf>
-Package pdftex.def Info: ../figures/ca_model.pdf  used on input line 716.
+Package pdftex.def Info: ../figures/ca_model.pdf  used on input line 717.
 (pdftex.def)             Requested size: 226.79846pt x 49.3795pt.
 
 
@@ -584,12 +584,12 @@ pdfTeX warning: pdflatex (file ../figures/moe_model.pdf): PDF inclusion: found P
 <../figures/moe_model.pdf, id=226, 543.95218pt x 115.3911pt>
 File: ../figures/moe_model.pdf Graphic file (type pdf)
 <use ../figures/moe_model.pdf>
-Package pdftex.def Info: ../figures/moe_model.pdf  used on input line 723.
+Package pdftex.def Info: ../figures/moe_model.pdf  used on input line 724.
 (pdftex.def)             Requested size: 226.79846pt x 48.11177pt.
 
 
 [6 <../figures/ca_model.pdf> <../figures/moe_model.pdf>]
-Underfull \hbox (badness 1946) in paragraph at lines 848--862
+Underfull \hbox (badness 1946) in paragraph at lines 849--863
 \OT1/ptm/m/n/10 ing reg-u-lar-i-ties, and entity[]mixing|that are te-dious for
  []
 
@@ -660,7 +660,7 @@ Here is how much of TeX's memory you used:
  1141 hyphenation exceptions out of 8191
  94i,10n,93p,566b,552s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on comp400.pdf (8 pages, 280164 bytes).
+Output written on comp400.pdf (8 pages, 280170 bytes).
 PDF statistics:
  369 PDF objects out of 1000 (max. 8388607)
  321 compressed objects within 4 object streams

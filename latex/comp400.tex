@@ -151,8 +151,9 @@ to mimic the real-time flow of social media feeds, gradually
 introducing new posts to participants. 
 Bot developers generated content incrementally across 
 these sub-sessions, with the requirement to post between 10 and 100
-posts per bot by session completion. Detector developers 
-subsequently analyzed the fully compiled datasets post-session to identify bots, providing both binary verdicts and confidence scores for each account.
+posts per bot by session completion. Detector deployments 
+subsequently analyzed the fully compiled datasets post-session 
+to identify bots, providing classification along with the bot-confidence score for each account.
 
 \subsection{Technical Setup}
 Participant submissions (bot and detector code) were managed via public GitHub repositories cloned into Docker images deployed on EC2 instances, ensuring standardized computing resources and fair evaluation conditions. Submissions were required to execute fully within a one-hour timeframe, after which automated shutdown procedures terminated any ongoing processes.
