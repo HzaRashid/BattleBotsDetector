@@ -532,8 +532,8 @@ computing scaled dot-product attention \citep{vaswani2017attention}
 \begin{align}
     \text{Attention}(Q, K, V) &= \text{softmax}(\frac{QK^{T}}{\sqrt{d_k}})V
 \end{align}
-in one direction where the description modality is the query (Q) and fused-DNA 
-provides the key (K) and value (V), and another direction in which the modalities swap 
+in one layer where the description modality is the query (Q) and fused-DNA 
+provides the key (K) and value (V), and another layer in which the modalities swap 
 roles. Here, $d_k$ denotes the dimensionality of the query and key. 
 A mean pooling is then applied to attention outputs to form 
 a final fused representation.
