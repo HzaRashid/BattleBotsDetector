@@ -739,16 +739,24 @@ lifecycle: (i) the tension between bots’    \textbf{manipulated static feature
 %------------------------------------------------
 \subsection{Key empirical trends}
 
-The baseline Random Forests (RF) established in Sessions~11--14 offer an instructive point of comparison:
-although overall accuracies exceeded $95\%$ across the four sessions, bot \emph{recall} was volatile, ranging from $0\%$ (Session~11) to $90.5\%$ (Session~13).
-This disparity highlights a pitfall of static, heavily engineered features in highly imbalanced settings, with 
-high accuracy coexisting with near‑zero sensitivity to the minority class.
+The baseline Random Forests (RF) established in Sessions~11--14 
+offer an instructive point of comparison:
+they achieved $\geq 95\%$ overall accuracy in every session, 
+yet bot-recall vacillated from 0.00 (Session 11) to 0.905 (Session 13), 
+before sliding back to 0.690 (Session 14). 
+With a human-to-bot ratio of roughly 14 : 1, these swings illustrate 
+a classic imbalance pitfall: accuracy is dominated by the majority class, 
+while static, hand-engineered features fail to generalise across sessions whose 
+topical mix and posting rhythms drift.
+% although overall accuracies exceeded $95\%$ across the four sessions, bot \emph{recall} was volatile, ranging from $0\%$ (Session~11) to $90.5\%$ (Session~13).
+% This disparity highlights a pitfall of static, heavily engineered features in highly imbalanced settings, with 
+% high accuracy coexisting with near‑zero sensitivity to the minority class.
 
 Transitioning to the \textit{Cross‑Attention} (CA) model in Sessions~16--19 reverses this failure mode:
 recall stabilises between $52\%$ and $72\%$, but precision remains modest ($14$--$62\%$), despite
 the addition of noisy features (emoji-DNA).
 The shift underscores the benefit of
-multmodal representation learning, 
+multimodal representation learning, 
 but also reveals the difficulty 
 of learning rich cross‑modal interactions with evolving bots 
 and imbalanced labels.
