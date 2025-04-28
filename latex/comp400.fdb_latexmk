@@ -1,16 +1,16 @@
 # Fdb version 4
-["bibtex comp400"] 1745872442.2034 "comp400.aux" "comp400.bbl" "comp400" 1745877737.76247 0
+["bibtex comp400"] 1745872442.2034 "comp400.aux" "comp400.bbl" "comp400" 1745878028.59952 0
   "./references.bib" 1745707872.13445 5764 bfaf4fd3f3369276732b4950cbfb168b ""
   "/usr/local/texlive/2024/texmf-dist/bibtex/bst/natbib/plainnat.bst" 1233624470 26816 ffe5423d2019860bad9f54bc402fac15 ""
-  "comp400.aux" 1745877737.49905 8700 e2753239766f2df8f5b1eca014e52ffe "pdflatex"
+  "comp400.aux" 1745878028.3334 8700 e2753239766f2df8f5b1eca014e52ffe "pdflatex"
   (generated)
   "comp400.bbl"
   "comp400.blg"
   (rewritten before read)
-["pdflatex"] 1745877736.77473 "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" "comp400.pdf" "comp400" 1745877737.76261 0
+["pdflatex"] 1745878027.54074 "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" "comp400.pdf" "comp400" 1745878028.59965 0
   "../figures/ca_model.pdf" 1745612224.57245 31973 ab0d7496f2240a0bcafbc94584a1e77f ""
   "../figures/moe_model.pdf" 1745695903.31897 35507 161950f4f5ae94a43f5d6879a2e28dff ""
-  "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" 1745877736.52931 42636 0decfe6fdccf54059d8be5b1975edab5 ""
+  "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" 1745878027.27855 42633 5a007665832f57248ed558068b9e81fe ""
   "/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/base/8r.enc" 1165713224 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/local/texlive/2024/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/tfm/adobe/courier/pcrr7t.tfm" 1136768653 960 379cc0019370a9e0208a0a3f949f847a ""
@@ -149,10 +149,10 @@
   "/usr/local/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1726687478 5498206 6c0f03cb370063b7ddbd563e5f9ce23a ""
   "/usr/local/texlive/2024/texmf-var/web2c/pdftex/pdflatex.fmt" 1726687597 3326097 67d158ddf1124cb5acae0cccb2750d58 ""
   "/usr/local/texlive/2024/texmf.cnf" 1726687468.2814 577 e590dabc9e28c5b61546e15f63eebcdf ""
-  "comp400.aux" 1745877737.49905 8700 e2753239766f2df8f5b1eca014e52ffe "pdflatex"
+  "comp400.aux" 1745878028.3334 8700 e2753239766f2df8f5b1eca014e52ffe "pdflatex"
   "comp400.bbl" 1745872442.33179 5949 3c1f6f88e45d1a4a4128f348bfe5dfa4 "bibtex comp400"
-  "comp400.out" 1745877737.50017 4925 1ae4adfa1206cde5af7a76732eabd635 "pdflatex"
-  "comp400.tex" 1745877736.52931 42636 0decfe6fdccf54059d8be5b1975edab5 ""
+  "comp400.out" 1745878028.33442 4925 1ae4adfa1206cde5af7a76732eabd635 "pdflatex"
+  "comp400.tex" 1745878027.27855 42633 5a007665832f57248ed558068b9e81fe ""
   (generated)
   "comp400.aux"
   "comp400.log"
