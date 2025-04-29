@@ -168,7 +168,7 @@ limited the available strategies, though we explored methods capable of incorpor
 We aimed to model user behaviour
 from a variety of perspectives, since nontrival bots manipulate features in at least one aspect 
 (e.g., tweet content, posting times, or interactions such as retweets, likes, and follower and following relationships).
-The results are shown in table~\ref{tab:hamzadetector1_results}.
+The results are shown in Table~\ref{tab:hamzadetector1_results}.
 
 \subsection{\textbf{Baseline - Random Forest}}
 For our baseline study, we employ a random forest 
@@ -840,6 +840,50 @@ This efficiency is crucial for practical applications.
     Precision, recall, and F1 are computed for the bot class.}
     \label{tab:hamzadetector1_results}
     \end{table}
+
+
+
+    \section{Limitations \& Ethical Considerations}
+    \label{sec:limitations}
+    
+    The models and experimental design presented in this study
+    must be interpreted in light of several methodological
+    limitations and ethical trade-offs.
+    
+    \subsection{Dataset Bias and Temporal Scope}
+    Session datasets tend to span \textbf{only two consecutive
+    days},
+    and initial tweet harvests are driven by
+    \emph{pre-defined topical keywords}.
+    Consequently, the data are \emph{not} a random or
+    longitudinal sample of the X platform.
+    Three practical implications follow:
+    
+    \begin{enumerate}
+      \item \textbf{Temporal representativeness.}
+            Temporal features (e.g.\ content- and especially time-DNA) 
+            may over-fit to short-window artefacts
+            such as coordinated campaigns or day-specific
+            events.  
+            Longer-horizon behaviours
+            (weekly cycles, account ageing) are invisible to the detector.
+    
+      \item \textbf{Topic coverage.}
+            Keyword seeding biases the corpus towards
+            the chosen themes of each session.
+            Bots—or humans—operating outside those
+            topical clusters are under-represented,
+            limiting external validity of the learned patterns.
+    
+      \item \textbf{Active-user bias.}
+            We retain only accounts that issue
+            \emph{at least ten posts} within the two-day window
+            This skews the sample toward highly active users,
+            excluding low-activity bots that ``lie low’’ or
+            genuine users who post infrequently.  
+            As a result, recall estimates may be optimistic for
+            high-volume spam but pessimistic for stealthy bots.
+    \end{enumerate}
 
 
 %------------------------------------------------

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.9.18)  28 APR 2025 20:15
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.9.18)  28 APR 2025 20:46
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -573,7 +573,7 @@ Underfull \hbox (badness 2875) in paragraph at lines 686--687
 
 
 pdfTeX warning: pdflatex (file ../figures/ca_model.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
-<../figures/ca_model.pdf, id=225, 529.98pt x 115.3911pt>
+<../figures/ca_model.pdf, id=233, 529.98pt x 115.3911pt>
 File: ../figures/ca_model.pdf Graphic file (type pdf)
 <use ../figures/ca_model.pdf>
 Package pdftex.def Info: ../figures/ca_model.pdf  used on input line 717.
@@ -581,7 +581,7 @@ Package pdftex.def Info: ../figures/ca_model.pdf  used on input line 717.
 
 
 pdfTeX warning: pdflatex (file ../figures/moe_model.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
-<../figures/moe_model.pdf, id=226, 543.95218pt x 115.3911pt>
+<../figures/moe_model.pdf, id=234, 543.95218pt x 115.3911pt>
 File: ../figures/moe_model.pdf Graphic file (type pdf)
 <use ../figures/moe_model.pdf>
 Package pdftex.def Info: ../figures/moe_model.pdf  used on input line 724.
@@ -591,16 +591,23 @@ Package pdftex.def Info: ../figures/moe_model.pdf  used on input line 724.
 [6 <../figures/ca_model.pdf> <../figures/moe_model.pdf>]
 
 
-Underfull \hbox (badness 1946) in paragraph at lines 857--871
+Underfull \hbox (badness 2213) in paragraph at lines 871--877
+\OT1/ptm/m/n/10 under-represented, lim-it-ing ex-ter-nal va-lid-ity of the
+ []
+
+
+Underfull \hbox (badness 1946) in paragraph at lines 901--915
 \OT1/ptm/m/n/10 ing reg-u-lar-i-ties, and entity[]mixing|that are te-dious for
  []
 
-(./comp400.bbl
 
-[7]
+
+[7] (./comp400.bbl
 Underfull \hbox (badness 2197) in paragraph at lines 25--29
 \OT1/ptm/m/n/10 with a class-based tf-idf pro-ce-dure.  \OT1/ptm/m/it/10 arXiv preprint
  []
+
+
 
 
 Underfull \hbox (badness 6893) in paragraph at lines 81--85
@@ -621,8 +628,6 @@ Underfull \hbox (badness 2556) in paragraph at lines 81--85
 Underfull \hbox (badness 2134) in paragraph at lines 81--85
 \OT1/ptm/m/n/10 need.  In \OT1/ptm/m/it/10 Ad-vances in Neu-ral In-for-ma-tion Pro-cess-
  []
-
-
 
 
 Underfull \hbox (badness 1365) in paragraph at lines 93--98
@@ -649,21 +654,21 @@ LaTeX2e <2024-06-01> patch level 2
 L3 programming layer <2024-08-30>
  ***********
 Package rerunfilecheck Info: File `comp400.out' has not changed.
-(rerunfilecheck)             Checksum: 1AE4ADFA1206CDE5AF7A76732EABD635;4925.
+(rerunfilecheck)             Checksum: 1AA3F77E544F057DC37512DA2DC9F8F1;5386.
  ) 
 Here is how much of TeX's memory you used:
- 15077 strings out of 473579
- 255692 string characters out of 5728234
- 694911 words of memory out of 5000000
- 37652 multiletter control sequences out of 15000+600000
+ 15085 strings out of 473579
+ 255777 string characters out of 5728234
+ 694974 words of memory out of 5000000
+ 37655 multiletter control sequences out of 15000+600000
  599596 words of font info for 118 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 94i,10n,93p,566b,550s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 94i,10n,93p,566b,525s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on comp400.pdf (8 pages, 280293 bytes).
+Output written on comp400.pdf (8 pages, 282030 bytes).
 PDF statistics:
- 369 PDF objects out of 1000 (max. 8388607)
- 321 compressed objects within 4 object streams
- 83 named destinations out of 1000 (max. 500000)
- 207 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 381 PDF objects out of 1000 (max. 8388607)
+ 333 compressed objects within 4 object streams
+ 88 named destinations out of 1000 (max. 500000)
+ 223 words of extra memory for PDF output out of 10000 (max. 10000000)
 
