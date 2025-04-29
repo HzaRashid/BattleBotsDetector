@@ -684,7 +684,7 @@ The architecture (broadly illustrated in Figure~\ref{fig:moe-diagram}) can be su
     \item Each modality is given a 2-expert MoE, 
     and only the top expert is chosen (i.e., $k=1$ in (\ref{eq:moe-gating})).
     \item The resulting outputs interact via multi-head self-attention.
-    \item The output tokens are concatenated with the consistency vector
+    \item The attention output tokens are concatenated with the consistency vector
     and passed through a one-layer classification head as outlined in (\ref{eq:moe-final-concat}).
 \end{itemize}
 
