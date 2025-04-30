@@ -1,4 +1,4 @@
-\begin{thebibliography}{15}
+\begin{thebibliography}{16}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -20,6 +20,12 @@ David~M. Blei, Andrew~Y. Ng, and Michael~I. Jordan.
 Clayton~A. Davis, Onur Varol, Emilio Ferrara, Alessandro Flammini, and Filippo Menczer.
 \newblock Botornot: A system to evaluate social bots.
 \newblock In \emph{Proceedings of the 25th International Conference Companion on World Wide Web}, pages 273--274. ACM, 2016.
+
+\bibitem[Feng et~al.(2022)Feng, Tan, Wan, Wang, Chen, Zhang, Zheng, Zhang, Lei, Yang, Feng, Zhang, Wang, Liu, Bai, Wang, Cai, Wang, Zheng, Ma, Li, and Luo]{feng2022twibot22}
+Shangbin Feng, Zhaoxuan Tan, Herun Wan, Ningnan Wang, Zilong Chen, Binchi Zhang, Qinghua Zheng, Wenqian Zhang, Zhenyu Lei, Shujie Yang, Xinshun Feng, Qingyue Zhang, Hongrui Wang, Yuhan Liu, Yuyang Bai, Heng Wang, Zijian Cai, Yanbo Wang, Lijing Zheng, Zihan Ma, Jundong Li, and Minnan Luo.
+\newblock Twibot-22: Towards graph-based twitter bot detection.
+\newblock \emph{arXiv preprint arXiv:2206.04564}, 2022.
+\newblock URL \url{https://arxiv.org/abs/2206.04564}.
 
 \bibitem[Grootendorst(2022)]{grootendorst2022bertopic}
 Maarten Grootendorst.

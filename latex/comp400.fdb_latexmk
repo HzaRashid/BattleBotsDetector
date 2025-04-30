@@ -1,16 +1,16 @@
 # Fdb version 4
-["bibtex comp400"] 1745890861.42322 "comp400.aux" "comp400.bbl" "comp400" 1745890862.53626 0
-  "./references.bib" 1745707872.13445 5764 bfaf4fd3f3369276732b4950cbfb168b ""
+["bibtex comp400"] 1745977814.79087 "comp400.aux" "comp400.bbl" "comp400" 1745977815.8069 0
+  "./references.bib" 1745942768.70036 6359 2b14d28d31f71eaf71b75dd8120f1469 ""
   "/usr/local/texlive/2024/texmf-dist/bibtex/bst/natbib/plainnat.bst" 1233624470 26816 ffe5423d2019860bad9f54bc402fac15 ""
-  "comp400.aux" 1745890862.28393 9229 aa2b093a099817ac7e2c073f06a4dcfb "pdflatex"
+  "comp400.aux" 1745977815.55874 9486 15a7aea440bb132cabc47e1aba1945ed "pdflatex"
   (generated)
   "comp400.bbl"
   "comp400.blg"
   (rewritten before read)
-["pdflatex"] 1745890861.55048 "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" "comp400.pdf" "comp400" 1745890862.53642 0
+["pdflatex"] 1745977814.93191 "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" "comp400.pdf" "comp400" 1745977815.80702 0
   "../figures/ca_model.pdf" 1745612224.57245 31973 ab0d7496f2240a0bcafbc94584a1e77f ""
   "../figures/moe_model.pdf" 1745890281.89061 35547 2922ae5a22665152084e88dfe8b8057c ""
-  "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" 1745890860.22074 45336 dfa761ef2c62bc462d3df66119414b92 ""
+  "/Users/hamzarashid/Desktop/comp400/latex/comp400.tex" 1745977813.59609 49113 2e9d79e59225d8d7276aefb8ab8b41b7 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/base/8r.enc" 1165713224 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/local/texlive/2024/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/tfm/adobe/courier/pcrr7t.tfm" 1136768653 960 379cc0019370a9e0208a0a3f949f847a ""
@@ -149,10 +149,10 @@
   "/usr/local/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1726687478 5498206 6c0f03cb370063b7ddbd563e5f9ce23a ""
   "/usr/local/texlive/2024/texmf-var/web2c/pdftex/pdflatex.fmt" 1726687597 3326097 67d158ddf1124cb5acae0cccb2750d58 ""
   "/usr/local/texlive/2024/texmf.cnf" 1726687468.2814 577 e590dabc9e28c5b61546e15f63eebcdf ""
-  "comp400.aux" 1745890862.28393 9229 aa2b093a099817ac7e2c073f06a4dcfb "pdflatex"
-  "comp400.bbl" 1745890861.54808 5949 3c1f6f88e45d1a4a4128f348bfe5dfa4 "bibtex comp400"
-  "comp400.out" 1745890862.28489 5671 65d41ccec7dff720f6450d33de9efabb "pdflatex"
-  "comp400.tex" 1745890860.22074 45336 dfa761ef2c62bc462d3df66119414b92 ""
+  "comp400.aux" 1745977815.55874 9486 15a7aea440bb132cabc47e1aba1945ed "pdflatex"
+  "comp400.bbl" 1745977814.92939 6587 7903446a45bd6fc934ea39325e22914d "bibtex comp400"
+  "comp400.out" 1745977815.55963 5654 75f64e499481e88ae1b6bdac75154789 "pdflatex"
+  "comp400.tex" 1745977813.59609 49113 2e9d79e59225d8d7276aefb8ab8b41b7 ""
   (generated)
   "comp400.aux"
   "comp400.log"
