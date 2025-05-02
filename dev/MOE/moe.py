@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+import math
 from torch.distributions.normal import Normal
 
 # Sparsely-Gated Mixture-of-Experts Layers.
@@ -143,14 +144,15 @@ class MixtureOfExperts(nn.Module):
         self.top_k = top_k
         self.noisy_gating = noisy_gating
         
-        gate_grad = True
-        # Parameters for gating: use Xavier uniform initialization instead of zeros.
-        self.w_gate = nn.Parameter(torch.empty(input_dim, num_experts), requires_grad=gate_grad)
+        req_grad = True
+        # Parameters for gating:
+        self.w_gate = nn.Parameter(torch.empty(input_dim, num_experts), requires_grad=req_grad)
         # nn.init.xavier_uniform_(self.w_gate)
         nn.init.constant_(self.w_gate, 0.1)
-        self.w_noise = nn.Parameter(torch.empty(input_dim, num_experts), requires_grad=gate_grad)
+        self.w_noise = nn.Parameter(torch.empty(input_dim, num_experts), requires_grad=req_grad)
         # nn.init.xavier_uniform_(self.w_noise)
         nn.init.constant_(self.w_noise, 0.1)
+
         
         self.softplus = nn.Softplus()
         self.softmax = nn.Softmax(dim=1)

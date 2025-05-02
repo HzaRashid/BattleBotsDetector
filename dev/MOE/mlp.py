@@ -6,7 +6,6 @@ import numpy as np
 import torch.optim as optim
 # from hybridv2 import GMUAttention
 from hybridv3 import MOEAttention
-from load_tensors import load_data
 from train_model import train_model, evaluate_model
 from sklearn.model_selection import train_test_split
 from sentence_transformers import SentenceTransformer, models
@@ -48,6 +47,7 @@ WEIGHT_DECAY = 1e-6
 # Main Pipeline
 # -------------------------
 if __name__ == "__main__":
+    from load_tensors import build_datasets
     set_seed(42)
     cur_dir = os.path.dirname(__file__)
     data_dir = os.path.join(cur_dir, "../data")
@@ -57,30 +57,16 @@ if __name__ == "__main__":
     st_model = SentenceTransformer(modules=[transformer_model, pooling_model])
     # outputs 768-dim embeddings
     # --------------------------------------------
-    dtypes = [torch.float32, torch.float32, torch.float32, torch.float32, torch.long]
     
-    # Load data
-    (train, test) = load_data(data_dir, 
-                              session_numbers=[], 
-                              st_model=st_model, 
-                              xnums=[1]
-                              )
-    train_tensors = [torch.tensor(train[i], dtype=dtypes[i]) for i in range(len(train))]
-    test_tensors = [torch.tensor(test[i], dtype=dtypes[i]) for i in range(len(test))]
-    
-    # stratified train/validation split for final training.
-    indices = np.arange(len(train_tensors[0]))
-    train_idx, val_idx = train_test_split(
-        indices, test_size=0.1, random_state=42, stratify=train_tensors[-1].numpy()
+    # Build datasets with train/val/test splits
+    train_ds, val_ds, test_ds = build_datasets(
+        data_dir, session_numbers=[], xnums=[1], st_model=st_model
     )
 
-    train_dataset = Subset(TensorDataset(*train_tensors), train_idx)
-    val_dataset = Subset(TensorDataset(*train_tensors), val_idx)
-    test_dataset = TensorDataset(*test_tensors)
-    
-    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
+    # Create DataLoaders
+    train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True)
+    val_loader   = DataLoader(val_ds,   batch_size=BATCH_SIZE, shuffle=False)
+    test_loader  = DataLoader(test_ds,  batch_size=BATCH_SIZE, shuffle=False)
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Training on device:", device) 
@@ -104,7 +90,7 @@ if __name__ == "__main__":
                                     optuna=None, torch=torch, moe=MOE)
     
     # ------------------- Test Final Model ----------------------
-    _, test_acc, _, _ = evaluate_model(final_model, test_loader, device, 
+    _, test_acc, _, _, _ = evaluate_model(final_model, test_loader, device, 
                                  final_criterion, torch, moe=MOE)
     print("Test Accuracy: {:.4f}".format(test_acc))
     

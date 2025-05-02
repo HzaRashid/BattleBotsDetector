@@ -7,144 +7,160 @@ from sklearn.model_selection import train_test_split
 from time_utils import generate_time_dna, encode_time_dna_batch_cnn
 from content_utils import generate_content_dna, encode_content_dna_batch_cnn
 from tweet_embs import sample_evenly_tweets, compute_mean_embeddings
+import torch
+from pathlib import Path
+from torch.utils.data import Dataset, DataLoader
+
+BATCH_SIZE = 64
+
+class BotSessionDataset(Dataset):
+    def __init__(self, user_info_list, user_posts_dict, st_model, sample_n=5):
+        # 1) filter out users without posts
+        valid_users = [u for u in user_info_list if u['user_id'] in user_posts_dict]
+        desc_texts, tweet_lists, content_dnas, time_dnas, labels = [], [], [], [], []
+        for u in valid_users:
+            uid = u['user_id']
+            desc_texts.append(u.get('description', ''))
+            # sort & sample
+            posts = sorted(
+                user_posts_dict[uid],
+                key=lambda x: datetime.fromisoformat(x['created_at'].replace('Z', '+00:00'))
+            )
+            texts = [p['text'] for p in posts]
+            tweet_lists.append(sample_evenly_tweets(texts, sample_n))
+            content_dnas.append(generate_content_dna(posts))
+            time_dnas.append(generate_time_dna(posts))
+            labels.append(int(u.get('is_bot', 0)))
+        # 3) precompute embeddings once
+        self.desc_embs    = st_model.encode(desc_texts, batch_size=BATCH_SIZE)
+        self.tweet_embs   = compute_mean_embeddings(tweet_lists, st_model, batch_size=BATCH_SIZE)
+        self.content_embs = encode_content_dna_batch_cnn(content_dnas)
+        self.time_embs    = encode_time_dna_batch_cnn(time_dnas)
+        self.labels       = labels
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, idx):
+        return (
+            torch.tensor(self.desc_embs[idx],    dtype=torch.float32),
+            torch.tensor(self.tweet_embs[idx],   dtype=torch.float32),
+            torch.tensor(self.content_embs[idx], dtype=torch.float32),
+            torch.tensor(self.time_embs[idx],    dtype=torch.float32),
+            torch.tensor(self.labels[idx],       dtype=torch.long),
+        )
 
 
-BATCH_SIZE=64
+def load_user_and_post_json(data_dir, session_numbers=None, xnums=None):
+    if session_numbers is None:
+        session_numbers = []
+    if xnums is None:
+        xnums = []
 
-def load_data(data_dir, session_numbers=[], st_model=None, xnums=[]):
-    """
-    Loads user and post data from JSON files in a memory-efficient way using ijson.kvitems,
-    extracts features with batch processing for text embeddings, and computes a mean pooled
-    embedding of each user's tweets using evenly distributed temporal stratification.
-    
-    Returns modalities for train and test sets in the following order:
-        description embeddings, mean tweet embeddings, DNA embeddings, time embeddings, labels.
-    """
     user_info_list = []
     user_posts_dict = {}
-    datasets = []
+    filenames = [f"session_{n}_results.json" for n in session_numbers] + \
+                [f"twibot22/processed/tweet_{n}_processed.json" for n in xnums]
 
-    if session_numbers:
-        datasets += [f"session_{num}_results.json" for num in session_numbers]
-    if xnums:
-        datasets += [f"twibot22/processed/tweet_{num}_processed.json" for num in xnums]
-
-    # Stream the JSON file once to extract both users and posts.
-    for fname in datasets:
-        json_file = os.path.join(data_dir, fname)
-        with open(json_file, "r") as f:
-            # Iterate over top-level keys ("users" and "posts")
+    for fname in filenames:
+        path = os.path.join(data_dir, fname)
+        with open(path, "r") as f:
             for key, items in ijson.kvitems(f, ""):
                 if key == "users":
-                    for user in items:
-                        user_info_list.append(user)
+                    user_info_list.extend(items)
                 elif key == "posts":
                     for post in items:
                         uid = post.get("user_id") or post.get("author_id")
-                        if uid is not None:
-                            user_posts_dict.setdefault(uid, []).append(post)
+                        if uid is None:
+                            continue
+                        user_posts_dict.setdefault(uid, []).append(post)
 
-    # Stratified train/test split using user metadata.
-    user_info_df = pd.DataFrame(user_info_list)[['user_id', 'is_bot']].drop_duplicates()
-    train_users, test_users = train_test_split(
-        user_info_df, test_size=0.2, random_state=42, stratify=user_info_df['is_bot']
+    # Deduplicate user entries: ensure each user_id appears only once
+    unique = {}
+    for u in user_info_list:
+        uid = u.get('user_id') or u.get('author_id')
+        unique.setdefault(uid, u)
+    user_info_list = list(unique.values())
+
+    # Deduplicate posts for each user by post 'id' or 'post_id'
+    for uid, posts in user_posts_dict.items():
+        seen = {}
+        for p in posts:
+            pid = p.get('id') or p.get('post_id')
+            if pid is None:
+                # if no id field, fallback to full object hash
+                pid = hash(frozenset(p.items()))
+            if pid not in seen:
+                seen[pid] = p
+        user_posts_dict[uid] = list(seen.values())
+
+    return user_info_list, user_posts_dict
+
+
+def build_datasets(data_dir, session_numbers=None, xnums=None, st_model=None,
+                   train_ratio=0.72, val_ratio=0.08, test_ratio=0.20):
+    """
+    Splits the data into train/validation/test according to the provided ratios.
+    """
+    # Load and dedupe data
+    user_info_list, user_posts_dict = load_user_and_post_json(data_dir, session_numbers, xnums)
+
+    # Create DataFrame for stratification
+    df = pd.DataFrame(user_info_list)[['user_id', 'is_bot']].drop_duplicates()
+
+    # First split: train vs. temp (val+test)
+    temp_ratio = val_ratio + test_ratio
+    train_df, temp_df = train_test_split(
+        df,
+        train_size=train_ratio,
+        stratify=df['is_bot'],
+        random_state=42
     )
-    train_user_ids = set(train_users['user_id'])
-    test_user_ids = set(test_users['user_id'])
 
-    # Prepare lists for different modalities.
-    train_desc_texts, test_desc_texts = [], []
-    train_dna_list, test_dna_list = [], []
-    train_time_list, test_time_list = [], []
-    train_labels, test_labels = [], []
-    # Each entry in these lists will be a list of the sampled tweets.
-    train_tweets, test_tweets = [], []
+    # Second split: validation vs. test
+    # test_size relative to temp set = test_ratio / (val_ratio + test_ratio)
+    val_df, test_df = train_test_split(
+        temp_df,
+        test_size=test_ratio / temp_ratio,
+        stratify=temp_df['is_bot'],
+        random_state=42
+    )
 
-    for user in user_info_list:
-        uid = user.get("user_id")
-        # Skip users with no associated posts.
-        if uid is None or uid not in user_posts_dict:
-            continue
-        description = user.get("description", "")
-        # Sample tweets evenly from the user's tweet texts.
-        time_sorted_posts = sorted(user_posts_dict[uid], key=lambda x: datetime.fromisoformat(x["created_at"].replace("Z", "+00:00")))
-        user_texts = [tweetitem['text'] for tweetitem in time_sorted_posts]
-                      
-        sampled_tweets = sample_evenly_tweets(user_texts, n=5)
-        # Generate DNA sequences for content and time modalities.
-        content_dna = generate_content_dna(user_posts_dict[uid])
-        time_dna = generate_time_dna(user_posts_dict[uid])
-        label = int(user.get("is_bot", 0))
+    # Extract user_id sets
+    train_uids = set(train_df['user_id'])
+    val_uids   = set(val_df['user_id'])
+    test_uids  = set(test_df['user_id'])
 
-        if uid in train_user_ids:
-            train_desc_texts.append(description)
-            train_dna_list.append(content_dna)
-            train_time_list.append(time_dna)
-            train_tweets.append(sampled_tweets)
-            train_labels.append(label)
-        elif uid in test_user_ids:
-            test_desc_texts.append(description)
-            test_dna_list.append(content_dna)
-            test_time_list.append(time_dna)
-            test_tweets.append(sampled_tweets)
-            test_labels.append(label)
+    # Partition user lists
+    train_users = [u for u in user_info_list if u['user_id'] in train_uids]
+    val_users   = [u for u in user_info_list if u['user_id'] in val_uids]
+    test_users  = [u for u in user_info_list if u['user_id'] in test_uids]
 
-    # Batch encode user descriptions.
-    train_desc_embs = st_model.encode(train_desc_texts, batch_size=BATCH_SIZE)
-    test_desc_embs = st_model.encode(test_desc_texts, batch_size=BATCH_SIZE)
+    # Create datasets
+    train_ds = BotSessionDataset(train_users, {u: user_posts_dict[u] for u in train_uids}, st_model)
+    val_ds   = BotSessionDataset(val_users,   {u: user_posts_dict[u] for u in val_uids},   st_model)
+    test_ds  = BotSessionDataset(test_users,  {u: user_posts_dict[u] for u in test_uids},  st_model)
 
-    # Compute mean tweet embeddings for train set.
-    train_tweet_embs = compute_mean_embeddings(train_tweets, st_model, batch_size=BATCH_SIZE)
-    test_tweet_embs = compute_mean_embeddings(test_tweets, st_model, batch_size=BATCH_SIZE)
+    return train_ds, val_ds, test_ds
 
-    # Generate CNN embeddings for DNA sequences.
-    train_dna_embs = encode_content_dna_batch_cnn(train_dna_list)
-    train_time_embs = encode_time_dna_batch_cnn(train_time_list)
-    test_dna_embs = encode_content_dna_batch_cnn(test_dna_list)
-    test_time_embs = encode_time_dna_batch_cnn(test_time_list)
-
-    # Return data as separate modalities for train and test sets.
-    # Order: description, mean tweet, DNA, time, labels.
-    train = [np.array(x) for x in [train_desc_embs, 
-                                   train_tweet_embs,
-                                   train_dna_embs, 
-                                   train_time_embs, 
-                                   train_labels]]
-    test = [np.array(x) for x in [test_desc_embs, 
-                                  test_tweet_embs,
-                                  test_dna_embs, 
-                                  test_time_embs, 
-                                  test_labels]]
-    return (train, test)
 
 if __name__ == "__main__":
     from sentence_transformers import SentenceTransformer, models
-    cur_dir = os.path.dirname(__file__)
-    data_dir = os.path.join(cur_dir, "../data")
+    data_dir = Path(__file__).parent / "../data"
 
-    # Initialize the transformer and pooling models.
-    transformer_model = models.Transformer("Twitter/twhin-bert-base", model_args={'attn_implementation': 'eager'})
-    pooling_model = models.Pooling(transformer_model.get_word_embedding_dimension(),
-                                   pooling_mode_mean_tokens=True)
+    transformer_model = models.Transformer(
+        "Twitter/twhin-bert-base", model_args={'attn_implementation': 'eager'}
+    )
+    pooling_model = models.Pooling(
+        transformer_model.get_word_embedding_dimension(),
+        pooling_mode_mean_tokens=True
+    )
     st_model = SentenceTransformer(modules=[transformer_model, pooling_model])
 
-    # Load data using the updated function.
-    (train, test) = load_data(
-         data_dir=data_dir, session_numbers=[10], xnums=[], st_model=st_model
-     )
+    train_ds, val_ds, test_ds = build_datasets(
+        data_dir, session_numbers=[10], xnums=[], st_model=st_model
+    )
 
-    # Display the shapes of the extracted embeddings and labels.
-    print("Train description embeddings shape:", train[0].shape)
-    print("Train mean tweet embeddings shape:", train[1].shape)
-    print("Train DNA embeddings shape:", train[2].shape)
-    print("Train time embeddings shape:", train[3].shape)
-    print("Train labels shape:", train[4].shape)
-
-    print("Test description embeddings shape:", test[0].shape)
-    print("Test mean tweet embeddings shape:", test[1].shape)
-    print("Test DNA embeddings shape:", test[2].shape)
-    print("Test time embeddings shape:", test[3].shape)
-    print("Test labels shape:", test[4].shape)
-
-
-    print(train[1])
+    train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True)
+    val_loader   = DataLoader(val_ds,   batch_size=BATCH_SIZE, shuffle=False)
+    test_loader  = DataLoader(test_ds,  batch_size=BATCH_SIZE, shuffle=False)

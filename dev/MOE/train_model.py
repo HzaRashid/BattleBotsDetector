@@ -1,4 +1,4 @@
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, f1_score
 
 # -------------------------
 # Evaluation Function (updated for separate modalities)
@@ -12,6 +12,7 @@ def evaluate_model(model, data_loader, device, criterion, torch, moe=False):
        acc: float, accuracy over the dataset
        best_val_loss: float, the best (lowest) validation loss observed so far
        best_val_acc: float, the best (highest) validation accuracy observed so far
+       best_f1: float, the best (highest) validation f1 score so far
        
     Note:
        The best validation metrics are maintained as attributes of this function.
@@ -41,20 +42,24 @@ def evaluate_model(model, data_loader, device, criterion, torch, moe=False):
 
     avg_loss = total_loss / total_samples
     acc = accuracy_score(all_labels, all_preds)
-
+    f1 = f1_score(all_labels, all_preds)
     # Initialize best values as attributes if they don't exist
     if not hasattr(evaluate_model, "best_val_acc"):
         evaluate_model.best_val_acc = 0.0
     if not hasattr(evaluate_model, "best_val_loss"):
         evaluate_model.best_val_loss = float('inf')
+    if not hasattr(evaluate_model, "best_val_f1"):
+        evaluate_model.best_val_f1 = 0.0
 
     # Update best values if current metrics are improved
     if acc > evaluate_model.best_val_acc:
         evaluate_model.best_val_acc = acc
     if avg_loss < evaluate_model.best_val_loss:
         evaluate_model.best_val_loss = avg_loss
+    if f1 > evaluate_model.best_val_f1:
+         evaluate_model.best_val_f1 = f1
 
-    return avg_loss, acc, evaluate_model.best_val_loss, evaluate_model.best_val_acc
+    return avg_loss, acc, evaluate_model.best_val_loss, evaluate_model.best_val_acc, evaluate_model.best_val_f1
 
 
 # -------------------------
@@ -64,7 +69,7 @@ def train_model(model, train_loader, val_loader,
                 device, criterion, optimizer, scheduler,
                 num_epochs, verbose=False, trial=None, 
                 optuna=None, torch=None, moe=False, 
-                unfreeze_threshold=0.86):
+                unfreeze_threshold=0.50):
     # Flag to track if some moe parameters have been unfrozen
     unfrozen = False
 
@@ -90,12 +95,12 @@ def train_model(model, train_loader, val_loader,
         
         
         train_loss = total_train_loss / total_samples
-        val_loss, val_acc, best_loss, best_acc = evaluate_model(model, val_loader, device, criterion, torch=torch, moe=moe)
+        val_loss, val_acc, best_loss, best_acc, best_f1 = evaluate_model(model, val_loader, device, criterion, torch=torch, moe=moe)
         # Step the scheduler
         scheduler.step()
         
         # Check if we should unfreeze the router parameters.
-        # if moe and (not unfrozen) and (best_acc > unfreeze_threshold):
+        # if moe and (not unfrozen) and (best_f1 > unfreeze_threshold):
         #     optimizer.param_groups[0]['lr']=1e-5
         #     # model.dna_moe.w_gate.requires_grad = True
         #     # model.dna_moe.w_noise.requires_grad = True
@@ -119,8 +124,8 @@ def train_model(model, train_loader, val_loader,
         #             for p in expert.parameters():
         #                 p.requires_grad = False
 
-        #     unfrozen = True
-        #     print("Router params unfrozen!")
+            # unfrozen = True
+            # print("Router params unfrozen!")
         
         if trial:
             trial.report(best_loss, epoch)
@@ -132,5 +137,5 @@ def train_model(model, train_loader, val_loader,
                   f"- Val Loss: {val_loss:.4f} - Val Acc: {val_acc:.4f} "
                   f"- LR: {optimizer.param_groups[0]['lr']:.6f}")
             
-    final_val_loss, final_val_acc, best_loss, best_acc = evaluate_model(model, val_loader, device, criterion, torch=torch, moe=moe)
+    final_val_loss, final_val_acc, best_loss, best_acc, best_f1 = evaluate_model(model, val_loader, device, criterion, torch=torch, moe=moe)
     return best_acc, best_loss

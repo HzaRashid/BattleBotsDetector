@@ -104,12 +104,12 @@ class MOEAttention(nn.Module):
         )
         # MOE for fusing content and time embeddings.
         self.dna_moe = MixtureOfExperts(
-            input_dim=2*self.align_size,
+            input_dim=self.align_size,
             num_experts=2,
             expert_hidden_dim=expert_hidden_dim,
             expert_output_dim=self.expert_out_dim,
             top_k=top_k,
-            # tweet_desc=True
+            tweet_desc=True
         )
         
         # Fusion module to combine MOE outputs.
@@ -144,8 +144,8 @@ class MOEAttention(nn.Module):
         desc, tweet, content, time = self.align(desc, tweet, content, time)
         # text_out, aux_loss_text = self.desc_tweet_moe(torch.cat((desc, tweet), dim=1))
         text_out, aux_loss_text = self.desc_tweet_moe.forward_roberta(tweets_tensor=tweet, des_tensor=desc)
-        dna_out, aux_loss_dna = self.dna_moe(torch.cat((content, time), dim=1))
-        # dna_out, aux_loss_dna = self.dna_moe.forward_roberta(tweets_tensor=time, des_tensor=content)
+        # dna_out, aux_loss_dna = self.dna_moe(torch.cat((content, time), dim=1))
+        dna_out, aux_loss_dna = self.dna_moe.forward_roberta(tweets_tensor=time, des_tensor=content)
         aux_loss = aux_loss_text + aux_loss_dna
         
         # Stack the outputs along a new token dimension.
