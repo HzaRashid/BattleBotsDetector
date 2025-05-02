@@ -1,0 +1,66 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36" version="26.1.1">
+  <diagram id="model_diagram" name="PyTorch Model Diagram">
+    <mxGraphModel dx="1193" dy="611" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="20" value="" style="group" parent="1" vertex="1" connectable="0">
+          <mxGeometry x="30" y="392" width="730" height="157.5" as="geometry" />
+        </mxCell>
+        <mxCell id="text" value="Text: user description" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3399FF;" parent="20" vertex="1">
+          <mxGeometry y="23.625" width="129.375" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="content" value="DNA: content + time" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#66CC00;" parent="20" vertex="1">
+          <mxGeometry y="91.875" width="129.375" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="14" value="" style="edgeStyle=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;strokeColor=default;endArrow=block;endFill=1;" parent="20" source="text_proj" target="cross_attn_2" edge="1">
+          <mxGeometry x="-0.0001" relative="1" as="geometry">
+            <mxPoint x="345" y="44.31617647058828" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="text_proj" value="Textual Encoder" style="rounded=1;fillColor=#fff2cc;strokeColor=#CCCC00;" parent="20" vertex="1">
+          <mxGeometry x="163.875" y="23.625" width="146.625" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="15" style="edgeStyle=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;endArrow=block;endFill=1;" parent="20" source="gmu" target="cross_attn_2" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="353.625" y="111.825" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gmu" value="Convert to image &#xa;+ CNN encoder" style="rounded=1;fillColor=#fff2cc;strokeColor=#CCCC00;" parent="20" vertex="1">
+          <mxGeometry x="163.875" y="81.375" width="146.625" height="63" as="geometry" />
+        </mxCell>
+        <mxCell id="10" style="edgeStyle=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=block;endFill=1;" parent="20" source="cross_attn_2" target="clf_head" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cross_attn_2" value="Cross-Attention &#xa;+ FFN" style="rounded=1;fillColor=#e1d5e7;strokeColor=#6600CC;" parent="20" vertex="1">
+          <mxGeometry x="370.88" y="10.5" width="109.13" height="136.5" as="geometry" />
+        </mxCell>
+        <mxCell id="vMqI1s3NrBposdDzURmd-24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=block;endFill=1;" edge="1" parent="20" source="clf_head" target="2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="clf_head" value="Mean Pool" style="rounded=1;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="20" vertex="1">
+          <mxGeometry x="520" width="83.87" height="157.5" as="geometry" />
+        </mxCell>
+        <mxCell id="edge1" style="endArrow=block;" parent="20" source="text" target="text_proj" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="2" value="Classification&#xa; head" style="rounded=1;fillColor=#f4cccc;strokeColor=#CC0000;" parent="20" vertex="1">
+          <mxGeometry x="640" width="90" height="157.5" as="geometry" />
+        </mxCell>
+        <mxCell id="19" style="endArrow=block;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="20" source="content" target="gmu" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="129.375" y="112.224" as="sourcePoint" />
+            <mxPoint x="172.5" y="111.825" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="21" value="&lt;font style=&quot;font-size: 9px;&quot;&gt;Project&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;" parent="20" vertex="1">
+          <mxGeometry x="320" y="23.63" width="40" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="22" value="&lt;font style=&quot;font-size: 9px;&quot;&gt;GMU&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;" parent="20" vertex="1">
+          <mxGeometry x="320" y="91.87" width="40" height="20" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
