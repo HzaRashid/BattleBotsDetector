@@ -76,29 +76,29 @@ def load_user_and_post_json(data_dir, session_numbers=None, xnums=None):
                         user_posts_dict.setdefault(uid, []).append(post)
 
     # Deduplicate user entries: ensure each user_id appears only once
-    unique = {}
-    for u in user_info_list:
-        uid = u.get('user_id') or u.get('author_id')
-        unique.setdefault(uid, u)
-    user_info_list = list(unique.values())
+    # unique = {}
+    # for u in user_info_list:
+    #     uid = u.get('user_id') or u.get('author_id')
+    #     unique.setdefault(uid, u)
+    # user_info_list = list(unique.values())
 
-    # Deduplicate posts for each user by post 'id' or 'post_id'
-    for uid, posts in user_posts_dict.items():
-        seen = {}
-        for p in posts:
-            pid = p.get('id') or p.get('post_id')
-            if pid is None:
-                # if no id field, fallback to full object hash
-                pid = hash(frozenset(p.items()))
-            if pid not in seen:
-                seen[pid] = p
-        user_posts_dict[uid] = list(seen.values())
+    # # Deduplicate posts for each user by post 'id' or 'post_id'
+    # for uid, posts in user_posts_dict.items():
+    #     seen = {}
+    #     for p in posts:
+    #         pid = p.get('id') or p.get('post_id')
+    #         if pid is None:
+    #             # if no id field, fallback to full object hash
+    #             pid = hash(frozenset(p.items()))
+    #         if pid not in seen:
+    #             seen[pid] = p
+    #     user_posts_dict[uid] = list(seen.values())
 
     return user_info_list, user_posts_dict
 
 
 def build_datasets(data_dir, session_numbers=None, xnums=None, st_model=None,
-                   train_ratio=0.72, val_ratio=0.08, test_ratio=0.20):
+                   train_ratio=0.75, val_ratio=0.05, test_ratio=0.20):
     """
     Splits the data into train/validation/test according to the provided ratios.
     """

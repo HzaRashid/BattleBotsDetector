@@ -32,10 +32,30 @@ class FeatureAlign(nn.Module):
             nn.Linear(int(align_size),int(align_size)),
         )
 
+
+
+        self.linear_text=nn.Sequential(
+            nn.Linear(768*2,int(align_size)),
+            nn.LeakyReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(int(align_size),int(align_size)),
+        )
+
+
+        self.linear_dna=nn.Sequential(
+            nn.Linear(2*640,int(align_size)),
+            nn.LeakyReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(int(align_size),int(align_size)),
+        )
+
     def forward(self, des_tensor,tweets_tensor,content_dna_tensor,time_dna_tensor):
-        des_tensor,tweets_tensor,content_dna_tensor,time_dna_tensor=self.linear_relu_des(des_tensor),self.linear_relu_tweet(tweets_tensor),\
-                                                        self.linear_content_dna(content_dna_tensor),self.linear_time_dna(time_dna_tensor)
-        return des_tensor,tweets_tensor,content_dna_tensor,time_dna_tensor
+        # des_tensor,tweets_tensor,content_dna_tensor,time_dna_tensor=self.linear_relu_des(des_tensor),self.linear_relu_tweet(tweets_tensor),\
+        #                                                 self.linear_content_dna(content_dna_tensor),self.linear_time_dna(time_dna_tensor)
+
+        text, dna = self.linear_text(torch.cat((des_tensor, tweets_tensor), dim=1)),\
+        self.linear_dna(torch.cat((content_dna_tensor,time_dna_tensor), dim=1))
+        return text,dna
     
 # FixedPooling as provided.
 class FixedPooling(nn.Module):
@@ -100,7 +120,7 @@ class MOEAttention(nn.Module):
             expert_hidden_dim=expert_hidden_dim,
             expert_output_dim=self.expert_out_dim,
             top_k=top_k,
-            tweet_desc=True
+            # tweet_desc=True
         )
         # MOE for fusing content and time embeddings.
         self.dna_moe = MixtureOfExperts(
@@ -109,7 +129,7 @@ class MOEAttention(nn.Module):
             expert_hidden_dim=expert_hidden_dim,
             expert_output_dim=self.expert_out_dim,
             top_k=top_k,
-            tweet_desc=True
+            # tweet_desc=True
         )
         
         # Fusion module to combine MOE outputs.
@@ -134,19 +154,26 @@ class MOEAttention(nn.Module):
         # - Pooled attention: fixed pooling produces a (4 x 4) map → 16 features.
         final_feature_dim = self.expert_out_dim * 2 + 16
         self.bn2 = nn.BatchNorm1d(final_feature_dim)
-        # self.dropout2 = nn.Dropout(p=0.3)
+        # self.dropout2 = nn.Dropout(p=0.1)
         self.mlp_classifier = nn.Linear(final_feature_dim, num_classes)
 
         self.apply(init_weights)
 
     def forward(self, desc, tweet, content, time):
 
-        desc, tweet, content, time = self.align(desc, tweet, content, time)
+        # desc, tweet, content, time = self.align(desc, tweet, content, time)
         # text_out, aux_loss_text = self.desc_tweet_moe(torch.cat((desc, tweet), dim=1))
-        text_out, aux_loss_text = self.desc_tweet_moe.forward_roberta(tweets_tensor=tweet, des_tensor=desc)
+        # # text_out, aux_loss_text = self.desc_tweet_moe.forward_roberta(tweets_tensor=tweet, des_tensor=desc)
         # dna_out, aux_loss_dna = self.dna_moe(torch.cat((content, time), dim=1))
-        dna_out, aux_loss_dna = self.dna_moe.forward_roberta(tweets_tensor=time, des_tensor=content)
+        # # dna_out, aux_loss_dna = self.dna_moe.forward_roberta(tweets_tensor=time, des_tensor=content)
+        # aux_loss = aux_loss_text + aux_loss_dna
+
+        text, dna = self.align(desc, tweet, content, time)
+
+        text_out, aux_loss_text = self.desc_tweet_moe(text)
+        dna_out, aux_loss_dna = self.desc_tweet_moe(dna)
         aux_loss = aux_loss_text + aux_loss_dna
+
         
         # Stack the outputs along a new token dimension.
         outputs = [text_out, dna_out]  # Each: (batch, hidden_dim)
@@ -160,7 +187,7 @@ class MOEAttention(nn.Module):
         fused, attn = self.fusion(out_tensor)  # fused: (batch, 2, hidden_dim), attn: (batch, num_heads, 2, 2)
 
         # Apply fixed pooling to the attention map.
-        attn = self.fixed_pooling(attn)  # Expected output shape: (batch, 6, 6)
+        attn = self.fixed_pooling(attn)  # Expected output shape: (batch, 4, 4)
         # print("fused shape:", fused.shape)
         # print("attention shape:", attn.shape)
         # ------* consistency *------
