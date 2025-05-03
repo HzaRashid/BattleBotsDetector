@@ -547,7 +547,7 @@ This is done by applying a 2D convolution\footnote{
     to BotMoE \url{https://github.com/lyh6560new/BotMoE},
     uses the flattened fixed-pooling output directly. 
      }
-on a downsample (via fixed-pooling) of the attention matrix \( \mathbf{M} \).
+on a sample (obtained via fixed-pooling) of the attention matrix \( \mathbf{M} \).
 
 \paragraph{Classification Head}
 The attention outputs and consistency vector are concatenated and passed through a final classifier:
@@ -763,8 +763,8 @@ evidence of this effect.
     \textbf{Annotation bottleneck and latent bots.}
     Running sessions requires annotating hundreds of accounts.
     If annotation relies solely on simple automated methods, 
-    sophisticated bots might be incorrectly labeled as humans, 
-    and similarly for genuine users,
+    sophisticated bots might be mislabeled as humans, 
+    and genuine users might be mislabeled as bots,
     all before the bot developer code is deployed. 
     The potential mislabeling further limits the generalizability of the obtained results. 
     % The inevitable lag between collection and annotation risks leaking
@@ -812,7 +812,7 @@ Section~\ref{sec:limitations}, we outline three possible next steps:
         future sessions should (a) stagger collection windows over several weeks,
         (b) remove topic seeding or broaden it, and
         (c) deliberately include low-activity accounts below the current 10-post
-        threshold.  
+        threshold (and allow the bots to have low activity).  
 
   \item \emph{Refining dataset curation to surface “wild” bots}.  
         The present B.O.N.\ pipeline filters out non-developer bots up-front,
