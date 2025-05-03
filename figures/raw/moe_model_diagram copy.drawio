@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="model_diagram" name="PyTorch Model Diagram">
-        <mxGraphModel dx="583" dy="529" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+        <mxGraphModel dx="149" dy="370" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -25,7 +25,7 @@
                 <mxCell id="vMqI1s3NrBposdDzURmd-24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=block;endFill=1;" parent="1" source="clf_head" target="2" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="clf_head" value="SelfAttn&#xa;+&#xa;Conv2D(AttnWeights)" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="1" vertex="1">
+                <mxCell id="clf_head" value="SelfAttn&#xa;+&#xa;Conv2D(AttnMatrix)" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="1" vertex="1">
                     <mxGeometry x="510" y="330" width="130" height="157.5" as="geometry"/>
                 </mxCell>
                 <mxCell id="edge1" style="endArrow=block;" parent="1" source="text" target="text_proj" edge="1">
