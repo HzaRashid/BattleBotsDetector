@@ -586,6 +586,8 @@ with the following modalities:
     Both are encoded with TwHIN-BERT, with a mean-pooling applied to tweets.
     \item DNA: Content + Time, encoded with MobileViT-small \citep{mehta2021mobilevit}.
 \end{itemize}
+Each modality-specific MoE contains two experts, and
+the gating network selects the top expert (i.e., $k=1$ in (\ref{eq:moe-gating})).
 
 Result: The MoE yields our strongest detector, 
 achieving perfect precision and the highest recall in Session 20 (English), 
