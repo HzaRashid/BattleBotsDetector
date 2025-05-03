@@ -1,0 +1,111 @@
+\begin{thebibliography}{17}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Arevalo et~al.(2017)Arevalo, Solorio, Montes-y G{'o}mez, and Gonz{'a}lez]{arevalo2017gated}
+John~Edison Arevalo, Thamar Solorio, Manuel Montes-y G{'o}mez, and Fabio~A. Gonz{'a}lez.
+\newblock Gated multimodal units for information fusion.
+\newblock \emph{CoRR}, abs/1702.01992, 2017.
+\newblock URL \url{https://arxiv.org/abs/1702.01992}.
+
+\bibitem[Blei et~al.(2003)Blei, Ng, and Jordan]{blei2003latent}
+David~M. Blei, Andrew~Y. Ng, and Michael~I. Jordan.
+\newblock Latent dirichlet allocation.
+\newblock \emph{Journal of Machine Learning Research}, 3:\penalty0 993--1022, 2003.
+
+\bibitem[Davis et~al.(2016)Davis, Varol, Ferrara, Flammini, and Menczer]{davis2016botornot}
+Clayton~A. Davis, Onur Varol, Emilio Ferrara, Alessandro Flammini, and Filippo Menczer.
+\newblock Botornot: A system to evaluate social bots.
+\newblock In \emph{Proceedings of the 25th International Conference Companion on World Wide Web}, pages 273--274. ACM, 2016.
+
+\bibitem[Feng et~al.(2022)Feng, Tan, Wan, Wang, Chen, Zhang, Zheng, Zhang, Lei, Yang, Feng, Zhang, Wang, Liu, Bai, Wang, Cai, Wang, Zheng, Ma, Li, and Luo]{feng2022twibot22}
+Shangbin Feng, Zhaoxuan Tan, Herun Wan, Ningnan Wang, Zilong Chen, Binchi Zhang, Qinghua Zheng, Wenqian Zhang, Zhenyu Lei, Shujie Yang, Xinshun Feng, Qingyue Zhang, Hongrui Wang, Yuhan Liu, Yuyang Bai, Heng Wang, Zijian Cai, Yanbo Wang, Lijing Zheng, Zihan Ma, Jundong Li, and Minnan Luo.
+\newblock Twibot-22: Towards graph-based twitter bot detection.
+\newblock \emph{arXiv preprint arXiv:2206.04564}, 2022.
+\newblock URL \url{https://arxiv.org/abs/2206.04564}.
+
+\bibitem[Grootendorst(2022)]{grootendorst2022bertopic}
+Maarten Grootendorst.
+\newblock Bertopic: Neural topic modeling with a class-based tf-idf procedure.
+\newblock \emph{arXiv preprint arXiv:2203.05794}, 2022.
+\newblock URL \url{https://arxiv.org/abs/2203.05794}.
+
+\bibitem[Ilias et~al.(2023)Ilias, Kazelidis, and Askounis]{ilias2023multimodal}
+Loukas Ilias, Ioannis~Michail Kazelidis, and Dimitris~Th. Askounis.
+\newblock Multimodal detection of bots on x (twitter) using transformers.
+\newblock \emph{arXiv preprint arXiv:2308.14484}, 2023.
+\newblock URL \url{https://arxiv.org/abs/2308.14484}.
+
+\bibitem[Lin et~al.(2017)Lin, Goyal, Girshick, He, and Doll{\'a}r]{lin2017focal}
+Tsung-Yi Lin, Priya Goyal, Ross Girshick, Kaiming He, and Piotr Doll{\'a}r.
+\newblock Focal loss for dense object detection.
+\newblock In \emph{Proceedings of the IEEE International Conference on Computer Vision (ICCV)}, pages 2980--2988. IEEE, 2017.
+\newblock \doi{10.1109/ICCV.2017.324}.
+\newblock URL \url{https://arxiv.org/abs/1708.02002}.
+
+\bibitem[Liu et~al.(2023)Liu, Tan, Wang, Feng, Zheng, and Luo]{liu2023botmoe}
+Yuhan Liu, Zhaoxuan Tan, Heng Wang, Shangbin Feng, Qinghua Zheng, and Minnan Luo.
+\newblock Botmoe: Twitter bot detection with community-aware mixtures of modal-specific experts.
+\newblock In \emph{Proceedings of the 46th International ACM SIGIR Conference on Research and Development in Information Retrieval}, SIGIR '23, pages 485--495, Taipei, Taiwan, July 2023. ACM.
+\newblock \doi{10.1145/3539618.3591646}.
+
+\bibitem[McInnes et~al.(2017)McInnes, Healy, and Astels]{mcinnes2017hdbscan}
+Leland McInnes, John Healy, and Steve Astels.
+\newblock hdbscan: Hierarchical density based clustering.
+\newblock \emph{The Journal of Open Source Software}, 2\penalty0 (11):\penalty0 205, 2017.
+\newblock \doi{10.21105/joss.00205}.
+
+\bibitem[Mehta and Rastegari(2021)]{mehta2021mobilevit}
+Sachin Mehta and Mohammad Rastegari.
+\newblock Mobilevit: Light-weight, general-purpose, and mobile-friendly vision transformer.
+\newblock \emph{arXiv preprint arXiv:2110.02178}, 2021.
+\newblock URL \url{https://arxiv.org/abs/2110.02178}.
+
+\bibitem[Reimers and Gurevych(2021)]{reimers2021sentence}
+Nils Reimers and Iryna Gurevych.
+\newblock Making monolingual sentence embeddings multilingual using knowledge distillation.
+\newblock \url{https://www.sbert.net}, 2021.
+\newblock Accessed: 2025-04-25.
+
+\bibitem[Sandler et~al.(2018)Sandler, Howard, Zhu, Zhmoginov, and Chen]{sandler2018mobilenetv2}
+Mark Sandler, Andrew Howard, Menglong Zhu, Andrey Zhmoginov, and Liang-Chieh Chen.
+\newblock Mobilenetv2: Inverted residuals and linear bottlenecks.
+\newblock In \emph{Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)}, pages 4510--4520, 2018.
+\newblock \doi{10.1109/CVPR.2018.00474}.
+\newblock URL \url{https://arxiv.org/abs/1801.04381}.
+
+\bibitem[Shazeer et~al.(2017)Shazeer, Mirhoseini, Maziarz, Davis, Le, Hinton, and Dean]{shazeer2017outrageously}
+Noam Shazeer, Azalia Mirhoseini, Krzysztof Maziarz, Andy Davis, Quoc~V. Le, Geoffrey~E. Hinton, and Jeff Dean.
+\newblock Outrageously large neural networks: The sparsely-gated mixture-of-experts layer.
+\newblock \emph{CoRR}, abs/1701.06538, 2017.
+\newblock URL \url{http://arxiv.org/abs/1701.06538}.
+
+\bibitem[{Unicode Consortium}(2020)]{unicodeEmojiOrdering}
+{Unicode Consortium}.
+\newblock Emoji ordering v13.0, 2020.
+\newblock URL \url{https://www.unicode.org/emoji/charts-13.0/emoji-ordering.html}.
+\newblock Accessed: 2025-04-30.
+
+\bibitem[Vaswani et~al.(2017)Vaswani, Shazeer, Parmar, Uszkoreit, Jones, Gomez, Kaiser, and Polosukhin]{vaswani2017attention}
+Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan~N. Gomez, {\L}ukasz Kaiser, and Illia Polosukhin.
+\newblock Attention is all you need.
+\newblock In \emph{Advances in Neural Information Processing Systems}, pages 5998--6008. Curran Associates, Inc., 2017.
+\newblock URL \url{https://papers.nips.cc/paper_files/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf}.
+
+\bibitem[Xiong et~al.(2020)Xiong, Yang, He, Zheng, Zheng, Xing, Zhang, Lan, Wang, and Liu]{xiong2020layer}
+Ruibin Xiong, Yunchang Yang, Di~He, Kai Zheng, Shuxin Zheng, Chen Xing, Huishuai Zhang, Yanyan Lan, Liwei Wang, and Tie-Yan Liu.
+\newblock On layer normalization in the transformer architecture.
+\newblock \emph{arXiv preprint arXiv:2002.04745}, 2020.
+\newblock URL \url{https://arxiv.org/abs/2002.04745}.
+
+\bibitem[Zhang et~al.(2022)Zhang, Liu, Zheng, and Luo]{zhang2022twhin}
+Haoyi Zhang, Yuhan Liu, Qinghua Zheng, and Minnan Luo.
+\newblock Twhin-bert: A robust twitter user representation model for social bot detection.
+\newblock In \emph{Proceedings of the 2022 Conference on Empirical Methods in Natural Language Processing (EMNLP)}, pages 2879--2893. Association for Computational Linguistics, 2022.
+\newblock \doi{10.18653/v1/2022.emnlp-main.210}.
+\newblock URL \url{https://aclanthology.org/2022.emnlp-main.210}.
+
+\end{thebibliography}
