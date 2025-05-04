@@ -7,7 +7,7 @@ class Trainer:
                  epochs=20,
                  batch_size=64,
                  optimizer=torch.optim.Adam,
-                 lr=1e-5,
+                 lr=1e-4,
                  weight_decay=1e-6):
         
         self.epochs = epochs

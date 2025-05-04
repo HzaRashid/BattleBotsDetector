@@ -10,52 +10,35 @@ class FeatureAlign(nn.Module):
         self.linear_relu_des=nn.Sequential(
             nn.Linear(768,int(align_size)),
             nn.LeakyReLU(),
-            # nn.Dropout(0.1),
+            # nn.Dropout(0.3),
             nn.Linear(int(align_size),int(align_size)),
         )
         self.linear_relu_tweet=nn.Sequential(
             nn.Linear(768,int(align_size)),
             nn.LeakyReLU(),
-            # nn.Dropout(0.1),
+            # nn.Dropout(0.3),
             nn.Linear(int(align_size),int(align_size)),
         )
         self.linear_content_dna=nn.Sequential(
             nn.Linear(640,int(align_size)),
             nn.LeakyReLU(),
-            # nn.Dropout(0.1),
+            # nn.Dropout(0.3),
             nn.Linear(int(align_size),int(align_size)),
         )
         self.linear_time_dna=nn.Sequential(
             nn.Linear(640,int(align_size)),
             nn.LeakyReLU(),
-            # nn.Dropout(0.1),
+            # nn.Dropout(0.3),
             nn.Linear(int(align_size),int(align_size)),
         )
 
 
-
-        self.linear_text=nn.Sequential(
-            nn.Linear(768*2,int(align_size)),
-            nn.LeakyReLU(),
-            nn.Dropout(0.5),
-            nn.Linear(int(align_size),int(align_size)),
-        )
-
-
-        self.linear_dna=nn.Sequential(
-            nn.Linear(2*640,int(align_size)),
-            nn.LeakyReLU(),
-            nn.Dropout(0.5),
-            nn.Linear(int(align_size),int(align_size)),
-        )
 
     def forward(self, des_tensor,tweets_tensor,content_dna_tensor,time_dna_tensor):
-        # des_tensor,tweets_tensor,content_dna_tensor,time_dna_tensor=self.linear_relu_des(des_tensor),self.linear_relu_tweet(tweets_tensor),\
-        #                                                 self.linear_content_dna(content_dna_tensor),self.linear_time_dna(time_dna_tensor)
+        des_tensor,tweets_tensor,content_dna_tensor,time_dna_tensor=self.linear_relu_des(des_tensor),self.linear_relu_tweet(tweets_tensor),\
+                                                        self.linear_content_dna(content_dna_tensor),self.linear_time_dna(time_dna_tensor)
 
-        text, dna = self.linear_text(torch.cat((des_tensor, tweets_tensor), dim=1)),\
-        self.linear_dna(torch.cat((content_dna_tensor,time_dna_tensor), dim=1))
-        return text,dna
+        return des_tensor,tweets_tensor,content_dna_tensor,time_dna_tensor
     
 # FixedPooling as provided.
 class FixedPooling(nn.Module):
@@ -80,12 +63,12 @@ class LModel(nn.Module):
         super(LModel, self).__init__()
         self.multihead_attention = nn.MultiheadAttention(embed_dim=embed_dim, 
                                                          num_heads=num_heads,
-                                                         dropout=0.1, 
+                                                         dropout=0.3, 
                                                          batch_first=True)
 
         self.norm_first = norm_first
         self.norm1 = nn.LayerNorm(embed_dim)
-        self.dropout1 = nn.Dropout(p=0.1)
+        self.dropout1 = nn.Dropout(p=0.3)
 
     def forward(self, text_src):
         if self.norm_first:
@@ -115,7 +98,7 @@ class MOEAttention(nn.Module):
 
         # MOE for fusing text and tweet embeddings.
         self.desc_tweet_moe = MixtureOfExperts(
-            input_dim=self.align_size, 
+            input_dim=2*self.align_size, 
             num_experts=2,
             expert_hidden_dim=expert_hidden_dim,
             expert_output_dim=self.expert_out_dim,
@@ -124,7 +107,7 @@ class MOEAttention(nn.Module):
         )
         # MOE for fusing content and time embeddings.
         self.dna_moe = MixtureOfExperts(
-            input_dim=self.align_size,
+            input_dim=2*self.align_size,
             num_experts=2,
             expert_hidden_dim=expert_hidden_dim,
             expert_output_dim=self.expert_out_dim,
@@ -147,31 +130,25 @@ class MOEAttention(nn.Module):
         
         # Batch normalization applied to the stacked outputs.
         self.bn1 = nn.BatchNorm1d(self.expert_out_dim)
-        self.dropout1 = nn.Dropout(p=0.1)
+        self.dropout1 = nn.Dropout(p=0.3)
         
         # The final feature dimension is the concatenation of:
         # - Fused tokens: here, we have 2 tokens each of dimension hidden_dim.
         # - Pooled attention: fixed pooling produces a (4 x 4) map → 16 features.
         final_feature_dim = self.expert_out_dim * 2 + 16
         self.bn2 = nn.BatchNorm1d(final_feature_dim)
-        # self.dropout2 = nn.Dropout(p=0.1)
+        # self.dropout2 = nn.Dropout(p=0.3)
         self.mlp_classifier = nn.Linear(final_feature_dim, num_classes)
 
         self.apply(init_weights)
 
     def forward(self, desc, tweet, content, time):
 
-        # desc, tweet, content, time = self.align(desc, tweet, content, time)
-        # text_out, aux_loss_text = self.desc_tweet_moe(torch.cat((desc, tweet), dim=1))
-        # # text_out, aux_loss_text = self.desc_tweet_moe.forward_roberta(tweets_tensor=tweet, des_tensor=desc)
-        # dna_out, aux_loss_dna = self.dna_moe(torch.cat((content, time), dim=1))
-        # # dna_out, aux_loss_dna = self.dna_moe.forward_roberta(tweets_tensor=time, des_tensor=content)
-        # aux_loss = aux_loss_text + aux_loss_dna
-
-        text, dna = self.align(desc, tweet, content, time)
-
-        text_out, aux_loss_text = self.desc_tweet_moe(text)
-        dna_out, aux_loss_dna = self.desc_tweet_moe(dna)
+        desc, tweet, content, time = self.align(desc, tweet, content, time)
+        text_out, aux_loss_text = self.desc_tweet_moe(torch.cat((desc, tweet), dim=1))
+        # text_out, aux_loss_text = self.desc_tweet_moe.forward_roberta(tweets_tensor=tweet, des_tensor=desc)
+        dna_out, aux_loss_dna = self.dna_moe(torch.cat((content, time), dim=1))
+        # dna_out, aux_loss_dna = self.dna_moe.forward_roberta(tweets_tensor=time, des_tensor=content)
         aux_loss = aux_loss_text + aux_loss_dna
 
         
