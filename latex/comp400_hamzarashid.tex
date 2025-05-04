@@ -232,7 +232,7 @@ point that do not modify their posting times, skewing the utility of timestamp p
 
 \subsubsection{\textbf{Session 14} – Topic Statistics + Temporal Statistics + Intra-Topic Similarity}
 Hashtags are partially preserved (\texttt{\#arena $\rightarrow$ <HashtagMention:arena>}) to keep topic cues often used by bots.
-Tweet embeddings are normalized to prevent variance from dominating downstream signals. Then, the topic histogram is replaced with topic mean, variance, and standard deviation in order to remove noise. Finally, the mean, median, and standard deviation of pairwise cosine similarities across tweet embeddings are computed for each user (averaged over their topics).
+Tweet embeddings are normalized to prevent variance from dominating downstream signals. Then, the topic histogram is replaced with topic mean, variance, and standard deviation in order to remove noise. Finally, the mean, median, and standard deviation of pairwise cosine similarities across tweet embeddings are computed for each user (averaged over their topics; we expect bots to be less nuanced).
 
 Result:
 By Session 14, the bots evolve. That is, under
