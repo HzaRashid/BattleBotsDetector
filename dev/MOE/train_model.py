@@ -22,6 +22,7 @@ class Trainer:
         
         self.init_opt(optimizer)
         self.device = 'cpu'
+        print("Training on device:", self.device) 
         self.model.to(self.device)
 
         self.loss_obj = torch.nn.CrossEntropyLoss()
@@ -68,9 +69,9 @@ class Trainer:
             
             # some modality-specific MoE's might benefit from intial freezing
             # of the gates or later freezing the experts:
-            if self.model_is_moe and (not unfrozen) and (f1_score > unfreeze_threshold):
-                self.param_up()
-                unfrozen = True
+            # if self.model_is_moe and (not unfrozen) and (f1_score > unfreeze_threshold):
+            #     self.param_up()
+            #     unfrozen = True
             
             if verbose:
                 print(f"Epoch {epoch+1}/{self.epochs} - Train Loss: {train_loss:.4f} "

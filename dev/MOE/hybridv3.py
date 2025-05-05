@@ -63,12 +63,12 @@ class LModel(nn.Module):
         super(LModel, self).__init__()
         self.multihead_attention = nn.MultiheadAttention(embed_dim=embed_dim, 
                                                          num_heads=num_heads,
-                                                         dropout=0.3, 
+                                                         dropout=0.1, 
                                                          batch_first=True)
 
         self.norm_first = norm_first
         self.norm1 = nn.LayerNorm(embed_dim)
-        self.dropout1 = nn.Dropout(p=0.3)
+        self.dropout1 = nn.Dropout(p=0.1)
 
     def forward(self, text_src):
         if self.norm_first:
@@ -130,14 +130,14 @@ class MOEAttention(nn.Module):
         
         # Batch normalization applied to the stacked outputs.
         self.bn1 = nn.BatchNorm1d(self.expert_out_dim)
-        self.dropout1 = nn.Dropout(p=0.3)
+        self.dropout1 = nn.Dropout(p=0.1)
         
         # The final feature dimension is the concatenation of:
         # - Fused tokens: here, we have 2 tokens each of dimension hidden_dim.
         # - Pooled attention: fixed pooling produces a (4 x 4) map → 16 features.
         final_feature_dim = self.expert_out_dim * 2 + 16
         self.bn2 = nn.BatchNorm1d(final_feature_dim)
-        # self.dropout2 = nn.Dropout(p=0.3)
+
         self.mlp_classifier = nn.Linear(final_feature_dim, num_classes)
 
         self.apply(init_weights)
@@ -179,7 +179,7 @@ class MOEAttention(nn.Module):
         # Concatenate and classify.
         final_features = torch.cat([fused_flat, attn_flat], dim=1)  # (batch, 2*hidden_dim + 16)
         final_features = self.bn2(final_features)
-        # final_features = self.dropout2(final_features)
+        
         logits = self.mlp_classifier(final_features)
         
         return logits, aux_loss

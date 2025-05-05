@@ -16,9 +16,9 @@ BATCH_SIZE = 64
 class BotSessionDataset(Dataset):
     def __init__(self, user_info_list, user_posts_dict, st_model, sample_n=5):
         # 1) filter out users without posts
-        valid_users = [u for u in user_info_list if u['user_id'] in user_posts_dict]
+        # valid_users = [u for u in user_info_list if u['user_id'] in user_posts_dict]
         desc_texts, tweet_lists, content_dnas, time_dnas, labels = [], [], [], [], []
-        for u in valid_users:
+        for u in user_info_list:
             uid = u['user_id']
             desc_texts.append(u.get('description', ''))
             # sort & sample
@@ -112,7 +112,7 @@ def build_datasets(data_dir, session_numbers=None, xnums=None, st_model=None,
     temp_ratio = val_ratio + test_ratio
     train_df, temp_df = train_test_split(
         df,
-        train_size=train_ratio,
+        test_size=1-train_ratio,
         stratify=df['is_bot'],
         random_state=42
     )
