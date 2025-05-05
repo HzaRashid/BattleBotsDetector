@@ -11,25 +11,25 @@ class FeatureAlign(nn.Module):
             nn.Linear(768,int(align_size)),
             nn.LeakyReLU(),
             # nn.Dropout(0.3),
-            nn.Linear(int(align_size),int(align_size)),
+            # nn.Linear(int(align_size),int(align_size)),
         )
         self.linear_relu_tweet=nn.Sequential(
             nn.Linear(768,int(align_size)),
             nn.LeakyReLU(),
             # nn.Dropout(0.3),
-            nn.Linear(int(align_size),int(align_size)),
+            # nn.Linear(int(align_size),int(align_size)),
         )
         self.linear_content_dna=nn.Sequential(
             nn.Linear(640,int(align_size)),
             nn.LeakyReLU(),
             # nn.Dropout(0.3),
-            nn.Linear(int(align_size),int(align_size)),
+            # nn.Linear(int(align_size),int(align_size)),
         )
         self.linear_time_dna=nn.Sequential(
             nn.Linear(640,int(align_size)),
             nn.LeakyReLU(),
             # nn.Dropout(0.3),
-            nn.Linear(int(align_size),int(align_size)),
+            # nn.Linear(int(align_size),int(align_size)),
         )
 
 

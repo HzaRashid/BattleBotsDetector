@@ -114,7 +114,7 @@ def build_datasets(data_dir, session_numbers=None, xnums=None, st_model=None,
         df,
         test_size=1-train_ratio,
         stratify=df['is_bot'],
-        random_state=42
+        random_state=5
     )
 
     # Second split: validation vs. test
@@ -123,7 +123,7 @@ def build_datasets(data_dir, session_numbers=None, xnums=None, st_model=None,
         temp_df,
         test_size=test_ratio / temp_ratio,
         stratify=temp_df['is_bot'],
-        random_state=42
+        random_state=5
     )
 
     # Extract user_id sets
