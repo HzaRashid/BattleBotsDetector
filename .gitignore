@@ -63,8 +63,13 @@ dev/inspect_data
 dev/foo
 
 
-run_local.sh
 
-/data
+dev/data
 
-/scripts
+dev/debug
+
+dev/process_data
+
+*.bin
+
+*.onnx
