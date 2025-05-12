@@ -63,6 +63,7 @@ dev/inspect_data
 dev/foo
 
 
+<<<<<<< HEAD
 
 dev/data
 
@@ -73,3 +74,10 @@ dev/process_data
 *.bin
 
 *.onnx
+=======
+run_local.sh
+
+/data
+
+/scripts
+>>>>>>> 0cf74d3 (misc)
