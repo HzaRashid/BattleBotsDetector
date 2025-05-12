@@ -1,4 +1,4 @@
-# BattleBotsTemplate
+# Bot Detection on X
 
 
 
