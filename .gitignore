@@ -6,6 +6,8 @@ __pycache__/
 # C extensions
 *.so
 
+.DS_Store
+
 # Distribution / packaging
 bin/
 build/
@@ -52,20 +54,22 @@ docs/_build/
 
 .venv
 
-get_token.sh
-
 .env
 
-.uD23#@H11JXJHAK12
+data
 
-register.py
+dev/inspect_data
 
-secrets.json
+dev/foo
 
-authorize.py
 
-run_local.sh
 
-/data
+dev/data
 
-/scripts
+dev/debug
+
+dev/process_data
+
+*.bin
+
+*.onnx
